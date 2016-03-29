@@ -1,0 +1,10 @@
+name: NickNamer
+main: org.inventivetalent.nicknamer.NickNamerPlugin
+author: inventivetalent
+version: ${project.version}
+
+softdepend: [PacketListenerApi]
+
+commands:
+  nicknamer:
+    aliases: []

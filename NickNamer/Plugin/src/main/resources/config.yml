@@ -1,0 +1,25 @@
+
+
+messages:
+  command:
+    name:
+      changed: "&aChanged &b%player%'s &aname to &b%name%&a."
+      cleared: "&aCleared &b%player%'s &aname"
+      error:
+        length: "&cThe specified name is too long"
+    skin:
+      changed: "&aChanged &b%player%'s &askin to &b%skin%''s&a skin."
+      cleared: "&aCleared &b%player%'s &askin"
+      error:
+        length: "&cThe specified skin is too long"
+    error:
+      unknown: "&cUnknown error while executing command. See console for details."
+      permission: "&cYou are missing the following permission: %s"
+      illegalSender: "&cThis command is only available to players"
+      unhandled: "&cInternal exception. See console for details."
+      length:
+       short: "&cMissing arguments. Usage: %s"
+       long: "&cToo many arguments. Usage: %s"
+      parse: "&cFailed to parse argument '%s' to %s"
+      target:
+        notFound: "&cPlayer could not be found"
