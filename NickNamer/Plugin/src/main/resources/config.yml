@@ -1,4 +1,16 @@
+replace:
+  chat:
+    # Replace names in messages sent by players
+    player: true
 
+    # Replaces names in ALL outgoing messages
+    out: false
+    in:
+      # Replace names in incoming commands
+      command: false
+
+      # Replace names in general (non-command) incoming messages
+      general: false
 
 messages:
   command:

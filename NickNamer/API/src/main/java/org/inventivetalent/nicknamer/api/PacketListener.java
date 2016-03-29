@@ -34,6 +34,9 @@ import org.bukkit.plugin.Plugin;
 import org.inventivetalent.nicknamer.api.event.NickNamerUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
+import org.inventivetalent.nicknamer.api.event.replace.ChatInReplacementEvent;
+import org.inventivetalent.nicknamer.api.event.replace.ChatOutReplacementEvent;
+import org.inventivetalent.nicknamer.api.event.replace.NameReplacer;
 import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.wrapper.PropertyMapWrapper;
 import org.inventivetalent.packetlistener.handler.PacketHandler;
@@ -42,7 +45,10 @@ import org.inventivetalent.packetlistener.handler.ReceivedPacket;
 import org.inventivetalent.packetlistener.handler.SentPacket;
 import org.inventivetalent.reflection.minecraft.Minecraft;
 import org.inventivetalent.reflection.resolver.FieldResolver;
+import org.inventivetalent.reflection.resolver.MethodResolver;
+import org.inventivetalent.reflection.resolver.ResolverQuery;
 import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
+import org.inventivetalent.reflection.resolver.minecraft.OBCClassResolver;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -53,10 +59,16 @@ import java.util.logging.Level;
 public class PacketListener extends PacketHandler {
 
 	static NMSClassResolver nmsClassResolver = new NMSClassResolver();
+	static OBCClassResolver obcClassResolver = new OBCClassResolver();
 
-	static Class<?> PlayerInfoData = nmsClassResolver.resolveSilent("PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
+	static Class<?> PlayerInfoData     = nmsClassResolver.resolveSilent("PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
+	static Class<?> CraftChatMessage   = obcClassResolver.resolveSilent("util.CraftChatMessage");
+	static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent");
+	static Class<?> PacketPlayInChat   = nmsClassResolver.resolveSilent("PacketPlayInChat");
 
-	static FieldResolver PlayerInfoDataFieldResolver = PlayerInfoData != null ? new FieldResolver(PlayerInfoData) : null;// 1.8+ only
+	static FieldResolver  PlayerInfoDataFieldResolver    = PlayerInfoData != null ? new FieldResolver(PlayerInfoData) : null;// 1.8+ only
+	static MethodResolver CraftChatMessageMethodResolver = new MethodResolver(CraftChatMessage);
+	static FieldResolver  PacketPlayInChatFieldResolver  = new FieldResolver(PacketPlayInChat);
 
 	public PacketListener(Plugin plugin) {
 		super(plugin);
@@ -64,9 +76,9 @@ public class PacketListener extends PacketHandler {
 
 	@Override
 	@PacketOptions(forcePlayer = true)
-	public void onSend(SentPacket packet) {
-		//// Nametag / Skin disguise
+	public void onSend(final SentPacket packet) {
 		if (packet.hasPlayer()) {
+			//// Nametag / Skin disguise
 			if ("PacketPlayOutNamedEntitySpawn".equals(packet.getPacketName()) && Minecraft.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
 				try {
 					Object profileHandle = packet.getPacketValue("b");
@@ -102,12 +114,93 @@ public class PacketListener extends PacketHandler {
 					getPlugin().getLogger().log(Level.SEVERE, "Failed to disguise profile", e);
 				}
 			}
+
+			//// Name replacement
+			if ("PacketPlayOutChat".equalsIgnoreCase(packet.getPacketName())) {
+				Object a = packet.getPacketValue("a");
+				try {
+					final String message = (String) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromComponent", IChatBaseComponent)).invoke(null, a);
+					System.out.println(message);
+					String replacedMessage=NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+						@Override
+						public String replace(String original) {
+							Player player = Bukkit.getPlayer(original);
+							if (player != null) {
+								ChatOutReplacementEvent replacementEvent = new ChatOutReplacementEvent(player, packet.getPlayer(), message, original, original);
+								Bukkit.getPluginManager().callEvent(replacementEvent);
+								if (replacementEvent.isCancelled()) { return original; }
+								return replacementEvent.getReplacement();
+							}
+							return original;
+						}
+					}, true);
+					//					String raw = (String) ChatSerializer.getDeclaredMethod("a", IChatBaseComponent).invoke(null, a);
+					//					for (Player player : Bukkit.getOnlinePlayers()) {
+					//						if (NickNamer.getNickManager().isNicked(player.getUniqueId())) {
+					//							String nick = NickNamer.getNickManager().getNick(player.getUniqueId());
+					//							if (raw.toLowerCase().contains(player.getName().toLowerCase())) {
+					//								raw = raw.replaceAll("(?i)" + player.getName().toLowerCase(), nick);
+					//							}
+					//						}
+					//					}
+
+					//					//Players that just logged out
+					//					for (Iterator<UUID> iterator = NickNamer.offlinePlayers.listIterator(); iterator.hasNext(); ) {
+					//						UUID uuid = iterator.next();
+					//
+					//						if (NickNamer.getNickManager().isNicked(uuid)) {
+					//							OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
+					//							if (offlinePlayer != null) {
+					//								if (offlinePlayer.isOnline()) {
+					//									iterator.remove();
+					//									break;
+					//								}
+					//								String name = offlinePlayer.getName();
+					//								String nick = NickNamer.getNickManager().getNick(uuid);
+					//								if (raw.contains(name)) {
+					//									raw = raw.replaceAll("(?i)" + name, nick);
+					//									iterator.remove();
+					//								}
+					//							}
+					//						}
+					//					}
+
+					//					Object serialized = ChatSerializer.getDeclaredMethod("a", String.class).invoke(null, raw);
+					Object[] components=(Object[]) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromString", String.class)).invoke(null, replacedMessage);
+					packet.setPacketValue("a", components[0]);
+				} catch (Exception e) {
+					getPlugin().getLogger().log(Level.SEVERE, "", e);
+				}
+			}
 		}
 	}
 
 	@Override
-	public void onReceive(ReceivedPacket receivedPacket) {
-
+	@PacketOptions(forcePlayer = true)
+	public void onReceive(final ReceivedPacket packet) {
+		if ("PacketPlayInChat".equals(packet.getPacketName())) {
+			if (packet.hasPlayer()) {
+				try {
+					final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
+					String replacedMessage=NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+						@Override
+						public String replace(String original) {
+							Player player = Bukkit.getPlayer(original);
+							if (player != null) {
+								ChatInReplacementEvent replacementEvent = new ChatInReplacementEvent(player, packet.getPlayer(), message, original, original);
+								Bukkit.getPluginManager().callEvent(replacementEvent);
+								if (replacementEvent.isCancelled()) { return original; }
+								return replacementEvent.getReplacement();
+							}
+							return original;
+						}
+					}, true);
+					PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
+				} catch (Exception e) {
+					getPlugin().getLogger().log(Level.SEVERE, "", e);
+				}
+			}
+		}
 	}
 
 	private GameProfileWrapper disguiseProfile(final Player observer, final GameProfileWrapper profileWrapper) throws Exception {

@@ -28,16 +28,30 @@
 
 package org.inventivetalent.nicknamer.api;
 
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.plugin.Plugin;
 import org.inventivetalent.apihelper.API;
 import org.inventivetalent.apihelper.APIManager;
 import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
+import org.inventivetalent.nicknamer.api.event.replace.ChatReplacementEvent;
+import org.inventivetalent.nicknamer.api.event.replace.NameReplacementEvent;
+import org.inventivetalent.nicknamer.api.event.replace.NameReplacer;
 import org.inventivetalent.packetlistener.PacketListenerAPI;
 import org.inventivetalent.packetlistener.handler.PacketHandler;
+
+import javax.annotation.Nonnull;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NickNamerAPI implements API, Listener {
 
@@ -46,6 +60,39 @@ public class NickNamerAPI implements API, Listener {
 
 	public static NickManager getNickManager() {
 		return nickManager;
+	}
+
+	/**
+	 * Replaces all specified names in the string and calls the {@link NameReplacer} for every name
+	 */
+	public static String replaceNames(@Nonnull final String original, @Nonnull final Iterable<String> namesToReplace, @Nonnull final NameReplacer replacer, boolean ignoreCase) {
+		String replaced = original;
+		for (String name : namesToReplace) {
+			Pattern pattern = Pattern.compile((ignoreCase ? "(?i)" : "") + name);
+			Matcher matcher = pattern.matcher(original);
+
+			StringBuffer replacementBuffer = new StringBuffer();
+			while (matcher.find()) {
+				matcher.appendReplacement(replacementBuffer, replacer.replace(name));
+			}
+			matcher.appendTail(replacementBuffer);
+
+			replaced = replacementBuffer.toString();
+		}
+		return replaced;
+	}
+
+	public static Set<String> getNickedPlayerNames() {
+		Set<String> nickedPlayerNames = new HashSet<>();
+		for (String nick : getNickManager().getUsedNicks()) {
+			for (UUID uuid : getNickManager().getPlayersWithNick(nick)) {
+				OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
+				if (offlinePlayer != null) {
+					nickedPlayerNames.add(offlinePlayer.getName());
+				}
+			}
+		}
+		return nickedPlayerNames;
 	}
 
 	//	public static void setNickManager(NickManager nickManager_) {
@@ -90,6 +137,26 @@ public class NickNamerAPI implements API, Listener {
 		}
 	}
 
+	// Name replacement listeners
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void on(final AsyncPlayerChatEvent event) {
+		final String message = event.getMessage();
+		Set<String> nickedPlayerNames = getNickedPlayerNames();
+		String replacedMessage=replaceNames(message, nickedPlayerNames, new NameReplacer() {
+			@Override
+			public String replace(String original) {
+				Player player = Bukkit.getPlayer(original);
+				if (player != null) {
+					NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original);
+					Bukkit.getPluginManager().callEvent(replacementEvent);
+					if (replacementEvent.isCancelled()) { return original; }
+					return replacementEvent.getReplacement();
+				}
+				return original;
+			}
+		}, true);
+		event.setMessage(replacedMessage);
+	}
 
 }
 

@@ -28,32 +28,25 @@
 
 package org.inventivetalent.nicknamer.api.event.replace;
 
-public enum ReplaceType {
+import org.bukkit.entity.Player;
 
-	/**
-	 * Outgoing chat messages sent to a player
-	 * All messages sent to players are included
-	 */
-	CHAT_OUT,
-	/**
-	 * Incoming chat message sent by a player
-	 * Commands are included as well (but have a <code>/</code> prefix)
-	 */
-	CHAT_IN,
-	/**
-	 * Chat message sent by a player
-	 * Called by the default {@link org.bukkit.event.player.AsyncPlayerChatEvent}
-	 */
-	PLAYER_CHAT,
-	/**
-	 * Names included in a scoreboard
-	 */
-	//TODO
-	SCOREBOARD,
-	/**
-	 * Displayed names in the player list
-	 */
-	//TODO
-	PLAYER_LIST,
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Set;
 
+/**
+ * Event called when a name in a message sent by a player is being replaced
+ */
+public class ChatReplacementEvent extends NameReplacementEvent {
+
+	private Set<Player> receivers;
+
+	public ChatReplacementEvent(@Nonnull Player disguised, @Nonnull Set<Player> receivers, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
+		super(disguised, receivers.iterator().next(), ReplaceType.PLAYER_CHAT, context, original, replacement);
+		this.receivers = receivers;
+	}
+
+	public Set<Player> getReceivers() {
+		return receivers;
+	}
 }

@@ -28,20 +28,34 @@
 
 package org.inventivetalent.nicknamer;
 
+import org.bukkit.Bukkit;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.inventivetalent.apihelper.APIManager;
 import org.inventivetalent.nicknamer.api.NickNamerAPI;
+import org.inventivetalent.nicknamer.api.event.replace.ChatInReplacementEvent;
+import org.inventivetalent.nicknamer.api.event.replace.ChatOutReplacementEvent;
+import org.inventivetalent.nicknamer.api.event.replace.ChatReplacementEvent;
 import org.inventivetalent.nicknamer.command.NickCommands;
 import org.inventivetalent.nicknamer.command.SkinCommands;
 import org.inventivetalent.packetlistener.PacketListenerAPI;
 import org.inventivetalent.pluginannotations.PluginAnnotations;
+import org.inventivetalent.pluginannotations.config.ConfigValue;
 
-public class NickNamerPlugin extends JavaPlugin {
+public class NickNamerPlugin extends JavaPlugin implements Listener {
 
 	public static NickNamerPlugin instance;
 
 	public NickCommands nickCommands;
 	public SkinCommands skinCommands;
+
+	//	@ConfigValue(path = "replace.tab") boolean replaceTab;
+	@ConfigValue(path = "replace.chat.player")     boolean replaceChatPlayer;
+	@ConfigValue(path = "replace.chat.out")        boolean replaceChatOut;
+	@ConfigValue(path = "replace.chat.in.general") boolean replaceChatInGeneral;
+	@ConfigValue(path = "replace.chat.in.command") boolean replaceChatInCommand;
 
 	@Override
 	public void onLoad() {
@@ -55,14 +69,55 @@ public class NickNamerPlugin extends JavaPlugin {
 		APIManager.initAPI(PacketListenerAPI.class);
 		APIManager.initAPI(NickNamerAPI.class);
 
+		Bukkit.getPluginManager().registerEvents(this, this);
+
 		saveDefaultConfig();
+		PluginAnnotations.CONFIG.loadValues(this, this);
 
 		PluginAnnotations.COMMAND.registerCommands(this, nickCommands = new NickCommands(this));
 		PluginAnnotations.COMMAND.registerCommands(this, skinCommands = new SkinCommands(this));
+
 	}
 
 	@Override
 	public void onDisable() {
 		APIManager.disableAPI(NickNamerAPI.class);
 	}
+
+	//// Replacement listeners
+
+	@EventHandler(priority = EventPriority.LOW)
+	public void on(ChatReplacementEvent event) {
+		if (replaceChatPlayer) {
+			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
+				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOW)
+	public void on(ChatOutReplacementEvent event) {
+		if (replaceChatOut) {
+			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
+				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOW)
+	public void on(ChatInReplacementEvent event) {
+		if (replaceChatInGeneral || replaceChatInCommand) {
+			if (replaceChatInCommand && event.getContext().startsWith("/")) { // Command
+				if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
+					event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+				}
+			}else if (replaceChatInGeneral) {
+				if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
+					event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+				}
+			}
+		}
+	}
+
 }
+
