@@ -4,6 +4,7 @@ author: inventivetalent
 version: ${project.version}
 
 softdepend: [PacketListenerApi]
+database: true
 
 commands:
   nicknamer:

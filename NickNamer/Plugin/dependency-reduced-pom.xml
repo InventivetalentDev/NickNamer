@@ -53,12 +53,23 @@
                   <include>org.inventivetalent:reflectionhelper**</include>
                   <include>org.inventivetalent:pluginannotations**</include>
                   <include>org.inventivetalent.update:**</include>
+                  <include>org.inventivetalent.data:**</include>
+                  <include>redis.clients:jedis**</include>
+                  <include>org.apache.commons:commons-pool**</include>
                 </includes>
               </artifactSet>
               <relocations>
                 <relocation>
                   <pattern>org.mcstats</pattern>
                   <shadedPattern>org.inventivetalent.nicknamer.mcstats</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>redis.clients</pattern>
+                  <shadedPattern>org.inventivetalent.nicknamer.redis</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.commons.pool</pattern>
+                  <shadedPattern>org.inventivetalent.nicknamer.commons-pool</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

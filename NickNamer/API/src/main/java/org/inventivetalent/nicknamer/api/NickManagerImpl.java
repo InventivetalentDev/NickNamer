@@ -28,20 +28,25 @@
 
 package org.inventivetalent.nicknamer.api;
 
+import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.inventivetalent.data.api.DataProvider;
+import org.inventivetalent.data.api.temporary.ConcurrentTemporaryDataProvider;
+import org.inventivetalent.data.api.wrapper.WrappedKeyDataProvider;
 import org.inventivetalent.nicknamer.api.event.NickNamerSelfUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
 import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
-class NickManagerImpl implements NickManager {
+public class NickManagerImpl implements NickManager {
 
 	Class EnumDifficulty = SkinLoader.nmsClassResolver.resolveSilent("EnumDifficulty");
 	Class WorldType      = SkinLoader.nmsClassResolver.resolveSilent("WorldType");
@@ -49,27 +54,47 @@ class NickManagerImpl implements NickManager {
 
 	private Plugin plugin;
 
-	final Map<UUID, String> nickedPlayers = new ConcurrentHashMap<>();
-	//	final Map<UUID, String> storedNames   = new ConcurrentHashMap<>();
-	final Map<UUID, String> skins         = new ConcurrentHashMap<>();
+	final WrappedKeyDataProvider<UUID, String> nickDataProvider = new WrappedKeyDataProvider<UUID, String>(String.class, new ConcurrentTemporaryDataProvider<>(String.class)) {
+		@Override
+		public UUID stringToKey(@NonNull String s) {
+			return UUID.fromString(s);
+		}
+	};
+	final WrappedKeyDataProvider<UUID, String> skinDataProvider = new WrappedKeyDataProvider<UUID, String>(String.class, new ConcurrentTemporaryDataProvider<>(String.class)) {
+		@Override
+		public UUID stringToKey(@NonNull String s) {
+			return UUID.fromString(s);
+		}
+	};
+
+	public void setNickDataProvider(DataProvider<String> provider) {
+		nickDataProvider.setDataProvider(provider);
+	}
+
+	public void setSkinDataProvider(DataProvider<String> provider) {
+		skinDataProvider.setDataProvider(provider);
+	}
 
 	NickManagerImpl(Plugin plugin) {
 		this.plugin = plugin;
 	}
 
 	@Override
-	public boolean isNicked(@Nonnull UUID id) {
-		return nickedPlayers.containsKey(id);
+	public boolean isNicked(@Nonnull UUID uuid) {
+		return nickDataProvider.contains(uuid) && nickDataProvider.get(uuid) != null;
 	}
 
 	@Override
 	public boolean isNickUsed(@Nonnull String nick) {
-		return nickedPlayers.containsValue(nick);
+		for (UUID uuid : nickDataProvider.keysK()) {
+			if (nick.equals(nickDataProvider.get(uuid))) { return true; }
+		}
+		return false;
 	}
 
 	@Override
 	public String getNick(@Nonnull UUID id) {
-		return nickedPlayers.get(id);
+		return nickDataProvider.get(id);
 	}
 
 	@Override
@@ -78,7 +103,7 @@ class NickManagerImpl implements NickManager {
 		if (isNicked(uuid)) {
 			removeNick(uuid);
 		}
-		nickedPlayers.put(uuid, nick);
+		nickDataProvider.put(uuid, nick);
 
 		//		Player player = Bukkit.getPlayer(uuid);
 		//		if (player != null) {
@@ -112,7 +137,7 @@ class NickManagerImpl implements NickManager {
 
 	@Override
 	public void removeNick(@Nonnull UUID uuid) {
-		nickedPlayers.remove(uuid);
+		nickDataProvider.remove(uuid);
 
 		//		Player player = Bukkit.getPlayer(uuid);
 		//		if (player != null) {
@@ -156,18 +181,26 @@ class NickManagerImpl implements NickManager {
 	@Override
 	public List<UUID> getPlayersWithNick(@Nonnull String nick) {
 		List<UUID> list = new ArrayList<>();
-		for (Map.Entry<UUID, String> entry : nickedPlayers.entrySet()) {
-			if (entry.getValue().equals(nick)) {
-				list.add(entry.getKey());
-			}
+		for (UUID uuid : nickDataProvider.keysK()) {
+			if (nick.equals(nickDataProvider.get(uuid))) { list.add(uuid); }
 		}
-		return Collections.unmodifiableList(list);
+		//		for (Map.Entry<UUID, String> entry : nicks.entrySet()) {
+		//			if (entry.getValue().equals(nick)) {
+		//				list.add(entry.getKey());
+		//			}
+		//		}
+		return list;
 	}
 
 	@Nonnull
 	@Override
 	public List<String> getUsedNicks() {
-		return Collections.unmodifiableList(new ArrayList<>(nickedPlayers.values()));
+		List<String> nicks = new ArrayList<>();
+		for (UUID uuid : nickDataProvider.keysK()) {
+			String nick = nickDataProvider.get(uuid);
+			if (nick != null) { nicks.add(nick); }
+		}
+		return nicks;
 	}
 
 	@Override
@@ -179,7 +212,7 @@ class NickManagerImpl implements NickManager {
 		//		@SuppressWarnings("deprecation")
 		//		UUID skinID = Bukkit.getOfflinePlayer(skinOwner).getUniqueId();
 
-		skins.put(uuid, skinOwner);
+		skinDataProvider.put(uuid, skinOwner);
 
 		//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", skinOwner);
 
@@ -205,7 +238,7 @@ class NickManagerImpl implements NickManager {
 
 	@Override
 	public void loadCustomSkin(@Nonnull String key, @Nonnull Object gameProfile) {
-		SkinLoader.skinMap.put(key, gameProfile);
+		SkinLoader.skinDataProvider.put(key, gameProfile);
 	}
 
 	@Override
@@ -218,15 +251,15 @@ class NickManagerImpl implements NickManager {
 	public void loadCustomSkin(String key, JSONObject data) {
 		if (key == null || data == null) { throw new IllegalArgumentException("key and data cannot be null"); }
 		if (!data.containsKey("properties")) { throw new IllegalArgumentException("JSONObject must contain 'properties' entry"); }
-		//		SkinLoader.skinStorage.put(key, data);
+		//		SkinLoader.skinDataProvidertorage.put(key, data);
 		loadCustomSkin(key, new GameProfileWrapper(data));
 		//		loadCustomSkin(key, SkinLoader.toProfile(key.length() > 16 ? key.substring(0, 16) : key, data));
 	}
 
 	@Override
 	public void setCustomSkin(@Nonnull UUID uuid, @Nonnull String skin) {
-		if (!SkinLoader.skinMap.containsKey(skin)) { throw new IllegalStateException("Specified skin has not been loaded yet"); }
-		skins.put(uuid, skin);
+		if (!SkinLoader.skinDataProvider.contains(skin)) { throw new IllegalStateException("Specified skin has not been loaded yet"); }
+		skinDataProvider.put(uuid, skin);
 
 		//		updatePlayer(id, false, true, (boolean) getConfigOption("selfUpdate"));
 		refreshPlayer(uuid);
@@ -234,7 +267,7 @@ class NickManagerImpl implements NickManager {
 
 	@Override
 	public void removeSkin(@Nonnull UUID uuid) {
-		skins.remove(uuid);
+		skinDataProvider.remove(uuid);
 
 		//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", "reset");
 
@@ -244,26 +277,29 @@ class NickManagerImpl implements NickManager {
 
 	@Override
 	public String getSkin(@Nonnull UUID uuid) {
-		if (hasSkin(uuid)) { return skins.get(uuid); }
+		if (hasSkin(uuid)) { return skinDataProvider.get(uuid); }
 		Player player = Bukkit.getPlayer(uuid);
 		return player != null ? player.getName() : null;
 	}
 
 	@Override
 	public boolean hasSkin(@Nonnull UUID uuid) {
-		return skins.containsKey(uuid);
+		return skinDataProvider.contains(uuid) && skinDataProvider.get(uuid) != null;
 	}
 
 	@Nonnull
 	@Override
 	public List<UUID> getPlayersWithSkin(@Nonnull String skin) {
 		List<UUID> list = new ArrayList<>();
-		for (Map.Entry<UUID, String> entry : skins.entrySet()) {
-			if (entry.getValue().equals(skin)) {
-				list.add(entry.getKey());
-			}
+		for (UUID uuid : skinDataProvider.keysK()) {
+			if (skin.equals(skinDataProvider.get(uuid))) { list.add(uuid); }
 		}
-		return Collections.unmodifiableList(list);
+		//		for (Map.Entry<UUID, String> entry : skinDataProvider.entrySet()) {
+		//			if (entry.getValue().equals(skin)) {
+		//				list.add(entry.getKey());
+		//			}
+		//		}
+		return list;
 	}
 
 	@Override

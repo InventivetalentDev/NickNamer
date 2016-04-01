@@ -65,6 +65,7 @@ public class PacketListener extends PacketHandler {
 	static Class<?> CraftChatMessage   = obcClassResolver.resolveSilent("util.CraftChatMessage");
 	static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent");
 	static Class<?> PacketPlayInChat   = nmsClassResolver.resolveSilent("PacketPlayInChat");
+	static Class<?> EnumChatFormat     = nmsClassResolver.resolveSilent("EnumChatFormat");
 
 	static FieldResolver  PlayerInfoDataFieldResolver    = PlayerInfoData != null ? new FieldResolver(PlayerInfoData) : null;// 1.8+ only
 	static MethodResolver CraftChatMessageMethodResolver = new MethodResolver(CraftChatMessage);
@@ -119,9 +120,8 @@ public class PacketListener extends PacketHandler {
 			if ("PacketPlayOutChat".equalsIgnoreCase(packet.getPacketName())) {
 				Object a = packet.getPacketValue("a");
 				try {
-					final String message = (String) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromComponent", IChatBaseComponent)).invoke(null, a);
-					System.out.println(message);
-					String replacedMessage=NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+					final String message = (String) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromComponent", IChatBaseComponent, EnumChatFormat)).invoke(null, a, EnumChatFormat.getEnumConstants()[15]);
+					final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
 						@Override
 						public String replace(String original) {
 							Player player = Bukkit.getPlayer(original);
@@ -166,7 +166,7 @@ public class PacketListener extends PacketHandler {
 					//					}
 
 					//					Object serialized = ChatSerializer.getDeclaredMethod("a", String.class).invoke(null, raw);
-					Object[] components=(Object[]) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromString", String.class)).invoke(null, replacedMessage);
+					Object[] components = (Object[]) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromString", String.class)).invoke(null, replacedMessage);
 					packet.setPacketValue("a", components[0]);
 				} catch (Exception e) {
 					getPlugin().getLogger().log(Level.SEVERE, "", e);
@@ -182,7 +182,7 @@ public class PacketListener extends PacketHandler {
 			if (packet.hasPlayer()) {
 				try {
 					final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
-					String replacedMessage=NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+					String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
 						@Override
 						public String replace(String original) {
 							Player player = Bukkit.getPlayer(original);

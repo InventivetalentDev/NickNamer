@@ -83,6 +83,28 @@
             <artifactId>reflectionhelper</artifactId>
             <version>[1.2.3,)</version>
         </dependency>
+
+
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api-bukkit-yaml</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api-gson</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api-sql</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
     </dependencies>
 
 </project>

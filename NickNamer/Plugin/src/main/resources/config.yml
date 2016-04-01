@@ -12,6 +12,27 @@ replace:
       # Replace names in general (non-command) incoming messages
       general: false
 
+storage:
+  # Storage type
+  # - local:
+  #     creates a local database or uses the database specified in bukkit.yml
+  # - sql
+  #     uses an SQL server
+  # - redis
+  #     uses a Redis server
+  type: "local"
+  sql:
+    host: "localhost"
+    port: 1433
+    user: ""
+    pass: ""
+  redis:
+    host: "localhost"
+    port: 6379
+    pass: ""
+    max-connections: 4
+
+
 messages:
   command:
     name:

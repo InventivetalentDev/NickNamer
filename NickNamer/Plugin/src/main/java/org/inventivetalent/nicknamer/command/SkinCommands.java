@@ -40,12 +40,11 @@ import org.inventivetalent.pluginannotations.message.MessageFormatter;
 
 public class SkinCommands {
 
-
 	public SkinCommands(NickNamerPlugin plugin) {
 	}
 
 	@Command(name = "skin",
-			 aliases = {  },
+			 aliases = {},
 			 usage = "<Skin> [Player]",
 			 description = "Set your own, or another player's skin",
 			 min = 1,
@@ -77,8 +76,9 @@ public class SkinCommands {
 				return message.replace("%player%", target.getName()).replace("%skin%", skin);
 			}
 		}));
-		NickNamerAPI.getNickManager().setSkin(target.getUniqueId(), skin);
+		if (!skin.equals(NickNamerAPI.getNickManager().getSkin(target.getUniqueId()))) {
+			NickNamerAPI.getNickManager().setSkin(target.getUniqueId(), skin);
+		}
 	}
-
 
 }

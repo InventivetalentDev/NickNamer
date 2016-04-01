@@ -77,7 +77,9 @@ public class NickCommands {
 				return message.replace("%player%", target.getName()).replace("%name%", nick);
 			}
 		}));
-		NickNamerAPI.getNickManager().setNick(target.getUniqueId(), nick);
+		if (!nick.equals(NickNamerAPI.getNickManager().getNick(target.getUniqueId()))) {
+			NickNamerAPI.getNickManager().setNick(target.getUniqueId(), nick);
+		}
 	}
 
 }

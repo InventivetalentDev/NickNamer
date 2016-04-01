@@ -55,12 +55,18 @@ import java.util.regex.Pattern;
 
 public class NickNamerAPI implements API, Listener {
 
-	private static   NickManager    nickManager;
+	private static NickManager  nickManager;
+//	private static UUIDResolver uuidResolver;
+
 	protected static PacketListener packetListener;
 
 	public static NickManager getNickManager() {
 		return nickManager;
 	}
+
+//	public static UUIDResolver getUuidResolver() {
+//		return uuidResolver;
+//	}
 
 	/**
 	 * Replaces all specified names in the string and calls the {@link NameReplacer} for every name
@@ -69,11 +75,12 @@ public class NickNamerAPI implements API, Listener {
 		String replaced = original;
 		for (String name : namesToReplace) {
 			Pattern pattern = Pattern.compile((ignoreCase ? "(?i)" : "") + name);
-			Matcher matcher = pattern.matcher(original);
+			Matcher matcher = pattern.matcher(replaced);
 
 			StringBuffer replacementBuffer = new StringBuffer();
 			while (matcher.find()) {
-				matcher.appendReplacement(replacementBuffer, replacer.replace(name));
+				String replace=replacer.replace(name);
+				matcher.appendReplacement(replacementBuffer, replace);
 			}
 			matcher.appendTail(replacementBuffer);
 
@@ -111,7 +118,10 @@ public class NickNamerAPI implements API, Listener {
 
 		APIManager.registerEvents(this, this);
 
+
 		nickManager = new NickManagerImpl(plugin);
+//		uuidResolver = new UUIDResolver(plugin, 3600000/* 1 hour */);
+
 		PacketHandler.addHandler(packetListener = new PacketListener(plugin));
 	}
 
@@ -142,7 +152,7 @@ public class NickNamerAPI implements API, Listener {
 	public void on(final AsyncPlayerChatEvent event) {
 		final String message = event.getMessage();
 		Set<String> nickedPlayerNames = getNickedPlayerNames();
-		String replacedMessage=replaceNames(message, nickedPlayerNames, new NameReplacer() {
+		String replacedMessage = replaceNames(message, nickedPlayerNames, new NameReplacer() {
 			@Override
 			public String replace(String original) {
 				Player player = Bukkit.getPlayer(original);

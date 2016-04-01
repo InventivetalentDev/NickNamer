@@ -28,6 +28,12 @@
 
 package org.inventivetalent.nicknamer.api;
 
+import com.google.gson.JsonParser;
+import lombok.NonNull;
+import org.inventivetalent.data.api.SerializationDataProvider;
+import org.inventivetalent.data.api.gson.parser.GsonDataParser;
+import org.inventivetalent.data.api.gson.serializer.GsonDataSerializer;
+import org.inventivetalent.data.api.temporary.ConcurrentTemporaryDataProvider;
 import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
 import org.inventivetalent.reflection.resolver.ClassResolver;
 import org.inventivetalent.reflection.resolver.FieldResolver;
@@ -36,8 +42,6 @@ import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class SkinLoader {
 
@@ -56,7 +60,27 @@ public class SkinLoader {
 	static MethodResolver CacheMethodResolver        = new MethodResolver(Cache);
 	static MethodResolver LoadingCacheMethodResolver = new MethodResolver(LoadingCache);
 
-	protected static Map<String, Object> skinMap = new ConcurrentHashMap<>();
+	static SerializationDataProvider<Object> skinDataProvider;
+
+	static {
+		setSkinDataProvider(new ConcurrentTemporaryDataProvider<>(Object.class));
+	}
+
+	public static void setSkinDataProvider(SerializationDataProvider<Object> skinDataProvider) {
+		SkinLoader.skinDataProvider = skinDataProvider;
+		SkinLoader.skinDataProvider.setSerializer(new GsonDataSerializer<Object>() {
+			@Override
+			public String serialize(@NonNull Object object) {
+				return new GameProfileWrapper(object).toJson().toString();
+			}
+		});
+		SkinLoader.skinDataProvider.setParser(new GsonDataParser<Object>(Object.class) {
+			@Override
+			public Object parse(@NonNull String string) {
+				return new GameProfileWrapper(new JsonParser().parse(string).getAsJsonObject()).getHandle();
+			}
+		});
+	}
 
 	//Should be called asynchronously
 	@Nullable
@@ -81,7 +105,7 @@ public class SkinLoader {
 			try {
 				Object cache = TileEntitySkullFieldResolver.resolve("skinCache").get(null);
 				profile = LoadingCacheMethodResolver.resolve("getUnchecked").invoke(cache, owner.toLowerCase());
-				if (profile != null) { skinMap.put(owner, profile); }
+				if (profile != null) { skinDataProvider.put(owner, profile); }
 			} catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);
 			}
@@ -91,12 +115,12 @@ public class SkinLoader {
 
 	@Nullable
 	public static Object getSkinProfileHandle(@Nonnull String owner) {
-		Object profile = skinMap.get(owner);
+		Object profile = skinDataProvider.get(owner);
 		if (profile == null) {
 			try {
 				Object cache = TileEntitySkullFieldResolver.resolve("skinCache").get(null);
 				profile = CacheMethodResolver.resolve("getIfPresent").invoke(cache, owner);
-				if (profile != null) { skinMap.put(owner, profile); }
+				if (profile != null) { skinDataProvider.put(owner, profile); }
 			} catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);
 			}
