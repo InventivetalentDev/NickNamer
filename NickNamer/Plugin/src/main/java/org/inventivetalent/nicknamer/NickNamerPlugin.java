@@ -59,9 +59,6 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import javax.persistence.PersistenceException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,10 +77,11 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 
 	@ConfigValue(path = "storage.type") String storageType = "local";
 
-	@ConfigValue(path = "storage.sql.host") String sqlHost;
-	@ConfigValue(path = "storage.sql.port") int    sqlPort;
-	@ConfigValue(path = "storage.sql.user") String sqlUser;
-	@ConfigValue(path = "storage.sql.pass") String sqlPass;
+	@ConfigValue(path = "storage.sql.address") String sqlAddress;
+	//	@ConfigValue(path = "storage.sql.host") String sqlHost;
+	//	@ConfigValue(path = "storage.sql.port") int    sqlPort;
+	@ConfigValue(path = "storage.sql.user")    String sqlUser;
+	@ConfigValue(path = "storage.sql.pass")    String sqlPass;
 
 	@ConfigValue(path = "storage.redis.host")            String redisHost;
 	@ConfigValue(path = "storage.redis.port")            int    redisPort;
@@ -116,7 +114,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 				initStorageLocal();
 				break;
 			case "sql":
-				getLogger().info("Using SQL storage (" + sqlUser + "@" + sqlHost + ":" + sqlPort + ")");
+				getLogger().info("Using SQL storage (" + sqlUser + "@" + sqlAddress + ")");
 				initStorageSQL();
 				break;
 			case "redis":
@@ -176,15 +174,11 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 		Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
 			@Override
 			public void run() {
-				try (Connection connection = DriverManager.getConnection(sqlHost + ":" + sqlPort, sqlUser, sqlPass)) {
-					getLogger().info("Connected to SQL");
+//				getLogger().info("Connected to SQL");
 
-					((NickManagerImpl) NickNamerAPI.getNickManager()).setNickDataProvider(new SQLDataProvider<>(String.class, connection, "nicknamer_data_nick"));
-					((NickManagerImpl) NickNamerAPI.getNickManager()).setSkinDataProvider(new SQLDataProvider<>(String.class, connection, "nicknamer_data_skin"));
-					SkinLoader.setSkinDataProvider(new SQLDataProvider<>(Object.class, connection, "nicknamer_skins"));
-				} catch (SQLException e) {
-					throw new RuntimeException("Failed to connect to database", e);
-				}
+				((NickManagerImpl) NickNamerAPI.getNickManager()).setNickDataProvider(new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_nick"));
+				((NickManagerImpl) NickNamerAPI.getNickManager()).setSkinDataProvider(new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_skin"));
+				SkinLoader.setSkinDataProvider(new SQLDataProvider<>(Object.class, sqlAddress, sqlUser, sqlPass, "nicknamer_skins"));
 			}
 		});
 	}
@@ -202,8 +196,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 					jedis.ping();
 					getLogger().info("Connected to Redis");
 
-					((NickManagerImpl) NickNamerAPI.getNickManager()).setNickDataProvider(new RedisDataProvider<>(String.class, pool, "nn_data_nick:%s", "nn_data_nick:(.*)"));
-					((NickManagerImpl) NickNamerAPI.getNickManager()).setSkinDataProvider(new RedisDataProvider<>(String.class, pool, "nn_data_skin:%s", "nn_data_skin:(.*)"));
+					((NickManagerImpl) NickNamerAPI.getNickManager()).setNickDataProvider(new RedisDataProvider<>(String.class, pool, "nn_data:%s:nick", "nn_data:(.*):nick"));
+					((NickManagerImpl) NickNamerAPI.getNickManager()).setSkinDataProvider(new RedisDataProvider<>(String.class, pool, "nn_data:%s;skin", "nn_data:(.*):skin"));
 					SkinLoader.setSkinDataProvider(new RedisDataProvider<Object>(Object.class, pool, "nn_skins:%s", "nn_skins:(.*)") {
 						@Override
 						public void put(@NonNull String key, Object value) {

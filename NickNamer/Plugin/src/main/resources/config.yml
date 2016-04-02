@@ -22,8 +22,7 @@ storage:
   #     uses a Redis server
   type: "local"
   sql:
-    host: "localhost"
-    port: 1433
+    address: "jdbc:mysql://localhost:3306/minecraft"
     user: ""
     pass: ""
   redis:
