@@ -30,10 +30,12 @@ package org.inventivetalent.nicknamer.api;
 
 import com.google.gson.JsonParser;
 import lombok.NonNull;
+import org.bukkit.Bukkit;
 import org.inventivetalent.data.api.SerializationDataProvider;
 import org.inventivetalent.data.api.gson.parser.GsonDataParser;
 import org.inventivetalent.data.api.gson.serializer.GsonDataSerializer;
 import org.inventivetalent.data.api.temporary.ConcurrentTemporaryDataProvider;
+import org.inventivetalent.nicknamer.api.event.skin.SkinLoadedEvent;
 import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
 import org.inventivetalent.reflection.resolver.ClassResolver;
 import org.inventivetalent.reflection.resolver.FieldResolver;
@@ -105,7 +107,10 @@ public class SkinLoader {
 			try {
 				Object cache = TileEntitySkullFieldResolver.resolve("skinCache").get(null);
 				profile = LoadingCacheMethodResolver.resolve("getUnchecked").invoke(cache, owner.toLowerCase());
-				if (profile != null) { skinDataProvider.put(owner, profile); }
+				if (profile != null) {
+					skinDataProvider.put(owner, profile);
+					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile)));
+				}
 			} catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);
 			}
@@ -120,7 +125,10 @@ public class SkinLoader {
 			try {
 				Object cache = TileEntitySkullFieldResolver.resolve("skinCache").get(null);
 				profile = CacheMethodResolver.resolve("getIfPresent").invoke(cache, owner);
-				if (profile != null) { skinDataProvider.put(owner, profile); }
+				if (profile != null) {
+					skinDataProvider.put(owner, profile);
+					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile)));
+				}
 			} catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);
 			}
