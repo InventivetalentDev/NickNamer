@@ -41,6 +41,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.inventivetalent.apihelper.APIManager;
@@ -311,6 +313,50 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				}
 			}, true);
 			event.setMessage(replacedMessage);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void on(final PlayerJoinEvent event) {
+		if (PlayerJoinReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+			final String message = event.getJoinMessage();
+			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
+			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
+				@Override
+				public String replace(String original) {
+					Player player = Bukkit.getPlayer(original);
+					if (player != null) {
+						PlayerJoinReplacementEvent replacementEvent = new PlayerJoinReplacementEvent(player, Bukkit.getOnlinePlayers(), message, original, original);
+						Bukkit.getPluginManager().callEvent(replacementEvent);
+						if (replacementEvent.isCancelled()) { return original; }
+						return replacementEvent.getReplacement();
+					}
+					return original;
+				}
+			}, true);
+			event.setJoinMessage(replacedMessage);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void on(final PlayerQuitEvent event) {
+		if (PlayerJoinReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+			final String message = event.getQuitMessage();
+			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
+			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
+				@Override
+				public String replace(String original) {
+					Player player = Bukkit.getPlayer(original);
+					if (player != null) {
+						PlayerQuitReplacementEvent replacementEvent = new PlayerQuitReplacementEvent(player, Bukkit.getOnlinePlayers(), message, original, original);
+						Bukkit.getPluginManager().callEvent(replacementEvent);
+						if (replacementEvent.isCancelled()) { return original; }
+						return replacementEvent.getReplacement();
+					}
+					return original;
+				}
+			}, true);
+			event.setQuitMessage(replacedMessage);
 		}
 	}
 

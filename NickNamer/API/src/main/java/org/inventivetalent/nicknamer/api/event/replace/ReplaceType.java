@@ -48,6 +48,14 @@ public enum ReplaceType {
 	/**
 	 * Names included in a scoreboard
 	 */
-	SCOREBOARD;
+	SCOREBOARD,
+	/**
+	 * Name in player join messages
+	 */
+	PLAYER_JOIN,
+	/**
+	 * Name in player quit messages
+	 */
+	PLAYER_QUIT;
 
 }
