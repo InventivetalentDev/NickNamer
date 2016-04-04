@@ -32,10 +32,10 @@ import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.inventivetalent.data.api.DataProvider;
 import org.inventivetalent.data.api.temporary.ConcurrentTemporaryDataProvider;
 import org.inventivetalent.data.api.wrapper.WrappedKeyDataProvider;
+import org.inventivetalent.nicknamer.NickNamerPlugin;
 import org.inventivetalent.nicknamer.api.event.NickNamerSelfUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
 import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
@@ -53,7 +53,7 @@ public class PluginNickManager implements NickManager {
 	Class WorldType      = SkinLoader.nmsClassResolver.resolveSilent("WorldType");
 	Class EnumGamemode   = SkinLoader.nmsClassResolver.resolveSilent("WorldSettings$EnumGamemode", "EnumGamemode");
 
-	private Plugin plugin;
+	private NickNamerPlugin plugin;
 
 	final WrappedKeyDataProvider<UUID, String> nickDataProvider = new WrappedKeyDataProvider<UUID, String>(String.class, new ConcurrentTemporaryDataProvider<>(String.class)) {
 		@Override
@@ -76,7 +76,7 @@ public class PluginNickManager implements NickManager {
 		skinDataProvider.setDataProvider(provider);
 	}
 
-	public PluginNickManager(Plugin plugin) {
+	public PluginNickManager(NickNamerPlugin plugin) {
 		this.plugin = plugin;
 		NickNamerAPI.nickManager = this;
 	}
@@ -170,6 +170,8 @@ public class PluginNickManager implements NickManager {
 			}
 		});
 
+		if (plugin.bungeecord) { plugin.sendPluginMessage(Bukkit.getPlayer(uuid), "name", nick); }
+
 		setNick.stopTiming();
 	}
 
@@ -224,6 +226,9 @@ public class PluginNickManager implements NickManager {
 				removeNickTask.stopTiming();
 			}
 		});
+
+		if (plugin.bungeecord) { plugin.sendPluginMessage(Bukkit.getPlayer(uuid), "name", "reset"); }
+
 		removeNick.stopTiming();
 	}
 
@@ -298,6 +303,8 @@ public class PluginNickManager implements NickManager {
 			}
 		}, 2);
 
+		if (plugin.bungeecord) { plugin.sendPluginMessage(Bukkit.getPlayer(uuid), "skin", skinOwner); }
+
 		setSkin.stopTiming();
 		//		}
 	}
@@ -350,6 +357,9 @@ public class PluginNickManager implements NickManager {
 				removeSkinTask.stopTiming();
 			}
 		});
+
+		if (plugin.bungeecord) { plugin.sendPluginMessage(Bukkit.getPlayer(uuid), "skin", "reset"); }
+
 		removeSkin.stopTiming();
 	}
 

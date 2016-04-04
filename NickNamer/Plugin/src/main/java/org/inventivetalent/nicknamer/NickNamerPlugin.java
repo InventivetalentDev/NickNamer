@@ -55,6 +55,7 @@ import org.inventivetalent.nicknamer.api.*;
 import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.replace.*;
+import org.inventivetalent.nicknamer.api.event.skin.SkinLoadedEvent;
 import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
 import org.inventivetalent.nicknamer.command.NickCommands;
 import org.inventivetalent.nicknamer.command.SkinCommands;
@@ -89,6 +90,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.chat.in.command") boolean replaceChatInCommand;
 	@ConfigValue(path = "replace.scoreboard")      boolean replaceScoreboard;
 
+	@ConfigValue(path = "bungeecord") public boolean bungeecord;
+
 	@ConfigValue(path = "storage.type") String storageType = "local";
 
 	@ConfigValue(path = "storage.sql.address") String sqlAddress;
@@ -121,6 +124,14 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 		PluginAnnotations.COMMAND.registerCommands(this, nickCommands = new NickCommands(this));
 		PluginAnnotations.COMMAND.registerCommands(this, skinCommands = new SkinCommands(this));
+
+		if (bungeecord) {
+			if (Bukkit.getOnlineMode()) {
+				getLogger().warning("Bungeecord is enabled, but server is in online mode!");
+			}
+			Bukkit.getMessenger().registerIncomingPluginChannel(this, "NickNamer", this);
+			Bukkit.getMessenger().registerOutgoingPluginChannel(this, "NickNamer");
+		}
 
 		//Replace the default NickManager
 		new PluginNickManager(this);
@@ -269,6 +280,17 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		}
 	}
 
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void on(SkinLoadedEvent event) {
+		if (bungeecord) {
+			if (Bukkit.getOnlinePlayers().isEmpty()) {
+				getLogger().warning("Cannot send skin data to Bungeecord: no players online");
+				return;
+			}
+			sendPluginMessage(Bukkit.getOnlinePlayers().iterator().next(), "data", event.getOwner(), event.getGameProfile().toJson().toString());
+		}
+	}
+
 	// Name replacement listeners
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void on(final AsyncPlayerChatEvent event) {
@@ -348,6 +370,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@Override
 	public void sendPluginMessage(Player player, String action, String... values) {
+		if (!bungeecord) { return; }
 		if (player == null || !player.isOnline()) { return; }
 
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
@@ -361,6 +384,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@Override
 	public void onPluginMessageReceived(String s, Player player, byte[] bytes) {
+		if (!bungeecord) { return; }
 		if ("NickNamer".equals(s)) {
 			ByteArrayDataInput in = ByteStreams.newDataInput(bytes);
 			String sub = in.readUTF();
