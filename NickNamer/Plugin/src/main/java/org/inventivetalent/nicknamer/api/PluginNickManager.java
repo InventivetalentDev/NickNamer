@@ -493,4 +493,8 @@ public class PluginNickManager implements NickManager {
 		refreshPlayer(uuid);
 	}
 
+	@Override
+	public boolean isSimple() {
+		return false;
+	}
 }

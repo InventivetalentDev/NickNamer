@@ -226,4 +226,8 @@ public class SimpleNickManager implements NickManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public boolean isSimple() {
+		return true;
+	}
 }

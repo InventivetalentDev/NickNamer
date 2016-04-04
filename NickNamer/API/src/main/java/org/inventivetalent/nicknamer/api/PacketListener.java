@@ -117,81 +117,52 @@ public class PacketListener extends PacketHandler {
 				}
 			}
 
-			//TODO: Check if the plugin NickManager is enabled before replacing names
-			//TODO: Check if any listeners are registered for the replacement events
-
 			//// Name replacement
-			if ("PacketPlayOutChat".equalsIgnoreCase(packet.getPacketName())) {
-				Object a = packet.getPacketValue("a");
-				try {
-					final String message = (String) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromComponent", IChatBaseComponent, EnumChatFormat)).invoke(null, a, EnumChatFormat.getEnumConstants()[15]);
-					final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-						@Override
-						public String replace(String original) {
-							Player player = Bukkit.getPlayer(original);
-							if (player != null) {
-								ChatOutReplacementEvent replacementEvent = new ChatOutReplacementEvent(player, packet.getPlayer(), message, original, original);
-								Bukkit.getPluginManager().callEvent(replacementEvent);
-								if (replacementEvent.isCancelled()) { return original; }
-								return replacementEvent.getReplacement();
-							}
-							return original;
+			if (!NickNamerAPI.getNickManager().isSimple()) {
+				if ("PacketPlayOutChat".equalsIgnoreCase(packet.getPacketName())) {
+					if (ChatOutReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+						Object a = packet.getPacketValue("a");
+						try {
+							final String message = (String) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromComponent", IChatBaseComponent, EnumChatFormat)).invoke(null, a, EnumChatFormat.getEnumConstants()[15]);
+							final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+								@Override
+								public String replace(String original) {
+									Player player = Bukkit.getPlayer(original);
+									if (player != null) {
+										ChatOutReplacementEvent replacementEvent = new ChatOutReplacementEvent(player, packet.getPlayer(), message, original, original);
+										Bukkit.getPluginManager().callEvent(replacementEvent);
+										if (replacementEvent.isCancelled()) { return original; }
+										return replacementEvent.getReplacement();
+									}
+									return original;
+								}
+							}, true);
+							Object[] components = (Object[]) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromString", String.class)).invoke(null, replacedMessage);
+							packet.setPacketValue("a", components[0]);
+						} catch (Exception e) {
+							getPlugin().getLogger().log(Level.SEVERE, "", e);
 						}
-					}, true);
-					//					String raw = (String) ChatSerializer.getDeclaredMethod("a", IChatBaseComponent).invoke(null, a);
-					//					for (Player player : Bukkit.getOnlinePlayers()) {
-					//						if (NickNamer.getNickManager().isNicked(player.getUniqueId())) {
-					//							String nick = NickNamer.getNickManager().getNick(player.getUniqueId());
-					//							if (raw.toLowerCase().contains(player.getName().toLowerCase())) {
-					//								raw = raw.replaceAll("(?i)" + player.getName().toLowerCase(), nick);
-					//							}
-					//						}
-					//					}
-
-					//					//Players that just logged out
-					//					for (Iterator<UUID> iterator = NickNamer.offlinePlayers.listIterator(); iterator.hasNext(); ) {
-					//						UUID uuid = iterator.next();
-					//
-					//						if (NickNamer.getNickManager().isNicked(uuid)) {
-					//							OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
-					//							if (offlinePlayer != null) {
-					//								if (offlinePlayer.isOnline()) {
-					//									iterator.remove();
-					//									break;
-					//								}
-					//								String name = offlinePlayer.getName();
-					//								String nick = NickNamer.getNickManager().getNick(uuid);
-					//								if (raw.contains(name)) {
-					//									raw = raw.replaceAll("(?i)" + name, nick);
-					//									iterator.remove();
-					//								}
-					//							}
-					//						}
-					//					}
-
-					//					Object serialized = ChatSerializer.getDeclaredMethod("a", String.class).invoke(null, raw);
-					Object[] components = (Object[]) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromString", String.class)).invoke(null, replacedMessage);
-					packet.setPacketValue("a", components[0]);
-				} catch (Exception e) {
-					getPlugin().getLogger().log(Level.SEVERE, "", e);
-				}
-			}
-			if ("PacketPlayOutScoreboardObjective".equals(packet.getPacketName())) {
-				final String b = (String) packet.getPacketValue("b");
-				final String replacedB = NickNamerAPI.replaceNames(b, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-					@Override
-					public String replace(String original) {
-						Player player = Bukkit.getPlayer(original);
-						if (player != null) {
-							ScoreboardReplacementEvent replacementEvent = new ScoreboardReplacementEvent(player, packet.getPlayer(), b, original, original);
-							Bukkit.getPluginManager().callEvent(replacementEvent);
-							if (replacementEvent.isCancelled()) { return original; }
-							return replacementEvent.getReplacement();
-						}
-						return original;
 					}
-				}, true);
-				packet.setPacketValue("b", replacedB);
+				}
+				if ("PacketPlayOutScoreboardObjective".equals(packet.getPacketName())) {
+					if (ScoreboardReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+						final String b = (String) packet.getPacketValue("b");
+						final String replacedB = NickNamerAPI.replaceNames(b, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+							@Override
+							public String replace(String original) {
+								Player player = Bukkit.getPlayer(original);
+								if (player != null) {
+									ScoreboardReplacementEvent replacementEvent = new ScoreboardReplacementEvent(player, packet.getPlayer(), b, original, original);
+									Bukkit.getPluginManager().callEvent(replacementEvent);
+									if (replacementEvent.isCancelled()) { return original; }
+									return replacementEvent.getReplacement();
+								}
+								return original;
+							}
+						}, true);
+						packet.setPacketValue("b", replacedB);
+					}
+				}
 			}
 		}
 	}
@@ -199,26 +170,30 @@ public class PacketListener extends PacketHandler {
 	@Override
 	@PacketOptions(forcePlayer = true)
 	public void onReceive(final ReceivedPacket packet) {
-		if ("PacketPlayInChat".equals(packet.getPacketName())) {
+		if (!NickNamerAPI.getNickManager().isSimple()) {
 			if (packet.hasPlayer()) {
-				try {
-					final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
-					String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-						@Override
-						public String replace(String original) {
-							Player player = Bukkit.getPlayer(original);
-							if (player != null) {
-								ChatInReplacementEvent replacementEvent = new ChatInReplacementEvent(player, packet.getPlayer(), message, original, original);
-								Bukkit.getPluginManager().callEvent(replacementEvent);
-								if (replacementEvent.isCancelled()) { return original; }
-								return replacementEvent.getReplacement();
-							}
-							return original;
+				if ("PacketPlayInChat".equals(packet.getPacketName())) {
+					if (ChatInReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+						try {
+							final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
+							String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+								@Override
+								public String replace(String original) {
+									Player player = Bukkit.getPlayer(original);
+									if (player != null) {
+										ChatInReplacementEvent replacementEvent = new ChatInReplacementEvent(player, packet.getPlayer(), message, original, original);
+										Bukkit.getPluginManager().callEvent(replacementEvent);
+										if (replacementEvent.isCancelled()) { return original; }
+										return replacementEvent.getReplacement();
+									}
+									return original;
+								}
+							}, true);
+							PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
+						} catch (Exception e) {
+							getPlugin().getLogger().log(Level.SEVERE, "", e);
 						}
-					}, true);
-					PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
-				} catch (Exception e) {
-					getPlugin().getLogger().log(Level.SEVERE, "", e);
+					}
 				}
 			}
 		}

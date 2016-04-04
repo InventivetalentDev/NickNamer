@@ -176,4 +176,6 @@ public interface NickManager {
 	 */
 	void refreshPlayer(@Nonnull UUID uuid);
 
+	boolean isSimple();
+
 }

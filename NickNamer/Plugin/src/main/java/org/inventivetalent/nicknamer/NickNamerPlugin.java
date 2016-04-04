@@ -47,8 +47,6 @@ import org.inventivetalent.apihelper.APIManager;
 import org.inventivetalent.data.api.SerializationDataProvider;
 import org.inventivetalent.data.api.bukkit.ebean.EbeanDataProvider;
 import org.inventivetalent.data.api.bukkit.ebean.KeyValueBean;
-import org.inventivetalent.data.api.gson.parser.GsonDataParser;
-import org.inventivetalent.data.api.gson.serializer.GsonDataSerializer;
 import org.inventivetalent.data.api.redis.RedisDataProvider;
 import org.inventivetalent.data.api.wrapper.AsyncDataProviderWrapper;
 import org.inventivetalent.data.api.wrapper.CachedAsyncDataProviderWrapper;
@@ -89,7 +87,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.chat.out")        boolean replaceChatOut;
 	@ConfigValue(path = "replace.chat.in.general") boolean replaceChatInGeneral;
 	@ConfigValue(path = "replace.chat.in.command") boolean replaceChatInCommand;
-	@ConfigValue(path="replace.scoreboard") boolean replaceScoreboard;
+	@ConfigValue(path = "replace.scoreboard")      boolean replaceScoreboard;
 
 	@ConfigValue(path = "storage.type") String storageType = "local";
 
@@ -170,22 +168,24 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	// Name replacement listeners
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void on(final AsyncPlayerChatEvent event) {
-		final String message = event.getMessage();
-		Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
-		String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
-			@Override
-			public String replace(String original) {
-				Player player = Bukkit.getPlayer(original);
-				if (player != null) {
-					NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original);
-					Bukkit.getPluginManager().callEvent(replacementEvent);
-					if (replacementEvent.isCancelled()) { return original; }
-					return replacementEvent.getReplacement();
+		if (ChatReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+			final String message = event.getMessage();
+			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
+			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
+				@Override
+				public String replace(String original) {
+					Player player = Bukkit.getPlayer(original);
+					if (player != null) {
+						NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original);
+						Bukkit.getPluginManager().callEvent(replacementEvent);
+						if (replacementEvent.isCancelled()) { return original; }
+						return replacementEvent.getReplacement();
+					}
+					return original;
 				}
-				return original;
-			}
-		}, true);
-		event.setMessage(replacedMessage);
+			}, true);
+			event.setMessage(replacedMessage);
+		}
 	}
 
 	<D> SerializationDataProvider<D> wrapAsyncProvider(Class<? extends D> clazz, SerializationDataProvider<D> dataProvider) {
@@ -195,22 +195,6 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				Bukkit.getScheduler().runTaskAsynchronously(instance, runnable);
 			}
 		});
-	}
-
-	SerializationDataProvider<Object> makeSkinProvider(SerializationDataProvider<Object> dataProvider) {
-		dataProvider.setSerializer(new GsonDataSerializer<Object>() {
-			@Override
-			public String serialize(@NonNull Object object) {
-				return new GameProfileWrapper(object).toJson().toString();
-			}
-		});
-		dataProvider.setParser(new GsonDataParser<Object>(Object.class) {
-			@Override
-			public Object parse(@NonNull String string) {
-				return new GameProfileWrapper(new JsonParser().parse(string).getAsJsonObject()).getHandle();
-			}
-		});
-		return dataProvider;
 	}
 
 	void initStorageLocal() {
