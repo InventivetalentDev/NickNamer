@@ -149,45 +149,6 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		APIManager.disableAPI(NickNamerAPI.class);
 	}
 
-	// Internal event listeners
-
-	@EventHandler(priority = EventPriority.LOWEST)
-	public void on(NickDisguiseEvent event) {
-		if (getAPI().isNicked(event.getPlayer().getUniqueId())) {
-			event.setNick(getAPI().getNick(event.getPlayer().getUniqueId()));
-		}
-	}
-
-	@EventHandler(priority = EventPriority.LOWEST)
-	public void on(SkinDisguiseEvent event) {
-		if (getAPI().hasSkin(event.getPlayer().getUniqueId())) {
-			event.setSkin(getAPI().getSkin(event.getPlayer().getUniqueId()));
-		}
-	}
-
-	// Name replacement listeners
-	@EventHandler(priority = EventPriority.NORMAL)
-	public void on(final AsyncPlayerChatEvent event) {
-		if (ChatReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-			final String message = event.getMessage();
-			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
-			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
-				@Override
-				public String replace(String original) {
-					Player player = Bukkit.getPlayer(original);
-					if (player != null) {
-						NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original);
-						Bukkit.getPluginManager().callEvent(replacementEvent);
-						if (replacementEvent.isCancelled()) { return original; }
-						return replacementEvent.getReplacement();
-					}
-					return original;
-				}
-			}, true);
-			event.setMessage(replacedMessage);
-		}
-	}
-
 	<D> SerializationDataProvider<D> wrapAsyncProvider(Class<? extends D> clazz, SerializationDataProvider<D> dataProvider) {
 		return new CachedAsyncDataProviderWrapper<>(clazz, new AsyncDataProviderWrapper<D>(dataProvider) {
 			@Override
@@ -290,6 +251,45 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		list.add(NickEntry.class);
 		list.add(SkinEntry.class);
 		return list;
+	}
+
+	// Internal event listeners
+
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void on(NickDisguiseEvent event) {
+		if (getAPI().isNicked(event.getPlayer().getUniqueId())) {
+			event.setNick(getAPI().getNick(event.getPlayer().getUniqueId()));
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void on(SkinDisguiseEvent event) {
+		if (getAPI().hasSkin(event.getPlayer().getUniqueId())) {
+			event.setSkin(getAPI().getSkin(event.getPlayer().getUniqueId()));
+		}
+	}
+
+	// Name replacement listeners
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void on(final AsyncPlayerChatEvent event) {
+		if (ChatReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+			final String message = event.getMessage();
+			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
+			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
+				@Override
+				public String replace(String original) {
+					Player player = Bukkit.getPlayer(original);
+					if (player != null) {
+						NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original);
+						Bukkit.getPluginManager().callEvent(replacementEvent);
+						if (replacementEvent.isCancelled()) { return original; }
+						return replacementEvent.getReplacement();
+					}
+					return original;
+				}
+			}, true);
+			event.setMessage(replacedMessage);
+		}
 	}
 
 	//// Replacement listeners
