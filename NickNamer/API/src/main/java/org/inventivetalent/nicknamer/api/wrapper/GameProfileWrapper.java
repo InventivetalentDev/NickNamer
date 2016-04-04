@@ -66,14 +66,18 @@ public class GameProfileWrapper {
 	public GameProfileWrapper(JsonObject jsonObject) {
 		this(UUID.fromString(jsonObject.get("id").getAsString()), jsonObject.get("name").getAsString());
 		getProperties().clear();
-		getProperties().putAll(new PropertyMapWrapper(jsonObject.get("properties").getAsJsonArray()));
+		if(jsonObject.has("properties")) {
+			getProperties().putAll(new PropertyMapWrapper(jsonObject.get("properties").getAsJsonArray()));
+		}
 	}
 
 	@Deprecated
 	public GameProfileWrapper(JSONObject jsonObject) {
 		this(UUID.fromString((String) jsonObject.get("id")), (String) jsonObject.get("name"));
 		getProperties().clear();
-		getProperties().putAll(new PropertyMapWrapper((JSONArray) jsonObject.get("properties")));
+		if(jsonObject.containsKey("properties")) {
+			getProperties().putAll(new PropertyMapWrapper((JSONArray) jsonObject.get("properties")));
+		}
 	}
 
 	public UUID getId() {
@@ -114,9 +118,11 @@ public class GameProfileWrapper {
 
 	public JsonObject toJson() {
 		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("id", getId().toString());
+		jsonObject.addProperty("id", getId()!=null?getId().toString():"");
 		jsonObject.addProperty("name", getName());
-		jsonObject.add("properties", getProperties().toJson());
+		if(getProperties()!=null) {
+			jsonObject.add("properties", getProperties().toJson());
+		}
 		return jsonObject;
 	}
 

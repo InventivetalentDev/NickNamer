@@ -28,23 +28,36 @@
 
 package org.inventivetalent.nicknamer;
 
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.inventivetalent.apihelper.APIManager;
+import org.inventivetalent.data.api.SerializationDataProvider;
 import org.inventivetalent.data.api.bukkit.ebean.EbeanDataProvider;
 import org.inventivetalent.data.api.bukkit.ebean.KeyValueBean;
+import org.inventivetalent.data.api.gson.parser.GsonDataParser;
+import org.inventivetalent.data.api.gson.serializer.GsonDataSerializer;
 import org.inventivetalent.data.api.redis.RedisDataProvider;
+import org.inventivetalent.data.api.wrapper.AsyncDataProviderWrapper;
+import org.inventivetalent.data.api.wrapper.CachedAsyncDataProviderWrapper;
 import org.inventivetalent.data.sql.SQLDataProvider;
-import org.inventivetalent.nicknamer.api.NickManagerImpl;
-import org.inventivetalent.nicknamer.api.NickNamerAPI;
-import org.inventivetalent.nicknamer.api.SkinLoader;
-import org.inventivetalent.nicknamer.api.event.replace.ChatInReplacementEvent;
-import org.inventivetalent.nicknamer.api.event.replace.ChatOutReplacementEvent;
-import org.inventivetalent.nicknamer.api.event.replace.ChatReplacementEvent;
+import org.inventivetalent.nicknamer.api.*;
+import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
+import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
+import org.inventivetalent.nicknamer.api.event.replace.*;
+import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
 import org.inventivetalent.nicknamer.command.NickCommands;
 import org.inventivetalent.nicknamer.command.SkinCommands;
 import org.inventivetalent.nicknamer.database.NickEntry;
@@ -61,8 +74,10 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import javax.persistence.PersistenceException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
-public class NickNamerPlugin extends JavaPlugin implements Listener {
+public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessageListener, INickNamer {
 
 	public static NickNamerPlugin instance;
 
@@ -108,7 +123,13 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 		PluginAnnotations.COMMAND.registerCommands(this, nickCommands = new NickCommands(this));
 		PluginAnnotations.COMMAND.registerCommands(this, skinCommands = new SkinCommands(this));
 
+		//Replace the default NickManager
+		new PluginNickManager(this);
+
 		switch (storageType.toLowerCase()) {
+			case "temporary":
+				getLogger().info("Using temporary storage");
+				break;
 			case "local":
 				getLogger().info("Using local storage");
 				initStorageLocal();
@@ -129,6 +150,68 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 		APIManager.disableAPI(NickNamerAPI.class);
 	}
 
+	// Internal event listeners
+
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void on(NickDisguiseEvent event) {
+		if (getAPI().isNicked(event.getPlayer().getUniqueId())) {
+			event.setNick(getAPI().getNick(event.getPlayer().getUniqueId()));
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void on(SkinDisguiseEvent event) {
+		if (getAPI().hasSkin(event.getPlayer().getUniqueId())) {
+			event.setSkin(getAPI().getSkin(event.getPlayer().getUniqueId()));
+		}
+	}
+
+	// Name replacement listeners
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void on(final AsyncPlayerChatEvent event) {
+		final String message = event.getMessage();
+		Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
+		String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
+			@Override
+			public String replace(String original) {
+				Player player = Bukkit.getPlayer(original);
+				if (player != null) {
+					NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original);
+					Bukkit.getPluginManager().callEvent(replacementEvent);
+					if (replacementEvent.isCancelled()) { return original; }
+					return replacementEvent.getReplacement();
+				}
+				return original;
+			}
+		}, true);
+		event.setMessage(replacedMessage);
+	}
+
+	<D> SerializationDataProvider<D> wrapAsyncProvider(Class<? extends D> clazz, SerializationDataProvider<D> dataProvider) {
+		return new CachedAsyncDataProviderWrapper<>(clazz, new AsyncDataProviderWrapper<D>(dataProvider) {
+			@Override
+			public void dispatch(Runnable runnable) {
+				Bukkit.getScheduler().runTaskAsynchronously(instance, runnable);
+			}
+		});
+	}
+
+	SerializationDataProvider<Object> makeSkinProvider(SerializationDataProvider<Object> dataProvider) {
+		dataProvider.setSerializer(new GsonDataSerializer<Object>() {
+			@Override
+			public String serialize(@NonNull Object object) {
+				return new GameProfileWrapper(object).toJson().toString();
+			}
+		});
+		dataProvider.setParser(new GsonDataParser<Object>(Object.class) {
+			@Override
+			public Object parse(@NonNull String string) {
+				return new GameProfileWrapper(new JsonParser().parse(string).getAsJsonObject()).getHandle();
+			}
+		});
+		return dataProvider;
+	}
+
 	void initStorageLocal() {
 		int nickCount = -1;
 		int skinCount = -1;
@@ -144,11 +227,11 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 		if (nickCount > 0) {
 			getLogger().info("Found " + nickCount + " player nick-data in database");
 		}
-		((NickManagerImpl) NickNamerAPI.getNickManager()).setNickDataProvider(new EbeanDataProvider<>(String.class, getDatabase(), NickEntry.class));
+		((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), NickEntry.class)));
 		if (dataCount > 0) {
 			getLogger().info("Found " + skinCount + " player skin-data in database");
 		}
-		((NickManagerImpl) NickNamerAPI.getNickManager()).setSkinDataProvider(new EbeanDataProvider<>(String.class, getDatabase(), SkinEntry.class));
+		((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), NickEntry.class)));
 
 		if (dataCount > 0) {
 			getLogger().info("Found " + dataCount + " skin textures in database");
@@ -158,6 +241,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 				}
 			}
 		}
+
 		SkinLoader.setSkinDataProvider(new EbeanDataProvider<Object>(Object.class/*We're using a custom parser/serializer, so this class doesn't matter*/, getDatabase(), SkinDataEntry.class) {
 			@Override
 			public KeyValueBean newBean() {
@@ -174,10 +258,10 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 		Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
 			@Override
 			public void run() {
-//				getLogger().info("Connected to SQL");
+				//				getLogger().info("Connected to SQL");
 
-				((NickManagerImpl) NickNamerAPI.getNickManager()).setNickDataProvider(new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_nick"));
-				((NickManagerImpl) NickNamerAPI.getNickManager()).setSkinDataProvider(new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_skin"));
+				((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_nick")));
+				((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_skin")));
 				SkinLoader.setSkinDataProvider(new SQLDataProvider<>(Object.class, sqlAddress, sqlUser, sqlPass, "nicknamer_skins"));
 			}
 		});
@@ -196,8 +280,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 					jedis.ping();
 					getLogger().info("Connected to Redis");
 
-					((NickManagerImpl) NickNamerAPI.getNickManager()).setNickDataProvider(new RedisDataProvider<>(String.class, pool, "nn_data:%s:nick", "nn_data:(.*):nick"));
-					((NickManagerImpl) NickNamerAPI.getNickManager()).setSkinDataProvider(new RedisDataProvider<>(String.class, pool, "nn_data:%s;skin", "nn_data:(.*):skin"));
+					((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:nick", "nn_data:(.*):nick")));
+					((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:skin", "nn_data:(.*):skin")));
 					SkinLoader.setSkinDataProvider(new RedisDataProvider<Object>(Object.class, pool, "nn_skins:%s", "nn_skins:(.*)") {
 						@Override
 						public void put(@NonNull String key, Object value) {
@@ -262,5 +346,58 @@ public class NickNamerPlugin extends JavaPlugin implements Listener {
 		}
 	}
 
+	@Override
+	public NickManager getAPI() {
+		return NickNamerAPI.getNickManager();
+	}
+
+	@Override
+	public void sendPluginMessage(Player player, String action, String... values) {
+		if (player == null || !player.isOnline()) { return; }
+
+		ByteArrayDataOutput out = ByteStreams.newDataOutput();
+		out.writeUTF(action);
+		out.writeUTF(player.getUniqueId().toString());
+		for (String s : values) {
+			out.writeUTF(s);
+		}
+		player.sendPluginMessage(instance, "NickNamer", out.toByteArray());
+	}
+
+	@Override
+	public void onPluginMessageReceived(String s, Player player, byte[] bytes) {
+		if ("NickNamer".equals(s)) {
+			ByteArrayDataInput in = ByteStreams.newDataInput(bytes);
+			String sub = in.readUTF();
+			UUID who = UUID.fromString(in.readUTF());
+			if ("name".equals(sub)) {
+				String name = in.readUTF();
+
+				if (name == null || "reset".equals(name)) {
+					getAPI().removeNick(who);
+				} else {
+					getAPI().setNick(who, name);
+				}
+			} else if ("skin".equals(sub)) {
+				String skin = in.readUTF();
+
+				if (skin == null || "reset".equals(skin)) {
+					getAPI().removeSkin(who);
+				} else {
+					getAPI().setSkin(who, skin);
+				}
+			} else if ("data".equals(sub)) {
+				try {
+					String owner = in.readUTF();
+					JsonObject data = new JsonParser().parse(in.readUTF()).getAsJsonObject();
+					SkinLoaderBridge.getSkinProvider().put(owner, new GameProfileWrapper(data));
+				} catch (JsonParseException e) {
+					e.printStackTrace();
+				}
+			} else {
+				getLogger().warning("Unknown incoming plugin message: " + sub);
+			}
+		}
+	}
 }
 

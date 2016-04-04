@@ -40,13 +40,14 @@ import org.inventivetalent.nicknamer.api.event.NickNamerSelfUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
 import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
 import org.json.simple.JSONObject;
+import org.spigotmc.CustomTimingsHandler;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class NickManagerImpl implements NickManager {
+public class PluginNickManager implements NickManager {
 
 	Class EnumDifficulty = SkinLoader.nmsClassResolver.resolveSilent("EnumDifficulty");
 	Class WorldType      = SkinLoader.nmsClassResolver.resolveSilent("WorldType");
@@ -75,111 +76,163 @@ public class NickManagerImpl implements NickManager {
 		skinDataProvider.setDataProvider(provider);
 	}
 
-	NickManagerImpl(Plugin plugin) {
+	public PluginNickManager(Plugin plugin) {
 		this.plugin = plugin;
+		NickNamerAPI.nickManager = this;
 	}
+
+	CustomTimingsHandler isNicked = new CustomTimingsHandler("isNicked");
 
 	@Override
 	public boolean isNicked(@Nonnull UUID uuid) {
-		return nickDataProvider.contains(uuid) && nickDataProvider.get(uuid) != null;
+		isNicked.startTiming();
+		boolean b =/* nickDataProvider.contains(uuid) && */nickDataProvider.get(uuid) != null;
+		isNicked.stopTiming();
+		return b;
 	}
+
+	CustomTimingsHandler isNickUsed = new CustomTimingsHandler("isNickUsed");
 
 	@Override
 	public boolean isNickUsed(@Nonnull String nick) {
+		isNickUsed.startTiming();
 		for (UUID uuid : nickDataProvider.keysK()) {
-			if (nick.equals(nickDataProvider.get(uuid))) { return true; }
+			if (nick.equals(nickDataProvider.get(uuid))) {
+				isNickUsed.stopTiming();
+				return true;
+			}
 		}
+		isNickUsed.stopTiming();
 		return false;
 	}
 
-	@Override
-	public String getNick(@Nonnull UUID id) {
-		return nickDataProvider.get(id);
-	}
+	CustomTimingsHandler getNick = new CustomTimingsHandler("getNick");
 
 	@Override
-	public void setNick(@Nonnull UUID uuid, @Nonnull String nick) {
+	public String getNick(@Nonnull UUID id) {
+		getNick.startTiming();
+		String s = nickDataProvider.get(id);
+		getNick.stopTiming();
+		return s;
+	}
+
+	CustomTimingsHandler setNick     = new CustomTimingsHandler("setNick");
+	CustomTimingsHandler setNickTask = new CustomTimingsHandler("setNickTask");
+
+	@Override
+	public void setNick(@Nonnull final UUID uuid, @Nonnull final String nick) {
 		if (nick.length() > 16) { throw new IllegalArgumentException("Name is too long (" + nick.length() + " > 16)"); }
+		setNick.startTiming();
 		if (isNicked(uuid)) {
 			removeNick(uuid);
 		}
-		nickDataProvider.put(uuid, nick);
+		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+			@Override
+			public void run() {
+				setNickTask.startTiming();
+				nickDataProvider.put(uuid, nick);
 
-		//		Player player = Bukkit.getPlayer(uuid);
-		//		if (player != null) {
-		//			storedNames.put(uuid, player.getDisplayName());
-		//			if (getConfigOption("nick.chat")) {
-		//				p.setDisplayName(nick);
-		//			}
-		//			if (getConfigOption("nick.tab")) {
-		//				p.setPlayerListName(nick);
-		//			}
-		//			if (getConfigOption("nick.scoreboard")) {
-		//				Scoreboard sb = p.getScoreboard();
-		//				if (sb == null) {
-		//					sb = Bukkit.getScoreboardManager().getMainScoreboard();
-		//				}
-		//				if (sb != null) {
-		//					Team t = sb.getPlayerTeam(p);
-		//					if (t != null) {
-		//						t.removePlayer(p);
-		//						t.addEntry(nick);
-		//					}
-		//				}
-		//			}
-		//		}
+				//		Player player = Bukkit.getPlayer(uuid);
+				//		if (player != null) {
+				//			storedNames.put(uuid, player.getDisplayName());
+				//			if (getConfigOption("nick.chat")) {
+				//				p.setDisplayName(nick);
+				//			}
+				//			if (getConfigOption("nick.tab")) {
+				//				p.setPlayerListName(nick);
+				//			}
+				//			if (getConfigOption("nick.scoreboard")) {
+				//				Scoreboard sb = p.getScoreboard();
+				//				if (sb == null) {
+				//					sb = Bukkit.getScoreboardManager().getMainScoreboard();
+				//				}
+				//				if (sb != null) {
+				//					Team t = sb.getPlayerTeam(p);
+				//					if (t != null) {
+				//						t.removePlayer(p);
+				//						t.addEntry(nick);
+				//					}
+				//				}
+				//			}
+				//		}
 
-		//		nickNamer.sendPluginMessage(p, "name", nick);
+				//		nickNamer.sendPluginMessage(p, "name", nick);
 
-		//		updatePlayer(id, true, false, (boolean) getConfigOption("selfUpdate"));
-		refreshPlayer(uuid);
+				//		updatePlayer(id, true, false, (boolean) getConfigOption("selfUpdate"));
+				//Wait for database
+				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+					@Override
+					public void run() {
+						refreshPlayer(uuid);
+					}
+				}, 10);
+				setNickTask.stopTiming();
+			}
+		});
+
+		setNick.stopTiming();
 	}
+
+	CustomTimingsHandler removeNick     = new CustomTimingsHandler("removeNick");
+	CustomTimingsHandler removeNickTask = new CustomTimingsHandler("removeNickTask");
 
 	@Override
-	public void removeNick(@Nonnull UUID uuid) {
-		nickDataProvider.remove(uuid);
+	public void removeNick(@Nonnull final UUID uuid) {
+		removeNick.startTiming();
+		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+			@Override
+			public void run() {
+				removeNickTask.startTiming();
+				nickDataProvider.remove(uuid);
 
-		//		Player player = Bukkit.getPlayer(uuid);
-		//		if (player != null) {
-		//			if (getConfigOption("nick.chat")) {
-		//				p.setDisplayName(storedNames.get(id));
-		//			}
-		//			if (getConfigOption("nick.tab")) {
-		//				p.setPlayerListName(storedNames.get(id));
-		//			}
-		//			if (getConfigOption("nick.scoreboard")) {
-		//				Scoreboard sb = p.getScoreboard();
-		//				if (sb == null) {
-		//					sb = Bukkit.getScoreboardManager().getMainScoreboard();
-		//				}
-		//				if (sb != null) {
-		//					Team t = null;
-		//					for (Team tm : sb.getTeams()) {
-		//						for (String s : tm.getEntries()) {
-		//							if (s.equals(nick)) {
-		//								t = tm;
-		//								break;
-		//							}
-		//						}
-		//					}
-		//					if (t != null) {
-		//						t.removeEntry(nick);
-		//						t.addPlayer(p);
-		//					}
-		//				}
-		//			}
-		//		}
-		//		storedNames.remove(id);
+				//		Player player = Bukkit.getPlayer(uuid);
+				//		if (player != null) {
+				//			if (getConfigOption("nick.chat")) {
+				//				p.setDisplayName(storedNames.get(id));
+				//			}
+				//			if (getConfigOption("nick.tab")) {
+				//				p.setPlayerListName(storedNames.get(id));
+				//			}
+				//			if (getConfigOption("nick.scoreboard")) {
+				//				Scoreboard sb = p.getScoreboard();
+				//				if (sb == null) {
+				//					sb = Bukkit.getScoreboardManager().getMainScoreboard();
+				//				}
+				//				if (sb != null) {
+				//					Team t = null;
+				//					for (Team tm : sb.getTeams()) {
+				//						for (String s : tm.getEntries()) {
+				//							if (s.equals(nick)) {
+				//								t = tm;
+				//								break;
+				//							}
+				//						}
+				//					}
+				//					if (t != null) {
+				//						t.removeEntry(nick);
+				//						t.addPlayer(p);
+				//					}
+				//				}
+				//			}
+				//		}
+				//		storedNames.remove(id);
 
-		//		nickNamer.sendPluginMessage(player, "name", "reset");
+				//		nickNamer.sendPluginMessage(player, "name", "reset");
 
-		//		updatePlayer(id, true, false, (boolean) getConfigOption("selfUpdate"));
-		refreshPlayer(uuid);
+				//		updatePlayer(id, true, false, (boolean) getConfigOption("selfUpdate"));
+				refreshPlayer(uuid);
+				removeNickTask.stopTiming();
+			}
+		});
+		removeNick.stopTiming();
 	}
+
+	CustomTimingsHandler getPlayersWithNick = new CustomTimingsHandler("getPlayersWithNick");
 
 	@Nonnull
 	@Override
 	public List<UUID> getPlayersWithNick(@Nonnull String nick) {
+		getPlayersWithNick.startTiming();
 		List<UUID> list = new ArrayList<>();
 		for (UUID uuid : nickDataProvider.keysK()) {
 			if (nick.equals(nickDataProvider.get(uuid))) { list.add(uuid); }
@@ -189,50 +242,63 @@ public class NickManagerImpl implements NickManager {
 		//				list.add(entry.getKey());
 		//			}
 		//		}
+		getPlayersWithNick.stopTiming();
 		return list;
 	}
+
+	CustomTimingsHandler getUsedNicks = new CustomTimingsHandler("getUsedNicks");
 
 	@Nonnull
 	@Override
 	public List<String> getUsedNicks() {
+		getUsedNicks.startTiming();
 		List<String> nicks = new ArrayList<>();
 		for (UUID uuid : nickDataProvider.keysK()) {
 			String nick = nickDataProvider.get(uuid);
 			if (nick != null) { nicks.add(nick); }
 		}
+		getUsedNicks.stopTiming();
 		return nicks;
 	}
 
+	CustomTimingsHandler setSkin     = new CustomTimingsHandler("setSkin");
+	CustomTimingsHandler setSkinTask = new CustomTimingsHandler("setSkinTask");
+
 	@Override
 	public void setSkin(@Nonnull final UUID uuid, @Nonnull final String skinOwner) {
+		setSkin.startTiming();
 		if (hasSkin(uuid)) {
 			removeSkin(uuid);
 		}
 
-		//		@SuppressWarnings("deprecation")
-		//		UUID skinID = Bukkit.getOfflinePlayer(skinOwner).getUniqueId();
-
-		skinDataProvider.put(uuid, skinOwner);
-
-		//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", skinOwner);
-
-		//		if (!Bukkit.getOnlineMode() && !NickNamer.BUNGEECORD) {
-		//			UUIDResolver.resolve(skinOwner);
-		//		} else {
-		//			long l = SkinLoader.load(skinOwner);
-		//			if (l == -1) {
-		//				updatePlayer(id, false, true, NickNamer.SELF_UPDATE);
-		//			}
-		//			return l;
 		Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
 			@Override
 			public void run() {
+				setSkinTask.startTiming();
+				//		@SuppressWarnings("deprecation")
+				//		UUID skinID = Bukkit.getOfflinePlayer(skinOwner).getUniqueId();
+
+				skinDataProvider.put(uuid, skinOwner);
+
+				//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", skinOwner);
+
+				//		if (!Bukkit.getOnlineMode() && !NickNamer.BUNGEECORD) {
+				//			UUIDResolver.resolve(skinOwner);
+				//		} else {
+				//			long l = SkinLoader.load(skinOwner);
+				//			if (l == -1) {
+				//				updatePlayer(id, false, true, NickNamer.SELF_UPDATE);
+				//			}
+				//			return l;
 				SkinLoader.loadSkin(skinOwner);
 				//				Object profile = SkinLoader.loadSkin(skinOwner);
 				//				updatePlayer(id, false, true, (boolean) getConfigOption("selfUpdate"));
 				refreshPlayer(uuid);
+				setSkinTask.stopTiming();
 			}
 		}, 2);
+
+		setSkin.stopTiming();
 		//		}
 	}
 
@@ -265,31 +331,55 @@ public class NickManagerImpl implements NickManager {
 		refreshPlayer(uuid);
 	}
 
+	CustomTimingsHandler removeSkin     = new CustomTimingsHandler("removeSkin");
+	CustomTimingsHandler removeSkinTask = new CustomTimingsHandler("removeSkinTask");
+
 	@Override
-	public void removeSkin(@Nonnull UUID uuid) {
-		skinDataProvider.remove(uuid);
+	public void removeSkin(@Nonnull final UUID uuid) {
+		removeSkin.startTiming();
+		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+			@Override
+			public void run() {
+				removeSkinTask.startTiming();
+				skinDataProvider.remove(uuid);
 
-		//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", "reset");
+				//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", "reset");
 
-		//		updatePlayer(id, false, true, (boolean) getConfigOption("selfUpdate"));
-		refreshPlayer(uuid);
+				//		updatePlayer(id, false, true, (boolean) getConfigOption("selfUpdate"));
+				refreshPlayer(uuid);
+				removeSkinTask.stopTiming();
+			}
+		});
+		removeSkin.stopTiming();
 	}
+
+	CustomTimingsHandler getSkin = new CustomTimingsHandler("getSkin");
 
 	@Override
 	public String getSkin(@Nonnull UUID uuid) {
+		getSkin.startTiming();
 		if (hasSkin(uuid)) { return skinDataProvider.get(uuid); }
 		Player player = Bukkit.getPlayer(uuid);
+		getSkin.stopTiming();
 		return player != null ? player.getName() : null;
 	}
 
+	CustomTimingsHandler hasSkin = new CustomTimingsHandler("hasSkin");
+
 	@Override
 	public boolean hasSkin(@Nonnull UUID uuid) {
-		return skinDataProvider.contains(uuid) && skinDataProvider.get(uuid) != null;
+		hasSkin.startTiming();
+		boolean b = /*skinDataProvider.contains(uuid) &&*/ skinDataProvider.get(uuid) != null;
+		hasSkin.stopTiming();
+		return b;
 	}
+
+	CustomTimingsHandler getPlayersWithSkin = new CustomTimingsHandler("getPlayersWithSkin");
 
 	@Nonnull
 	@Override
 	public List<UUID> getPlayersWithSkin(@Nonnull String skin) {
+		getPlayersWithSkin.startTiming();
 		List<UUID> list = new ArrayList<>();
 		for (UUID uuid : skinDataProvider.keysK()) {
 			if (skin.equals(skinDataProvider.get(uuid))) { list.add(uuid); }
@@ -299,17 +389,24 @@ public class NickManagerImpl implements NickManager {
 		//				list.add(entry.getKey());
 		//			}
 		//		}
+		getPlayersWithSkin.stopTiming();
 		return list;
 	}
+
+	CustomTimingsHandler refreshPlayer = new CustomTimingsHandler("refreshPlayer");
 
 	@Override
 	public void refreshPlayer(@Nonnull UUID uuid) {
 		final Player player = Bukkit.getPlayer(uuid);
 		if (player == null || !player.isOnline()) { return; }
+		refreshPlayer.startTiming();
 
 		PlayerRefreshEvent refreshEvent = new PlayerRefreshEvent(player, true);
 		Bukkit.getPluginManager().callEvent(refreshEvent);
-		if (refreshEvent.isCancelled()) { return; }
+		if (refreshEvent.isCancelled()) {
+			refreshPlayer.stopTiming();
+			return;
+		}
 
 		if (refreshEvent.isSelf()) {
 			updateSelf(player);
@@ -331,15 +428,23 @@ public class NickManagerImpl implements NickManager {
 				}
 			}
 		});
+
+		refreshPlayer.stopTiming();
 	}
+
+	CustomTimingsHandler updateSelf = new CustomTimingsHandler("updateSelf");
 
 	protected void updateSelf(final Player player) {
 		if (player == null || !player.isOnline()) { return; }
+		updateSelf.startTiming();
 		Object profile = ClassBuilder.getGameProfile(player);
 
 		NickNamerSelfUpdateEvent event = new NickNamerSelfUpdateEvent(player, isNicked(player.getUniqueId()) ? getNick(player.getUniqueId()) : player.getPlayerListName(), profile, player.getWorld().getDifficulty(), player.getGameMode());
 		Bukkit.getPluginManager().callEvent(event);
-		if (event.isCancelled()) { return; }
+		if (event.isCancelled()) {
+			updateSelf.stopTiming();
+			return;
+		}
 
 		try {
 			final Object removePlayer = ClassBuilder.buildPlayerInfoPacket(4, event.getGameProfile(), 0, event.getGameMode().ordinal(), event.getName());
@@ -373,6 +478,7 @@ public class NickManagerImpl implements NickManager {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		updateSelf.stopTiming();
 	}
 
 	@Override

@@ -14,7 +14,9 @@ replace:
 
 storage:
   # Storage type
-  # - local:
+  # - temporary
+  #     saves all data in memory until the server is stopped
+  # - local (recommended)
   #     creates a local database or uses the database specified in bukkit.yml
   # - sql
   #     uses an SQL server

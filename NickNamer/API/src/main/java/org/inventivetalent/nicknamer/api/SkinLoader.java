@@ -60,7 +60,7 @@ public class SkinLoader {
 	static MethodResolver CacheMethodResolver        = new MethodResolver(Cache);
 	static MethodResolver LoadingCacheMethodResolver = new MethodResolver(LoadingCache);
 
-	static SerializationDataProvider<Object> skinDataProvider;
+	protected static SerializationDataProvider<Object> skinDataProvider;
 
 	static {
 		setSkinDataProvider(new ConcurrentTemporaryDataProvider<>(Object.class));

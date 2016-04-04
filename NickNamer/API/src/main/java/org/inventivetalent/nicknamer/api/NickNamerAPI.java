@@ -55,7 +55,7 @@ import java.util.regex.Pattern;
 
 public class NickNamerAPI implements API, Listener {
 
-	private static NickManager  nickManager;
+	protected static NickManager  nickManager;
 //	private static UUIDResolver uuidResolver;
 
 	protected static PacketListener packetListener;
@@ -102,10 +102,6 @@ public class NickNamerAPI implements API, Listener {
 		return nickedPlayerNames;
 	}
 
-	//	public static void setNickManager(NickManager nickManager_) {
-	//		if (nickManager != null) { throw new IllegalStateException("NickManager already set"); }
-	//		nickManager = nickManager_;
-	//	}
 
 	@Override
 	public void load() {
@@ -119,7 +115,7 @@ public class NickNamerAPI implements API, Listener {
 		APIManager.registerEvents(this, this);
 
 
-		nickManager = new NickManagerImpl(plugin);
+		nickManager = new SimpleNickManager(plugin);
 //		uuidResolver = new UUIDResolver(plugin, 3600000/* 1 hour */);
 
 		PacketHandler.addHandler(packetListener = new PacketListener(plugin));
@@ -131,42 +127,7 @@ public class NickNamerAPI implements API, Listener {
 		APIManager.disableAPI(PacketListenerAPI.class);
 	}
 
-	// Internal event listeners
 
-	@EventHandler(priority = EventPriority.LOWEST)
-	public void on(NickDisguiseEvent event) {
-		if (getNickManager().isNicked(event.getPlayer().getUniqueId())) {
-			event.setNick(getNickManager().getNick(event.getPlayer().getUniqueId()));
-		}
-	}
-
-	@EventHandler(priority = EventPriority.LOWEST)
-	public void on(SkinDisguiseEvent event) {
-		if (getNickManager().hasSkin(event.getPlayer().getUniqueId())) {
-			event.setSkin(getNickManager().getSkin(event.getPlayer().getUniqueId()));
-		}
-	}
-
-	// Name replacement listeners
-	@EventHandler(priority = EventPriority.NORMAL)
-	public void on(final AsyncPlayerChatEvent event) {
-		final String message = event.getMessage();
-		Set<String> nickedPlayerNames = getNickedPlayerNames();
-		String replacedMessage = replaceNames(message, nickedPlayerNames, new NameReplacer() {
-			@Override
-			public String replace(String original) {
-				Player player = Bukkit.getPlayer(original);
-				if (player != null) {
-					NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original);
-					Bukkit.getPluginManager().callEvent(replacementEvent);
-					if (replacementEvent.isCancelled()) { return original; }
-					return replacementEvent.getReplacement();
-				}
-				return original;
-			}
-		}, true);
-		event.setMessage(replacedMessage);
-	}
 
 }
 

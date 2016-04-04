@@ -127,6 +127,11 @@
 
         <dependency>
             <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
             <artifactId>api-bukkit-ebean</artifactId>
             <version>[0.0.1-SNAPSHOT,)</version>
         </dependency>
@@ -135,6 +140,32 @@
             <artifactId>api-redis</artifactId>
             <version>[0.0.1-SNAPSHOT,)</version>
         </dependency>
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api-bukkit-yaml</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api-gson</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api-sql</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+        <dependency>
+            <groupId>org.inventivetalent.data</groupId>
+            <artifactId>api-cache</artifactId>
+            <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+
     </dependencies>
 
 </project>
