@@ -89,6 +89,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.chat.out")        boolean replaceChatOut;
 	@ConfigValue(path = "replace.chat.in.general") boolean replaceChatInGeneral;
 	@ConfigValue(path = "replace.chat.in.command") boolean replaceChatInCommand;
+	@ConfigValue(path="replace.scoreboard") boolean replaceScoreboard;
 
 	@ConfigValue(path = "storage.type") String storageType = "local";
 
@@ -342,6 +343,16 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
 					event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
 				}
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOW)
+	public void on(ScoreboardReplacementEvent event) {
+		System.out.println(event);
+		if (replaceScoreboard) {
+			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
+				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
 			}
 		}
 	}

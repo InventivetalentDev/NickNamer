@@ -37,6 +37,7 @@ import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.replace.ChatInReplacementEvent;
 import org.inventivetalent.nicknamer.api.event.replace.ChatOutReplacementEvent;
 import org.inventivetalent.nicknamer.api.event.replace.NameReplacer;
+import org.inventivetalent.nicknamer.api.event.replace.ScoreboardReplacementEvent;
 import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.wrapper.PropertyMapWrapper;
 import org.inventivetalent.packetlistener.handler.PacketHandler;
@@ -116,6 +117,9 @@ public class PacketListener extends PacketHandler {
 				}
 			}
 
+			//TODO: Check if the plugin NickManager is enabled before replacing names
+			//TODO: Check if any listeners are registered for the replacement events
+
 			//// Name replacement
 			if ("PacketPlayOutChat".equalsIgnoreCase(packet.getPacketName())) {
 				Object a = packet.getPacketValue("a");
@@ -171,6 +175,23 @@ public class PacketListener extends PacketHandler {
 				} catch (Exception e) {
 					getPlugin().getLogger().log(Level.SEVERE, "", e);
 				}
+			}
+			if ("PacketPlayOutScoreboardObjective".equals(packet.getPacketName())) {
+				final String b = (String) packet.getPacketValue("b");
+				final String replacedB = NickNamerAPI.replaceNames(b, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+					@Override
+					public String replace(String original) {
+						Player player = Bukkit.getPlayer(original);
+						if (player != null) {
+							ScoreboardReplacementEvent replacementEvent = new ScoreboardReplacementEvent(player, packet.getPlayer(), b, original, original);
+							Bukkit.getPluginManager().callEvent(replacementEvent);
+							if (replacementEvent.isCancelled()) { return original; }
+							return replacementEvent.getReplacement();
+						}
+						return original;
+					}
+				}, true);
+				packet.setPacketValue("b", replacedB);
 			}
 		}
 	}
