@@ -31,7 +31,7 @@ package org.inventivetalent.nicknamer.api.event.skin;
 import lombok.NonNull;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
+import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 
 import javax.annotation.Nonnull;
 

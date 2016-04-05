@@ -29,7 +29,7 @@
 package org.inventivetalent.nicknamer.api;
 
 import org.bukkit.entity.Player;
-import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
+import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;

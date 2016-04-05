@@ -31,7 +31,7 @@ package org.inventivetalent.nicknamer.api.event.disguise;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
-import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
+import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

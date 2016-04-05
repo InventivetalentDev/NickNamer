@@ -83,6 +83,11 @@
             <artifactId>reflectionhelper</artifactId>
             <version>[1.2.3,)</version>
         </dependency>
+        <dependency>
+            <groupId>org.inventivetalent</groupId>
+            <artifactId>mc-wrappers</artifactId>
+            <version>[1.0.0,)</version>
+        </dependency>
 
         <dependency>
             <groupId>org.inventivetalent.data</groupId>

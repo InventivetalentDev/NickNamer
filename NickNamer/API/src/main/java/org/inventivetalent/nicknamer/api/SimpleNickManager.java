@@ -32,9 +32,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.event.NickNamerSelfUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
-import org.inventivetalent.nicknamer.api.wrapper.GameProfileWrapper;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
