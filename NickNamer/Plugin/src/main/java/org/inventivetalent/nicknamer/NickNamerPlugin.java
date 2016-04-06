@@ -194,7 +194,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (dataCount > 0) {
 			getLogger().info("Found " + skinCount + " player skin-data in database");
 		}
-		((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), NickEntry.class)));
+		((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), SkinEntry.class)));
 
 		if (dataCount > 0) {
 			getLogger().info("Found " + dataCount + " skin textures in database");
