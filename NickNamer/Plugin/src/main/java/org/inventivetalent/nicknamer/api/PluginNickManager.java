@@ -223,7 +223,12 @@ public class PluginNickManager implements NickManager {
 				//		nickNamer.sendPluginMessage(player, "name", "reset");
 
 				//		updatePlayer(id, true, false, (boolean) getConfigOption("selfUpdate"));
-				refreshPlayer(uuid);
+				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+					@Override
+					public void run() {
+						refreshPlayer(uuid);
+					}
+				}, 10);
 				removeNickTask.stopTiming();
 			}
 		});
@@ -299,7 +304,12 @@ public class PluginNickManager implements NickManager {
 				SkinLoader.loadSkin(skinOwner);
 				//				Object profile = SkinLoader.loadSkin(skinOwner);
 				//				updatePlayer(id, false, true, (boolean) getConfigOption("selfUpdate"));
-				refreshPlayer(uuid);
+				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+					@Override
+					public void run() {
+						refreshPlayer(uuid);
+					}
+				}, 10);
 				setSkinTask.stopTiming();
 			}
 		}, 2);
@@ -360,7 +370,12 @@ public class PluginNickManager implements NickManager {
 				//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", "reset");
 
 				//		updatePlayer(id, false, true, (boolean) getConfigOption("selfUpdate"));
-				refreshPlayer(uuid);
+				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+					@Override
+					public void run() {
+						refreshPlayer(uuid);
+					}
+				}, 10);
 				removeSkinTask.stopTiming();
 			}
 		});
