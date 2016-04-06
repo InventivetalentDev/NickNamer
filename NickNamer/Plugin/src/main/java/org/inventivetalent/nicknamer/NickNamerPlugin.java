@@ -368,7 +368,6 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ChatReplacementEvent event) {
-		System.out.println(event);
 		if (replaceChatPlayer) {
 			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
 				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
@@ -378,8 +377,6 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ChatOutReplacementEvent event) {
-		replaceChatOut = true;
-		System.out.println(event);
 		if (replaceChatOut) {
 			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
 				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
@@ -389,7 +386,6 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ChatInReplacementEvent event) {
-		System.out.println(event);
 		if (replaceChatInGeneral || replaceChatInCommand) {
 			if (replaceChatInCommand && event.getContext().startsWith("/")) { // Command
 				if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
@@ -405,7 +401,6 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ScoreboardReplacementEvent event) {
-		System.out.println(event);
 		if (replaceScoreboard) {
 			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
 				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
