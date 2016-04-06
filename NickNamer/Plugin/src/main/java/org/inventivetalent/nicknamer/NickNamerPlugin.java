@@ -77,6 +77,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessageListener, INickNamer {
 
@@ -84,6 +86,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	public NickCommands nickCommands;
 	public SkinCommands skinCommands;
+
+	final Executor storageExecutor = Executors.newSingleThreadExecutor();
 
 	//	@ConfigValue(path = "replace.tab") boolean replaceTab;
 	@ConfigValue(path = "replace.chat.player")     boolean replaceChatPlayer;
@@ -166,7 +170,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		return new CachedAsyncDataProviderWrapper<>(clazz, new AsyncDataProviderWrapper<D>(dataProvider) {
 			@Override
 			public void dispatch(Runnable runnable) {
-				Bukkit.getScheduler().runTaskAsynchronously(instance, runnable);
+				storageExecutor.execute(runnable);
 			}
 		});
 	}
