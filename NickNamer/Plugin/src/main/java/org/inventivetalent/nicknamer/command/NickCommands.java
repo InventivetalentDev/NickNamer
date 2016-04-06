@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.command;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.inventivetalent.nicknamer.NickNamerPlugin;
@@ -40,7 +41,9 @@ import org.inventivetalent.pluginannotations.message.MessageFormatter;
 
 public class NickCommands {
 
-	public NickCommands(NickNamerPlugin plugin) {
+	private NickNamerPlugin plugin;
+
+	public NickCommands(NickNamerPlugin plugin) {this.plugin=plugin;
 	}
 
 	@Command(name = "nickname",
@@ -80,6 +83,41 @@ public class NickCommands {
 		if (!nick.equals(NickNamerAPI.getNickManager().getNick(target.getUniqueId()))) {
 			NickNamerAPI.getNickManager().setNick(target.getUniqueId(), nick);
 		}
+	}
+
+	@Command(name = "clearNick",
+			 aliases = {
+					 "nickclear",
+					 "resetnick" },
+			 usage = "[Player]",
+			 description = "Reset your own, or another player's nick name",
+			 min = 0,
+			 max = 1)
+	@Permission("nick.command.name.clear")
+	public void clearNick(final CommandSender sender, @OptionalArg String targetName) {
+		System.out.println("clearNick( " + sender + ", " + targetName + " )");
+
+		boolean otherTarget = targetName != null && !targetName.isEmpty();
+		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
+		System.out.println(target);
+		if (target == null) { return; }
+
+		if (!sender.hasPermission("nick.other")) {
+			throw new PermissionException("nick.other");
+		}
+
+		NickNamerAPI.getNickManager().removeNick(target.getUniqueId());
+		Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+			@Override
+			public void run() {
+				sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("name.cleared", "name.cleared", new MessageFormatter() {
+					@Override
+					public String format(String key, String message) {
+						return message.replace("%player%", target.getName());
+					}
+				}));
+			}
+		}, 10);
 	}
 
 }
