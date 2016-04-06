@@ -44,7 +44,7 @@ public class SkinCommands {
 	private NickNamerPlugin plugin;
 
 	public SkinCommands(NickNamerPlugin plugin) {
-		this.plugin=plugin;
+		this.plugin = plugin;
 	}
 
 	@Command(name = "skin",
@@ -80,9 +80,9 @@ public class SkinCommands {
 				return message.replace("%player%", target.getName()).replace("%skin%", skin);
 			}
 		}));
-		if (!skin.equals(NickNamerAPI.getNickManager().getSkin(target.getUniqueId()))) {
-			NickNamerAPI.getNickManager().setSkin(target.getUniqueId(), skin);
-		}
+		//		if (!skin.equals(NickNamerAPI.getNickManager().getSkin(target.getUniqueId()))) {
+		NickNamerAPI.getNickManager().setSkin(target.getUniqueId(), skin);
+		//		}
 	}
 
 	@Command(name = "clearSkin",
@@ -105,7 +105,6 @@ public class SkinCommands {
 		if (!sender.hasPermission("nick.other")) {
 			throw new PermissionException("nick.other");
 		}
-
 
 		NickNamerAPI.getNickManager().removeSkin(target.getUniqueId());
 		Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {

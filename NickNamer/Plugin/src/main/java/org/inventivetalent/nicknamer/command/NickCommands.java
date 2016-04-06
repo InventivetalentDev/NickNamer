@@ -43,7 +43,8 @@ public class NickCommands {
 
 	private NickNamerPlugin plugin;
 
-	public NickCommands(NickNamerPlugin plugin) {this.plugin=plugin;
+	public NickCommands(NickNamerPlugin plugin) {
+		this.plugin = plugin;
 	}
 
 	@Command(name = "nickname",
@@ -80,9 +81,9 @@ public class NickCommands {
 				return message.replace("%player%", target.getName()).replace("%name%", nick);
 			}
 		}));
-		if (!nick.equals(NickNamerAPI.getNickManager().getNick(target.getUniqueId()))) {
-			NickNamerAPI.getNickManager().setNick(target.getUniqueId(), nick);
-		}
+		//		if (!nick.equals(NickNamerAPI.getNickManager().getNick(target.getUniqueId()))) {
+		NickNamerAPI.getNickManager().setNick(target.getUniqueId(), nick);
+		//		}
 	}
 
 	@Command(name = "clearNick",
