@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api;
 
+import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -191,6 +192,11 @@ public class SimpleNickManager implements NickManager {
 
 	@Override
 	public void loadCustomSkin(@Nonnull String key, @Nonnull GameProfileWrapper profileWrapper) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void loadCustomSkin(@Nonnull String key, @Nonnull JsonObject data) {
 		throw new UnsupportedOperationException();
 	}
 

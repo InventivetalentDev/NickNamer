@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api;
 
+import com.google.gson.JsonObject;
 import org.bukkit.entity.Player;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.json.simple.JSONObject;
@@ -103,6 +104,13 @@ public interface NickManager {
 	 * @param profileWrapper GameProfile
 	 */
 	void loadCustomSkin(@Nonnull String key, @Nonnull GameProfileWrapper profileWrapper);
+
+	/**
+	 * @param key  unique identifier for the custom skin
+	 * @param data {@link JsonObject} data
+	 * @see #loadCustomSkin(String, GameProfileWrapper)
+	 */
+	void loadCustomSkin(@Nonnull String key, @Nonnull JsonObject data);
 
 	/**
 	 * @param key  unique identifier for the custom skin

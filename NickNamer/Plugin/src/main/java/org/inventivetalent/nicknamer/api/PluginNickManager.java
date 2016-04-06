@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api;
 
+import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -317,6 +318,12 @@ public class PluginNickManager implements NickManager {
 	@Override
 	public void loadCustomSkin(@Nonnull String key, @Nonnull GameProfileWrapper profileWrapper) {
 		loadCustomSkin(key, profileWrapper.getHandle());
+	}
+
+	@Override
+	public void loadCustomSkin(@Nonnull String key, @Nonnull JsonObject data) {
+		if (!data.has("properties")) { throw new IllegalArgumentException("JsonObject must contain 'properties' entry"); }
+		loadCustomSkin(key, new GameProfileWrapper(data));
 	}
 
 	@Override
