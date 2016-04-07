@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api;
 
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
@@ -73,13 +74,21 @@ public class SkinLoader {
 		SkinLoader.skinDataProvider.setSerializer(new GsonDataSerializer<Object>() {
 			@Override
 			public String serialize(@NonNull Object object) {
-				return new GameProfileWrapper(object).toJson().toString();
+				JsonObject jsonObject = new GameProfileWrapper(object).toJson();
+				jsonObject.addProperty("loadTime", System.currentTimeMillis());
+				return jsonObject.toString();
 			}
 		});
 		SkinLoader.skinDataProvider.setParser(new GsonDataParser<Object>(Object.class) {
 			@Override
 			public Object parse(@NonNull String string) {
-				return new GameProfileWrapper(new JsonParser().parse(string).getAsJsonObject()).getHandle();
+				JsonObject jsonObject = new JsonParser().parse(string).getAsJsonObject();
+				if (jsonObject.has("loadTime")) {
+					if (System.currentTimeMillis() - jsonObject.get("loadTime").getAsLong() > 3600000/* 1 hour */) {
+						return null;//return null, so the updated skin can be inserted
+					}
+				}
+				return new GameProfileWrapper(jsonObject).getHandle();
 			}
 		});
 	}
