@@ -52,7 +52,7 @@ public class SimpleNickManager implements NickManager {
 	Class WorldType      = SkinLoader.nmsClassResolver.resolveSilent("WorldType");
 	Class EnumGamemode   = SkinLoader.nmsClassResolver.resolveSilent("WorldSettings$EnumGamemode", "EnumGamemode");
 
-	private Plugin plugin;
+	protected Plugin plugin;
 
 	public SimpleNickManager(Plugin plugin) {
 		this.plugin = plugin;
@@ -60,8 +60,14 @@ public class SimpleNickManager implements NickManager {
 
 	@Override
 	public void refreshPlayer(@Nonnull UUID uuid) {
-		final Player player = Bukkit.getPlayer(uuid);
-		if (player == null || !player.isOnline()) { return; }
+		Player player = Bukkit.getPlayer(uuid);
+		if (player == null) { return; }
+		refreshPlayer(player);
+	}
+
+	@Override
+	public void refreshPlayer(@Nonnull final Player player) {
+		if (!player.isOnline()) { return; }
 
 		PlayerRefreshEvent refreshEvent = new PlayerRefreshEvent(player, true);
 		Bukkit.getPluginManager().callEvent(refreshEvent);
