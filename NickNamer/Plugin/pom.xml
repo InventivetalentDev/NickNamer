@@ -167,6 +167,11 @@
             <version>[0.0.1-SNAPSHOT,)</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.mcstats.bukkit</groupId>
+            <artifactId>metrics-lite</artifactId>
+            <version>R8-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>
