@@ -100,14 +100,14 @@ public class NickNamerAPI implements API, Listener {
 		return nickedPlayerNames;
 	}
 
-	public static String getRandomNick(Set<String> nicks) {
+	public static String getRandomNick(Collection<String> nicks) {
 		RandomNickRequestEvent event;
 		Bukkit.getPluginManager().callEvent(event = new RandomNickRequestEvent(new ArrayList<>(nicks)));
 		if (event.getPossibilities().isEmpty()) { return ""; }
 		return ((List<String>) event.getPossibilities()).get(random.nextInt(event.getPossibilities().size()));
 	}
 
-	public static String getRandomSkin(Set<String> skins) {
+	public static String getRandomSkin(Collection<String> skins) {
 		RandomSkinRequestEvent event;
 		Bukkit.getPluginManager().callEvent(event = new RandomSkinRequestEvent(new ArrayList<>(skins)));
 		if (event.getPossibilities().isEmpty()) { return ""; }
