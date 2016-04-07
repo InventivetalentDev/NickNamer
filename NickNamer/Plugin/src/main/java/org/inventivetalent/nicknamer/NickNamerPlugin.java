@@ -209,6 +209,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			for (SkinDataEntry entry : getDatabase().find(SkinDataEntry.class).findSet()) {
 				if (System.currentTimeMillis() - entry.getLoadTime() > 3600000/*1 hour*/) {
 					getLogger().info("Deleting old skin for " + entry.getKey());
+					getDatabase().delete(entry);
 				}
 			}
 		}
