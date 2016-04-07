@@ -34,18 +34,20 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.inventivetalent.apihelper.API;
 import org.inventivetalent.apihelper.APIManager;
+import org.inventivetalent.nicknamer.api.event.random.RandomNickRequestEvent;
+import org.inventivetalent.nicknamer.api.event.random.RandomSkinRequestEvent;
 import org.inventivetalent.nicknamer.api.event.replace.NameReplacer;
 import org.inventivetalent.packetlistener.PacketListenerAPI;
 import org.inventivetalent.packetlistener.handler.PacketHandler;
 
 import javax.annotation.Nonnull;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NickNamerAPI implements API, Listener {
+
+	static final Random random = new Random();
 
 	protected static NickManager nickManager;
 	//	private static UUIDResolver uuidResolver;
@@ -96,6 +98,20 @@ public class NickNamerAPI implements API, Listener {
 			}
 		}
 		return nickedPlayerNames;
+	}
+
+	public static String getRandomNick(Set<String> nicks) {
+		RandomNickRequestEvent event;
+		Bukkit.getPluginManager().callEvent(event = new RandomNickRequestEvent(new ArrayList<>(nicks)));
+		if (event.getPossibilities().isEmpty()) { return ""; }
+		return ((List<String>) event.getPossibilities()).get(random.nextInt(event.getPossibilities().size()));
+	}
+
+	public static String getRandomSkin(Set<String> skins) {
+		RandomSkinRequestEvent event;
+		Bukkit.getPluginManager().callEvent(event = new RandomSkinRequestEvent(new ArrayList<>(skins)));
+		if (event.getPossibilities().isEmpty()) { return ""; }
+		return ((List<String>) event.getPossibilities()).get(random.nextInt(event.getPossibilities().size()));
 	}
 
 	@Override
