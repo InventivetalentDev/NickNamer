@@ -96,6 +96,9 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.scoreboard")       boolean replaceScoreboard;
 	@ConfigValue(path = "replace.tabComplete.chat") boolean replaceTabCompleteChat;
 
+	@ConfigValue(path = "random.nick") public Collection<String> randomNicks = new ArrayList<>();
+	@ConfigValue(path = "random.skin") public Collection<String> randomSkins = new ArrayList<>();
+
 	@ConfigValue(path = "bungeecord") public boolean bungeecord;
 
 	@ConfigValue(path = "storage.type") String storageType = "local";

@@ -115,6 +115,22 @@ public class NickCommands {
 		}, 10);
 	}
 
+	@Command(name = "randomNick",
+			 aliases = { "nickRandom" },
+			 usage = "[Player]",
+			 description = "Get a random nick name",
+			 min = 0,
+			 max = 1)
+	@Permission("nick.command.name.random")
+	public void randomNick(final CommandSender sender, @OptionalArg String targetName) {
+		boolean otherTarget = targetName != null && !targetName.isEmpty();
+		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
+		if (target == null) { return; }
+		if (sender instanceof Player) {
+			((Player) sender).chat("/nickname " + NickNamerAPI.getRandomNick(plugin.randomNicks));
+		}
+	}
+
 	@Command(name = "refreshNick",
 			 aliases = {
 					 "nickRefresh",

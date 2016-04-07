@@ -15,6 +15,17 @@ replace:
   tabComplete:
     chat: false
 
+random:
+  nick:
+  - "inventivetalent"
+  - "md_5"
+  - "jeb_"
+  - "Notch"
+  - "Dinnerbone"
+  skin:
+  - "md_5"
+  - "inventivetalent"
+
 #Enable this if this server is behind a BungeeCord server
 bungeecord: false
 

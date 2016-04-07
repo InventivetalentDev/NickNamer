@@ -115,4 +115,20 @@ public class SkinCommands {
 		}, 10);
 	}
 
+	@Command(name = "randomSkin",
+			 aliases = { "skinRandom" },
+			 usage = "[Player]",
+			 description = "Get a random skin",
+			 min = 0,
+			 max = 1)
+	@Permission("nick.command.skin.random")
+	public void randomNick(final CommandSender sender, @OptionalArg String targetName) {
+		boolean otherTarget = targetName != null && !targetName.isEmpty();
+		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
+		if (target == null) { return; }
+		if (sender instanceof Player) {
+			((Player) sender).chat("/skin " + NickNamerAPI.getRandomSkin(plugin.randomSkins));
+		}
+	}
+
 }
