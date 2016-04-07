@@ -38,7 +38,6 @@ import org.inventivetalent.data.api.wrapper.WrappedKeyDataProvider;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.NickNamerPlugin;
 import org.json.simple.JSONObject;
-import org.spigotmc.CustomTimingsHandler;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -73,55 +72,35 @@ public class PluginNickManager extends SimpleNickManager {
 		NickNamerAPI.nickManager = this;
 	}
 
-	CustomTimingsHandler isNicked = new CustomTimingsHandler("isNicked");
-
 	@Override
 	public boolean isNicked(@Nonnull UUID uuid) {
-		isNicked.startTiming();
-		boolean b = nickDataProvider.contains(uuid);
-		isNicked.stopTiming();
-		return b;
+		return nickDataProvider.contains(uuid);
 	}
-
-	CustomTimingsHandler isNickUsed = new CustomTimingsHandler("isNickUsed");
 
 	@Override
 	public boolean isNickUsed(@Nonnull String nick) {
-		isNickUsed.startTiming();
 		for (UUID uuid : nickDataProvider.keysK()) {
 			if (nick.equals(nickDataProvider.get(uuid))) {
-				isNickUsed.stopTiming();
 				return true;
 			}
 		}
-		isNickUsed.stopTiming();
 		return false;
 	}
 
-	CustomTimingsHandler getNick = new CustomTimingsHandler("getNick");
-
 	@Override
 	public String getNick(@Nonnull UUID id) {
-		getNick.startTiming();
-		String s = nickDataProvider.get(id);
-		getNick.stopTiming();
-		return s;
+		return nickDataProvider.get(id);
 	}
-
-	CustomTimingsHandler setNick     = new CustomTimingsHandler("setNick");
-	CustomTimingsHandler setNickTask = new CustomTimingsHandler("setNickTask");
 
 	@Override
 	public void setNick(@Nonnull final UUID uuid, @Nonnull final String nick) {
 		if (nick.length() > 16) { throw new IllegalArgumentException("Name is too long (" + nick.length() + " > 16)"); }
-		setNick.startTiming();
 		if (isNicked(uuid)) {
 			removeNick(uuid);
 		}
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 			@Override
 			public void run() {
-				setNickTask.startTiming();
 				nickDataProvider.put(uuid, nick);
 
 				//		Player player = Bukkit.getPlayer(uuid);
@@ -158,25 +137,17 @@ public class PluginNickManager extends SimpleNickManager {
 						refreshPlayer(uuid);
 					}
 				}, 10);
-				setNickTask.stopTiming();
 			}
 		});
 
 		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "name", nick); }
-
-		setNick.stopTiming();
 	}
-
-	CustomTimingsHandler removeNick     = new CustomTimingsHandler("removeNick");
-	CustomTimingsHandler removeNickTask = new CustomTimingsHandler("removeNickTask");
 
 	@Override
 	public void removeNick(@Nonnull final UUID uuid) {
-		removeNick.startTiming();
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 			@Override
 			public void run() {
-				removeNickTask.startTiming();
 				nickDataProvider.remove(uuid);
 
 				//		Player player = Bukkit.getPlayer(uuid);
@@ -220,21 +191,15 @@ public class PluginNickManager extends SimpleNickManager {
 						refreshPlayer(uuid);
 					}
 				}, 10);
-				removeNickTask.stopTiming();
 			}
 		});
 
 		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "name", "reset"); }
-
-		removeNick.stopTiming();
 	}
-
-	CustomTimingsHandler getPlayersWithNick = new CustomTimingsHandler("getPlayersWithNick");
 
 	@Nonnull
 	@Override
 	public List<UUID> getPlayersWithNick(@Nonnull String nick) {
-		getPlayersWithNick.startTiming();
 		List<UUID> list = new ArrayList<>();
 		for (UUID uuid : nickDataProvider.keysK()) {
 			if (nick.equals(nickDataProvider.get(uuid))) { list.add(uuid); }
@@ -244,31 +209,22 @@ public class PluginNickManager extends SimpleNickManager {
 		//				list.add(entry.getKey());
 		//			}
 		//		}
-		getPlayersWithNick.stopTiming();
 		return list;
 	}
-
-	CustomTimingsHandler getUsedNicks = new CustomTimingsHandler("getUsedNicks");
 
 	@Nonnull
 	@Override
 	public List<String> getUsedNicks() {
-		getUsedNicks.startTiming();
 		List<String> nicks = new ArrayList<>();
 		for (UUID uuid : nickDataProvider.keysK()) {
 			String nick = nickDataProvider.get(uuid);
 			if (nick != null) { nicks.add(nick); }
 		}
-		getUsedNicks.stopTiming();
 		return nicks;
 	}
 
-	CustomTimingsHandler setSkin     = new CustomTimingsHandler("setSkin");
-	CustomTimingsHandler setSkinTask = new CustomTimingsHandler("setSkinTask");
-
 	@Override
 	public void setSkin(@Nonnull final UUID uuid, @Nonnull final String skinOwner) {
-		setSkin.startTiming();
 		if (hasSkin(uuid)) {
 			removeSkin(uuid);
 		}
@@ -276,7 +232,6 @@ public class PluginNickManager extends SimpleNickManager {
 		Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
 			@Override
 			public void run() {
-				setSkinTask.startTiming();
 				//		@SuppressWarnings("deprecation")
 				//		UUID skinID = Bukkit.getOfflinePlayer(skinOwner).getUniqueId();
 
@@ -301,14 +256,10 @@ public class PluginNickManager extends SimpleNickManager {
 						refreshPlayer(uuid);
 					}
 				}, 10);
-				setSkinTask.stopTiming();
 			}
 		}, 2);
 
 		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "skin", skinOwner); }
-
-		setSkin.stopTiming();
-		//		}
 	}
 
 	@Override
@@ -346,16 +297,11 @@ public class PluginNickManager extends SimpleNickManager {
 		refreshPlayer(uuid);
 	}
 
-	CustomTimingsHandler removeSkin     = new CustomTimingsHandler("removeSkin");
-	CustomTimingsHandler removeSkinTask = new CustomTimingsHandler("removeSkinTask");
-
 	@Override
 	public void removeSkin(@Nonnull final UUID uuid) {
-		removeSkin.startTiming();
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 			@Override
 			public void run() {
-				removeSkinTask.startTiming();
 				skinDataProvider.remove(uuid);
 
 				//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", "reset");
@@ -367,42 +313,27 @@ public class PluginNickManager extends SimpleNickManager {
 						refreshPlayer(uuid);
 					}
 				}, 10);
-				removeSkinTask.stopTiming();
 			}
 		});
 
 		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "skin", "reset"); }
-
-		removeSkin.stopTiming();
 	}
-
-	CustomTimingsHandler getSkin = new CustomTimingsHandler("getSkin");
 
 	@Override
 	public String getSkin(@Nonnull UUID uuid) {
-		getSkin.startTiming();
 		if (hasSkin(uuid)) { return skinDataProvider.get(uuid); }
 		Player player = Bukkit.getPlayer(uuid);
-		getSkin.stopTiming();
 		return player != null ? player.getName() : null;
 	}
 
-	CustomTimingsHandler hasSkin = new CustomTimingsHandler("hasSkin");
-
 	@Override
 	public boolean hasSkin(@Nonnull UUID uuid) {
-		hasSkin.startTiming();
-		boolean b = skinDataProvider.contains(uuid);
-		hasSkin.stopTiming();
-		return b;
+		return skinDataProvider.contains(uuid);
 	}
-
-	CustomTimingsHandler getPlayersWithSkin = new CustomTimingsHandler("getPlayersWithSkin");
 
 	@Nonnull
 	@Override
 	public List<UUID> getPlayersWithSkin(@Nonnull String skin) {
-		getPlayersWithSkin.startTiming();
 		List<UUID> list = new ArrayList<>();
 		for (UUID uuid : skinDataProvider.keysK()) {
 			if (skin.equals(skinDataProvider.get(uuid))) { list.add(uuid); }
@@ -412,11 +343,8 @@ public class PluginNickManager extends SimpleNickManager {
 		//				list.add(entry.getKey());
 		//			}
 		//		}
-		getPlayersWithSkin.stopTiming();
 		return list;
 	}
-
-	CustomTimingsHandler refreshPlayer = new CustomTimingsHandler("refreshPlayer");
 
 	@Override
 	@Deprecated
