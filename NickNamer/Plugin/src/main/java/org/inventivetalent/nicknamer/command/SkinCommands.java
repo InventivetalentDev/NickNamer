@@ -122,12 +122,11 @@ public class SkinCommands {
 			 min = 0,
 			 max = 1)
 	@Permission("nick.command.skin.random")
-	public void randomNick(final CommandSender sender, @OptionalArg String targetName) {
-		boolean otherTarget = targetName != null && !targetName.isEmpty();
-		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
-		if (target == null) { return; }
+	public void randomSkin(final CommandSender sender, @OptionalArg String targetName) {
 		if (sender instanceof Player) {
-			((Player) sender).chat("/skin " + NickNamerAPI.getRandomSkin(plugin.randomSkins));
+			((Player) sender).chat("/skin " + NickNamerAPI.getRandomSkin(plugin.randomSkins) + (targetName != null ? " " + targetName : ""));
+		} else {
+			Bukkit.getServer().dispatchCommand(sender, "/skin " + NickNamerAPI.getRandomSkin(plugin.randomSkins) + (targetName != null ? " " + targetName : ""));
 		}
 	}
 

@@ -123,11 +123,10 @@ public class NickCommands {
 			 max = 1)
 	@Permission("nick.command.name.random")
 	public void randomNick(final CommandSender sender, @OptionalArg String targetName) {
-		boolean otherTarget = targetName != null && !targetName.isEmpty();
-		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
-		if (target == null) { return; }
 		if (sender instanceof Player) {
-			((Player) sender).chat("/nickname " + NickNamerAPI.getRandomNick(plugin.randomNicks));
+			((Player) sender).chat("/nickname " + NickNamerAPI.getRandomNick(plugin.randomNicks) + (targetName != null ? " " + targetName : ""));
+		} else {
+			Bukkit.getServer().dispatchCommand(sender, "/nickname " + NickNamerAPI.getRandomNick(plugin.randomNicks) + (targetName != null ? " " + targetName : ""));
 		}
 	}
 
