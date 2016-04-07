@@ -33,6 +33,9 @@ import org.bukkit.entity.Player;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+/**
+ * Event called when a name in scoreboard objectives is replaced
+ */
 public class ScoreboardReplacementEvent extends NameReplacementEvent {
 
 	public ScoreboardReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
