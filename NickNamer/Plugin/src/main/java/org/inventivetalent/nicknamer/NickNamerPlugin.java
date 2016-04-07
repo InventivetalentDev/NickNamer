@@ -41,6 +41,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -73,10 +74,7 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import javax.persistence.PersistenceException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -95,6 +93,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.chat.in.general") boolean replaceChatInGeneral;
 	@ConfigValue(path = "replace.chat.in.command") boolean replaceChatInCommand;
 	@ConfigValue(path = "replace.scoreboard")      boolean replaceScoreboard;
+	@ConfigValue(path="replace.tabComplete.chat") boolean       replaceTabCompleteChat;
 
 	@ConfigValue(path = "bungeecord") public boolean bungeecord;
 
@@ -364,6 +363,29 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		}
 	}
 
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void on(PlayerChatTabCompleteEvent event) {
+		if (ChatTabCompleteReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
+			for (Iterator<String> iterator=event.getTabCompletions().iterator();iterator.hasNext();) {
+				final String completion=iterator.next();
+				String replacedCompletion = NickNamerAPI.replaceNames(completion, nickedPlayerNames, new NameReplacer() {
+					@Override
+					public String replace(String original) {
+						Player player = Bukkit.getPlayer(original);
+						if (player != null) {
+							PlayerQuitReplacementEvent replacementEvent = new PlayerQuitReplacementEvent(player, Bukkit.getOnlinePlayers(), completion, original, original);
+							Bukkit.getPluginManager().callEvent(replacementEvent);
+							if (replacementEvent.isCancelled()) { return original; }
+							return replacementEvent.getReplacement();
+						}
+						return original;
+					}
+				}, true);
+			}
+		}
+	}
+
 	//// Replacement listeners
 
 	@EventHandler(priority = EventPriority.LOW)
@@ -402,6 +424,15 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ScoreboardReplacementEvent event) {
 		if (replaceScoreboard) {
+			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
+				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOW)
+	public void on(ChatTabCompleteReplacementEvent event) {
+		if (replaceTabCompleteChat) {
 			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
 				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
 			}

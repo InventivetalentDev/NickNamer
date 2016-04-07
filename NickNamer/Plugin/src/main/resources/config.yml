@@ -11,6 +11,9 @@ replace:
 
       # Replace names in general (non-command) incoming messages
       general: false
+  scoreboard: false
+  tabComplete:
+    chat: false
 
 #Enable this if this server is behind a BungeeCord server
 bungeecord: false
