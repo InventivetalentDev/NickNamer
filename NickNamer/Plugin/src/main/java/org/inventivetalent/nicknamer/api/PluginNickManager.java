@@ -31,15 +31,12 @@ package org.inventivetalent.nicknamer.api;
 import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.inventivetalent.data.api.DataProvider;
 import org.inventivetalent.data.api.temporary.ConcurrentTemporaryDataProvider;
 import org.inventivetalent.data.api.wrapper.WrappedKeyDataProvider;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.NickNamerPlugin;
-import org.inventivetalent.nicknamer.api.event.NickNamerSelfUpdateEvent;
-import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
 import org.json.simple.JSONObject;
 import org.spigotmc.CustomTimingsHandler;
 
@@ -48,13 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class PluginNickManager implements NickManager {
-
-	Class EnumDifficulty = SkinLoader.nmsClassResolver.resolveSilent("EnumDifficulty");
-	Class WorldType      = SkinLoader.nmsClassResolver.resolveSilent("WorldType");
-	Class EnumGamemode   = SkinLoader.nmsClassResolver.resolveSilent("WorldSettings$EnumGamemode", "EnumGamemode");
-
-	private NickNamerPlugin plugin;
+public class PluginNickManager extends SimpleNickManager {
 
 	final WrappedKeyDataProvider<UUID, String> nickDataProvider = new WrappedKeyDataProvider<UUID, String>(String.class, new ConcurrentTemporaryDataProvider<>(String.class)) {
 		@Override
@@ -78,7 +69,7 @@ public class PluginNickManager implements NickManager {
 	}
 
 	public PluginNickManager(NickNamerPlugin plugin) {
-		this.plugin = plugin;
+		super(plugin);
 		NickNamerAPI.nickManager = this;
 	}
 
@@ -171,7 +162,7 @@ public class PluginNickManager implements NickManager {
 			}
 		});
 
-		if (plugin.bungeecord) { plugin.sendPluginMessage(Bukkit.getPlayer(uuid), "name", nick); }
+		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "name", nick); }
 
 		setNick.stopTiming();
 	}
@@ -233,7 +224,7 @@ public class PluginNickManager implements NickManager {
 			}
 		});
 
-		if (plugin.bungeecord) { plugin.sendPluginMessage(Bukkit.getPlayer(uuid), "name", "reset"); }
+		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "name", "reset"); }
 
 		removeNick.stopTiming();
 	}
@@ -314,7 +305,7 @@ public class PluginNickManager implements NickManager {
 			}
 		}, 2);
 
-		if (plugin.bungeecord) { plugin.sendPluginMessage(Bukkit.getPlayer(uuid), "skin", skinOwner); }
+		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "skin", skinOwner); }
 
 		setSkin.stopTiming();
 		//		}
@@ -380,7 +371,7 @@ public class PluginNickManager implements NickManager {
 			}
 		});
 
-		if (plugin.bungeecord) { plugin.sendPluginMessage(Bukkit.getPlayer(uuid), "skin", "reset"); }
+		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "skin", "reset"); }
 
 		removeSkin.stopTiming();
 	}
@@ -426,92 +417,6 @@ public class PluginNickManager implements NickManager {
 	}
 
 	CustomTimingsHandler refreshPlayer = new CustomTimingsHandler("refreshPlayer");
-
-	@Override
-	public void refreshPlayer(@Nonnull UUID uuid) {
-		final Player player = Bukkit.getPlayer(uuid);
-		if (player == null || !player.isOnline()) { return; }
-		refreshPlayer.startTiming();
-
-		PlayerRefreshEvent refreshEvent = new PlayerRefreshEvent(player, true);
-		Bukkit.getPluginManager().callEvent(refreshEvent);
-		if (refreshEvent.isCancelled()) {
-			refreshPlayer.stopTiming();
-			return;
-		}
-
-		if (refreshEvent.isSelf()) {
-			updateSelf(player);
-		}
-
-		Bukkit.getScheduler().runTask(plugin, new Runnable() {
-
-			@Override
-			public void run() {
-				List<Player> canSee = new ArrayList<>();
-				for (Player player1 : Bukkit.getOnlinePlayers()) {
-					if (player1.canSee(player)) {
-						canSee.add(player1);
-						player1.hidePlayer(player);
-					}
-				}
-				for (Player player1 : canSee) {
-					player1.showPlayer(player);
-				}
-			}
-		});
-
-		refreshPlayer.stopTiming();
-	}
-
-	CustomTimingsHandler updateSelf = new CustomTimingsHandler("updateSelf");
-
-	protected void updateSelf(final Player player) {
-		if (player == null || !player.isOnline()) { return; }
-		updateSelf.startTiming();
-		Object profile = ClassBuilder.getGameProfile(player);
-
-		NickNamerSelfUpdateEvent event = new NickNamerSelfUpdateEvent(player, isNicked(player.getUniqueId()) ? getNick(player.getUniqueId()) : player.getPlayerListName(), profile, player.getWorld().getDifficulty(), player.getGameMode());
-		Bukkit.getPluginManager().callEvent(event);
-		if (event.isCancelled()) {
-			updateSelf.stopTiming();
-			return;
-		}
-
-		try {
-			final Object removePlayer = ClassBuilder.buildPlayerInfoPacket(4, event.getGameProfile(), 0, event.getGameMode().ordinal(), event.getName());
-			final Object addPlayer = ClassBuilder.buildPlayerInfoPacket(0, event.getGameProfile(), 0, event.getGameMode().ordinal(), event.getName());
-			Object difficulty = EnumDifficulty.getDeclaredMethod("getById", int.class).invoke(null, event.getDifficulty().getValue());
-			Object type = ((Object[]) WorldType.getDeclaredField("types").get(null))[0];
-			Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
-			final Object respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn").getConstructor(int.class, EnumDifficulty, WorldType, EnumGamemode).newInstance(0, difficulty, type, gamemode);
-
-			NickNamerAPI.packetListener.sendPacket(player, removePlayer);
-
-			Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-				@Override
-				public void run() {
-					boolean flying = player.isFlying();
-					Location location = player.getLocation();
-					int level = player.getLevel();
-					float xp = player.getExp();
-
-					NickNamerAPI.packetListener.sendPacket(player, respawnPlayer);
-
-					player.setFlying(flying);
-					player.teleport(location);
-					player.updateInventory();
-					player.setLevel(level);
-					player.setExp(xp);
-
-					NickNamerAPI.packetListener.sendPacket(player, addPlayer);
-				}
-			}, 1);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		updateSelf.stopTiming();
-	}
 
 	@Override
 	@Deprecated

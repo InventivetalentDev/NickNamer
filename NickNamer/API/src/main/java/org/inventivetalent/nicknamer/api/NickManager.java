@@ -189,6 +189,13 @@ public interface NickManager {
 	 */
 	void refreshPlayer(@Nonnull UUID uuid);
 
+	/**
+	 * Refresh a player, calls the {@link org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent}
+	 *
+	 * @param player {@link Player}
+	 */
+	void refreshPlayer(@Nonnull Player player);
+
 	boolean isSimple();
 
 }
