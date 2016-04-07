@@ -38,6 +38,11 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.UUID;
 
+/**
+ * Note: If you only use the API artifact without the plugin installed, you will only be able to use the {@link #refreshPlayer(UUID)} methods.
+ * <p>
+ * It's recommended to use the {@link org.inventivetalent.nicknamer.api.event.disguise.ProfileDisguiseEvent}s, but you can also use these methods if the plugin is installed
+ */
 public interface NickManager {
 
 	/**
