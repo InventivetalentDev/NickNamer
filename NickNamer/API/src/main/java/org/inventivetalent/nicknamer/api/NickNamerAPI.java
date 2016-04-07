@@ -30,18 +30,10 @@ package org.inventivetalent.nicknamer.api;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.plugin.Plugin;
 import org.inventivetalent.apihelper.API;
 import org.inventivetalent.apihelper.APIManager;
-import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
-import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
-import org.inventivetalent.nicknamer.api.event.replace.ChatReplacementEvent;
-import org.inventivetalent.nicknamer.api.event.replace.NameReplacementEvent;
 import org.inventivetalent.nicknamer.api.event.replace.NameReplacer;
 import org.inventivetalent.packetlistener.PacketListenerAPI;
 import org.inventivetalent.packetlistener.handler.PacketHandler;
@@ -55,8 +47,8 @@ import java.util.regex.Pattern;
 
 public class NickNamerAPI implements API, Listener {
 
-	protected static NickManager  nickManager;
-//	private static UUIDResolver uuidResolver;
+	protected static NickManager nickManager;
+	//	private static UUIDResolver uuidResolver;
 
 	protected static PacketListener packetListener;
 
@@ -64,9 +56,9 @@ public class NickNamerAPI implements API, Listener {
 		return nickManager;
 	}
 
-//	public static UUIDResolver getUuidResolver() {
-//		return uuidResolver;
-//	}
+	//	public static UUIDResolver getUuidResolver() {
+	//		return uuidResolver;
+	//	}
 
 	/**
 	 * Replaces all specified names in the string and calls the {@link NameReplacer} for every name
@@ -79,7 +71,7 @@ public class NickNamerAPI implements API, Listener {
 
 			StringBuffer replacementBuffer = new StringBuffer();
 			while (matcher.find()) {
-				String replace=replacer.replace(name);
+				String replace = replacer.replace(name);
 				matcher.appendReplacement(replacementBuffer, replace);
 			}
 			matcher.appendTail(replacementBuffer);
@@ -89,8 +81,12 @@ public class NickNamerAPI implements API, Listener {
 		return replaced;
 	}
 
+	/**
+	 * @return The names of all nicked players (only works if the plugin is installed)
+	 */
 	public static Set<String> getNickedPlayerNames() {
 		Set<String> nickedPlayerNames = new HashSet<>();
+		if (getNickManager().isSimple()) { return nickedPlayerNames; }
 		for (String nick : getNickManager().getUsedNicks()) {
 			for (UUID uuid : getNickManager().getPlayersWithNick(nick)) {
 				OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
@@ -101,7 +97,6 @@ public class NickNamerAPI implements API, Listener {
 		}
 		return nickedPlayerNames;
 	}
-
 
 	@Override
 	public void load() {
@@ -114,9 +109,8 @@ public class NickNamerAPI implements API, Listener {
 
 		APIManager.registerEvents(this, this);
 
-
 		nickManager = new SimpleNickManager(plugin);
-//		uuidResolver = new UUIDResolver(plugin, 3600000/* 1 hour */);
+		//		uuidResolver = new UUIDResolver(plugin, 3600000/* 1 hour */);
 
 		PacketHandler.addHandler(packetListener = new PacketListener(plugin));
 	}
@@ -126,8 +120,6 @@ public class NickNamerAPI implements API, Listener {
 		PacketHandler.removeHandler(packetListener);
 		APIManager.disableAPI(PacketListenerAPI.class);
 	}
-
-
 
 }
 
