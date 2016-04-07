@@ -102,8 +102,8 @@ public class SkinCommands {
 		System.out.println(target);
 		if (target == null) { return; }
 
-		if (!sender.hasPermission("nick.other")) {
-			throw new PermissionException("nick.other");
+		if (!sender.hasPermission("skin.other")) {
+			throw new PermissionException("skin.other");
 		}
 
 		NickNamerAPI.getNickManager().removeSkin(target.getUniqueId());
