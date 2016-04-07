@@ -121,4 +121,26 @@ public class NickCommands {
 		}, 10);
 	}
 
+	@Command(name = "refreshNick",
+			 aliases = {
+					 "nickRefresh",
+					 "refreshSkin",
+					 "reloadSkin",
+					 "reloadNick" },
+			 usage = "[Player]",
+			 description = "Refresh the displayed skin",
+			 min = 0,
+			 max = 1)
+	@Permission("nick.command.refresh")
+	public void refreshNick(final CommandSender sender, @OptionalArg String targetName) {
+		boolean otherTarget = targetName != null && !targetName.isEmpty();
+		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
+		if (target == null) { return; }
+
+		if (!sender.hasPermission("nick.other")) {
+			throw new PermissionException("nick.other");
+		}
+		NickNamerAPI.getNickManager().refreshPlayer(target.getUniqueId());
+	}
+
 }
