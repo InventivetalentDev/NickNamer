@@ -68,6 +68,7 @@ import org.inventivetalent.nicknamer.database.SkinEntry;
 import org.inventivetalent.packetlistener.PacketListenerAPI;
 import org.inventivetalent.pluginannotations.PluginAnnotations;
 import org.inventivetalent.pluginannotations.config.ConfigValue;
+import org.mcstats.MetricsLite;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -88,12 +89,12 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	final Executor storageExecutor = Executors.newSingleThreadExecutor();
 
 	//	@ConfigValue(path = "replace.tab") boolean replaceTab;
-	@ConfigValue(path = "replace.chat.player")     boolean replaceChatPlayer;
-	@ConfigValue(path = "replace.chat.out")        boolean replaceChatOut;
-	@ConfigValue(path = "replace.chat.in.general") boolean replaceChatInGeneral;
-	@ConfigValue(path = "replace.chat.in.command") boolean replaceChatInCommand;
-	@ConfigValue(path = "replace.scoreboard")      boolean replaceScoreboard;
-	@ConfigValue(path="replace.tabComplete.chat") boolean       replaceTabCompleteChat;
+	@ConfigValue(path = "replace.chat.player")      boolean replaceChatPlayer;
+	@ConfigValue(path = "replace.chat.out")         boolean replaceChatOut;
+	@ConfigValue(path = "replace.chat.in.general")  boolean replaceChatInGeneral;
+	@ConfigValue(path = "replace.chat.in.command")  boolean replaceChatInCommand;
+	@ConfigValue(path = "replace.scoreboard")       boolean replaceScoreboard;
+	@ConfigValue(path = "replace.tabComplete.chat") boolean replaceTabCompleteChat;
 
 	@ConfigValue(path = "bungeecord") public boolean bungeecord;
 
@@ -157,6 +158,14 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				getLogger().info("Using Redis storage (" + redisHost + ":" + redisPort + ")");
 				initStorageRedis();
 				break;
+		}
+
+		try {
+			MetricsLite metrics = new MetricsLite(this);
+			if (metrics.start()) {
+				getLogger().info("Metrics started");
+			}
+		} catch (Exception e) {
 		}
 	}
 
@@ -367,8 +376,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	public void on(PlayerChatTabCompleteEvent event) {
 		if (ChatTabCompleteReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
-			for (Iterator<String> iterator=event.getTabCompletions().iterator();iterator.hasNext();) {
-				final String completion=iterator.next();
+			for (Iterator<String> iterator = event.getTabCompletions().iterator(); iterator.hasNext(); ) {
+				final String completion = iterator.next();
 				String replacedCompletion = NickNamerAPI.replaceNames(completion, nickedPlayerNames, new NameReplacer() {
 					@Override
 					public String replace(String original) {
