@@ -87,7 +87,7 @@ public class PluginNickManager implements NickManager {
 	@Override
 	public boolean isNicked(@Nonnull UUID uuid) {
 		isNicked.startTiming();
-		boolean b =/* nickDataProvider.contains(uuid) && */nickDataProvider.get(uuid) != null;
+		boolean b = nickDataProvider.contains(uuid);
 		isNicked.stopTiming();
 		return b;
 	}
@@ -401,7 +401,7 @@ public class PluginNickManager implements NickManager {
 	@Override
 	public boolean hasSkin(@Nonnull UUID uuid) {
 		hasSkin.startTiming();
-		boolean b = /*skinDataProvider.contains(uuid) &&*/ skinDataProvider.get(uuid) != null;
+		boolean b = skinDataProvider.contains(uuid);
 		hasSkin.stopTiming();
 		return b;
 	}
