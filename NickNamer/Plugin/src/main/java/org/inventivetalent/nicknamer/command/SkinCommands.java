@@ -56,8 +56,6 @@ public class SkinCommands {
 			 errorHandler = NickNamerErrorHandler.class)
 	@Permission("nick.command.skin")
 	public void skin(CommandSender sender, final String skin, @OptionalArg String targetName) {
-		System.out.println("skin( " + sender + ", " + skin + ", " + targetName + " )");
-
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
 		if (target == null) { return; }
@@ -95,11 +93,8 @@ public class SkinCommands {
 			 max = 1)
 	@Permission("nick.command.skin.clear")
 	public void clearSkin(final CommandSender sender, @OptionalArg String targetName) {
-		System.out.println("clearNick( " + sender + ", " + targetName + " )");
-
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
-		System.out.println(target);
 		if (target == null) { return; }
 
 		if (!sender.hasPermission("skin.other")) {

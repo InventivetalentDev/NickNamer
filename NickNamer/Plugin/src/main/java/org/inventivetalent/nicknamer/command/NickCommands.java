@@ -56,11 +56,8 @@ public class NickCommands {
 			 errorHandler = NickNamerErrorHandler.class)
 	@Permission("nick.command.name")
 	public void nick(CommandSender sender, final String nick, @OptionalArg String targetName) {
-		System.out.println("nick( " + sender + ", " + nick + ", " + targetName + " )");
-
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
-		System.out.println(target);
 		if (target == null) { return; }
 
 		if (!sender.hasPermission("nick.other")) {
@@ -96,11 +93,8 @@ public class NickCommands {
 			 max = 1)
 	@Permission("nick.command.name.clear")
 	public void clearNick(final CommandSender sender, @OptionalArg String targetName) {
-		System.out.println("clearNick( " + sender + ", " + targetName + " )");
-
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
-		System.out.println(target);
 		if (target == null) { return; }
 
 		if (!sender.hasPermission("nick.other")) {
