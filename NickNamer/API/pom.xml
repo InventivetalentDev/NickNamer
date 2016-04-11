@@ -92,12 +92,12 @@
         <dependency>
             <groupId>org.inventivetalent.data</groupId>
             <artifactId>api</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
+            <version>[0.1.0,)</version>
         </dependency>
         <dependency>
             <groupId>org.inventivetalent.data</groupId>
             <artifactId>api-gson</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
+            <version>[0.1.0,)</version>
         </dependency>
 
 
