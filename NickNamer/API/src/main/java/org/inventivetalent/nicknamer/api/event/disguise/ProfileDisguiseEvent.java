@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api.event.disguise;
 
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
@@ -44,7 +45,7 @@ public abstract class ProfileDisguiseEvent extends DisguiseEvent implements Canc
 
 	private boolean cancelled;
 
-	public ProfileDisguiseEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile) {
+	public ProfileDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile) {
 		super(disguised, receiver);
 		this.gameProfile = gameProfile;
 	}

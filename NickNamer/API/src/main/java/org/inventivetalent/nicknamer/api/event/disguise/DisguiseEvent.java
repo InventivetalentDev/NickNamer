@@ -28,34 +28,36 @@
 
 package org.inventivetalent.nicknamer.api.event.disguise;
 
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public abstract class DisguiseEvent extends Event implements Cancellable {
 
-	private Player disguised;
-	private Player receiver;
+	private OfflinePlayer disguised;
+	private Player        receiver;
 
 	private boolean cancelled;
 
-	public DisguiseEvent(@Nonnull Player disguised, @Nonnull Player receiver) {
+	public DisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver) {
 		this.disguised = disguised;
 		this.receiver = receiver;
 	}
 
-	@Nonnull
+	@Nullable
 	public Player getPlayer() {
-		return getDisguised();
+		return getDisguised().getPlayer();
 	}
 
 	/**
 	 * @return The player to disguise
 	 */
 	@Nonnull
-	public Player getDisguised() {
+	public OfflinePlayer getDisguised() {
 		return disguised;
 	}
 

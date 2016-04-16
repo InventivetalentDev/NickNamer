@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api.event.disguise;
 
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -52,7 +53,7 @@ public class SkinDisguiseEvent extends ProfileDisguiseEvent implements Cancellab
 	private final String originalSkin;
 	private       String skin;
 
-	public SkinDisguiseEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String skin) {
+	public SkinDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String skin) {
 		super(disguised, receiver, gameProfile);
 		this.originalSkin = this.skin = skin;
 	}

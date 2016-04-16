@@ -286,15 +286,15 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void on(NickDisguiseEvent event) {
-		if (getAPI().isNicked(event.getPlayer().getUniqueId())) {
-			event.setNick(getAPI().getNick(event.getPlayer().getUniqueId()));
+		if (getAPI().isNicked(event.getDisguised().getUniqueId())) {
+			event.setNick(getAPI().getNick(event.getDisguised().getUniqueId()));
 		}
 	}
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void on(SkinDisguiseEvent event) {
-		if (getAPI().hasSkin(event.getPlayer().getUniqueId())) {
-			event.setSkin(getAPI().getSkin(event.getPlayer().getUniqueId()));
+		if (getAPI().hasSkin(event.getDisguised().getUniqueId())) {
+			event.setSkin(getAPI().getSkin(event.getDisguised().getUniqueId()));
 		}
 	}
 
@@ -404,8 +404,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ChatReplacementEvent event) {
 		if (replaceChatPlayer) {
-			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
-				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+			if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
+				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
 			}
 		}
 	}
@@ -413,8 +413,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ChatOutReplacementEvent event) {
 		if (replaceChatOut) {
-			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
-				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+			if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
+				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
 			}
 		}
 	}
@@ -423,12 +423,12 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	public void on(ChatInReplacementEvent event) {
 		if (replaceChatInGeneral || replaceChatInCommand) {
 			if (replaceChatInCommand && event.getContext().startsWith("/")) { // Command
-				if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
-					event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+				if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
+					event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
 				}
 			} else if (replaceChatInGeneral) {
-				if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
-					event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+				if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
+					event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
 				}
 			}
 		}
@@ -437,8 +437,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ScoreboardReplacementEvent event) {
 		if (replaceScoreboard) {
-			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
-				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+			if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
+				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
 			}
 		}
 	}
@@ -446,8 +446,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ChatTabCompleteReplacementEvent event) {
 		if (replaceTabCompleteChat) {
-			if (NickNamerAPI.getNickManager().isNicked(event.getPlayer().getUniqueId())) {
-				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getPlayer().getUniqueId()));
+			if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
+				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
 			}
 		}
 	}

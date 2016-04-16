@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api.event.replace;
 
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -59,14 +60,14 @@ public class NameReplacementEvent extends DisguiseEvent implements Cancellable {
 	 */
 	@Nonnull
 	@Override
-	public Player getDisguised() {
+	public OfflinePlayer getDisguised() {
 		return super.getDisguised();
 	}
 
 	/**
 	 * @return The player whose name is being replaced
 	 */
-	@Nonnull
+	@Nullable
 	@Override
 	public Player getPlayer() {
 		return super.getPlayer();

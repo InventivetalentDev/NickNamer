@@ -29,6 +29,7 @@
 package org.inventivetalent.nicknamer.api;
 
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
@@ -202,10 +203,10 @@ public class PacketListener extends PacketHandler {
 	private GameProfileWrapper disguiseProfile(final Player observer, final GameProfileWrapper profileWrapper) throws Exception {
 		final UUID id = profileWrapper.getId();
 		final String name = profileWrapper.getName();
-		final Player toDisguise = Bukkit.getPlayer(id);
+		final OfflinePlayer toDisguise = Bukkit.getOfflinePlayer(id);
 
-		if (toDisguise == null || !toDisguise.isOnline()) {
-			return profileWrapper;//Player to disguise is offline
+		if (toDisguise == null /*|| !toDisguise.isOnline()*/) {
+			return profileWrapper;//Player to disguise doesn't exist
 		}
 
 		NickDisguiseEvent nickDisguiseEvent = new NickDisguiseEvent(toDisguise, observer, profileWrapper, name);
