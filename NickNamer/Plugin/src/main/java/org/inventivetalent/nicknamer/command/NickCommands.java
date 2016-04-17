@@ -29,6 +29,7 @@
 package org.inventivetalent.nicknamer.command;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.inventivetalent.nicknamer.NickNamerPlugin;
@@ -55,7 +56,7 @@ public class NickCommands {
 			 max = 2,
 			 errorHandler = NickNamerErrorHandler.class)
 	@Permission("nick.command.name")
-	public void nick(CommandSender sender, final String nick, @OptionalArg String targetName) {
+	public void nick(CommandSender sender, String nick, @OptionalArg String targetName) {
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
 		if (target == null) { return; }
@@ -71,16 +72,18 @@ public class NickCommands {
 		if ((!sender.hasPermission("nick.name." + nick) && !sender.hasPermission("nick.name.*")) /*|| sender.hasPermission("-nick.name." + nick)*/) {
 			throw new PermissionException("nick.name." + nick);
 		}
+		if (sender.hasPermission("nick.colored")) {
+			nick = ChatColor.translateAlternateColorCodes('&', nick);
+		}
 
+		final String finalNick = nick;
 		sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("name.changed", "name.changed", new MessageFormatter() {
 			@Override
 			public String format(String key, String message) {
-				return message.replace("%player%", target.getName()).replace("%name%", nick);
+				return message.replace("%player%", target.getName()).replace("%name%", finalNick);
 			}
 		}));
-		//		if (!nick.equals(NickNamerAPI.getNickManager().getNick(target.getUniqueId()))) {
 		NickNamerAPI.getNickManager().setNick(target.getUniqueId(), nick);
-		//		}
 	}
 
 	@Command(name = "clearNick",
