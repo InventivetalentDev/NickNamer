@@ -64,14 +64,13 @@ public class PacketListener extends PacketHandler {
 	static OBCClassResolver obcClassResolver = new OBCClassResolver();
 
 	static Class<?> PlayerInfoData     = nmsClassResolver.resolveSilent("PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
-	static Class<?> CraftChatMessage   = obcClassResolver.resolveSilent("util.CraftChatMessage");
 	static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent");
 	static Class<?> PacketPlayInChat   = nmsClassResolver.resolveSilent("PacketPlayInChat");
-	static Class<?> EnumChatFormat     = nmsClassResolver.resolveSilent("EnumChatFormat");
+	static Class<?> ChatSerializer     = nmsClassResolver.resolveSilent("ChatSerializer", "IChatBaseComponent$ChatSerializer");
 
-	static FieldResolver  PlayerInfoDataFieldResolver    = PlayerInfoData != null ? new FieldResolver(PlayerInfoData) : null;// 1.8+ only
-	static MethodResolver CraftChatMessageMethodResolver = new MethodResolver(CraftChatMessage);
-	static FieldResolver  PacketPlayInChatFieldResolver  = new FieldResolver(PacketPlayInChat);
+	static FieldResolver  PlayerInfoDataFieldResolver   = PlayerInfoData != null ? new FieldResolver(PlayerInfoData) : null;// 1.8+ only
+	static FieldResolver  PacketPlayInChatFieldResolver = new FieldResolver(PacketPlayInChat);
+	static MethodResolver ChatSerializerMethodResolver  = new MethodResolver(ChatSerializer);
 
 	public PacketListener(Plugin plugin) {
 		super(plugin);
@@ -124,7 +123,7 @@ public class PacketListener extends PacketHandler {
 					if (ChatOutReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 						Object a = packet.getPacketValue("a");
 						try {
-							final String message = (String) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromComponent", IChatBaseComponent, EnumChatFormat)).invoke(null, a, EnumChatFormat.getEnumConstants()[15]);
+							final String message = serializeChat(a);
 							final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
 								@Override
 								public String replace(String original) {
@@ -138,8 +137,7 @@ public class PacketListener extends PacketHandler {
 									return original;
 								}
 							}, true);
-							Object[] components = (Object[]) CraftChatMessageMethodResolver.resolve(new ResolverQuery("fromString", String.class)).invoke(null, replacedMessage);
-							packet.setPacketValue("a", components[0]);
+							packet.setPacketValue("a", deserializeChat(replacedMessage));
 						} catch (Exception e) {
 							getPlugin().getLogger().log(Level.SEVERE, "", e);
 						}
@@ -302,5 +300,21 @@ public class PacketListener extends PacketHandler {
 		//			nameField.set(profileClone, nick);
 		//		}
 		return profileClone;
+	}
+
+	String serializeChat(Object chatComponent) {
+		try {
+			return (String) ChatSerializerMethodResolver.resolve(new ResolverQuery("a", IChatBaseComponent)).invoke(null, chatComponent);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	Object deserializeChat(String serialized) {
+		try {
+			return ChatSerializerMethodResolver.resolve(new ResolverQuery("a", String.class)).invoke(null, serialized);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
