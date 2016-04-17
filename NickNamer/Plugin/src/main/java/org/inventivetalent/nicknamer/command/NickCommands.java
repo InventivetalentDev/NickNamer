@@ -117,16 +117,25 @@ public class NickCommands {
 
 	@Command(name = "randomNick",
 			 aliases = { "nickRandom" },
-			 usage = "[Player]",
+			 usage = "[Player] [Category]",
 			 description = "Get a random nick name",
 			 min = 0,
-			 max = 1)
+			 max = 2)
 	@Permission("nick.command.name.random")
-	public void randomNick(final CommandSender sender, @OptionalArg String targetName) {
-		if (sender instanceof Player) {
-			((Player) sender).chat("/nickname " + NickNamerAPI.getRandomNick(plugin.randomNicks) + (targetName != null ? " " + targetName : ""));
+	public void randomNick(final CommandSender sender, @OptionalArg String targetName, @OptionalArg(def = "__default__") final String category) {
+		if (!plugin.randomNicks.containsKey(category)) {
+			sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("name.error.category.unknown", "name.error.category.unknown", new MessageFormatter() {
+				@Override
+				public String format(String key, String message) {
+					return String.format(message, category);
+				}
+			}));
 		} else {
-			Bukkit.getServer().dispatchCommand(sender, "/nickname " + NickNamerAPI.getRandomNick(plugin.randomNicks) + (targetName != null ? " " + targetName : ""));
+			if (sender instanceof Player) {
+				((Player) sender).chat("/nickname " + NickNamerAPI.getRandomNick(plugin.randomNicks.get(category)) + (targetName != null ? " " + targetName : ""));
+			} else {
+				Bukkit.getServer().dispatchCommand(sender, "/nickname " + NickNamerAPI.getRandomNick(plugin.randomNicks.get(category)) + (targetName != null ? " " + targetName : ""));
+			}
 		}
 	}
 

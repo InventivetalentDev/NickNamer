@@ -78,6 +78,7 @@ import javax.persistence.PersistenceException;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 
 public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessageListener, INickNamer {
 
@@ -96,8 +97,10 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.scoreboard")       boolean replaceScoreboard;
 	@ConfigValue(path = "replace.tabComplete.chat") boolean replaceTabCompleteChat;
 
-	@ConfigValue(path = "random.nick") public Collection<String> randomNicks = new ArrayList<>();
-	@ConfigValue(path = "random.skin") public Collection<String> randomSkins = new ArrayList<>();
+	//	@ConfigValue(path = "random.nick")
+	public Map<String, Collection<String>> randomNicks = new HashMap<>();
+	//	@ConfigValue(path = "random.skin")
+	public Map<String, Collection<String>> randomSkins = new HashMap<>();
 
 	@ConfigValue(path = "bungeecord") public boolean bungeecord;
 
@@ -130,6 +133,10 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 		saveDefaultConfig();
 		PluginAnnotations.CONFIG.loadValues(this, this);
+
+		// Random nicks & skins
+		parseListOrCategories("random.nick", randomNicks);
+		parseListOrCategories("random.skin", randomSkins);
 
 		PluginAnnotations.COMMAND.registerCommands(this, nickCommands = new NickCommands(this));
 		PluginAnnotations.COMMAND.registerCommands(this, skinCommands = new SkinCommands(this));
@@ -280,6 +287,29 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		list.add(NickEntry.class);
 		list.add(SkinEntry.class);
 		return list;
+	}
+
+	void parseListOrCategories(String path, Map<String, Collection<String>> target) {
+		List randomList = (List) getConfig().get(path);
+		target.put("__default__", new ArrayList<String>());
+		for (Object randomObject : randomList) {
+			try {
+				if (randomObject instanceof String) {
+					target.get("__default__").add((String) randomObject);
+				} else if (randomObject instanceof Map) {
+					for (Map.Entry<?, ?> entry : ((Map<?, ?>) randomObject).entrySet()) {
+						Collection<String> collection = target.get( entry.getKey());
+						if (collection == null) { collection = new ArrayList<>(); }
+						collection.addAll(((List<String>) entry.getValue()));
+						target.put((String) entry.getKey(), collection);
+					}
+				} else {
+					getLogger().warning("Unknown " + path + " entry " + randomObject.getClass());
+				}
+			} catch (Exception e) {
+				getLogger().log(Level.WARNING, "Failed to parse " + path + " entry " + randomObject, e);
+			}
+		}
 	}
 
 	// Internal event listeners

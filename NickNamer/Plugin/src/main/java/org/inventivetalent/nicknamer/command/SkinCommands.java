@@ -117,16 +117,25 @@ public class SkinCommands {
 
 	@Command(name = "randomSkin",
 			 aliases = { "skinRandom" },
-			 usage = "[Player]",
+			 usage = "[Player] [Category]",
 			 description = "Get a random skin",
 			 min = 0,
-			 max = 1)
+			 max = 2)
 	@Permission("nick.command.skin.random")
-	public void randomSkin(final CommandSender sender, @OptionalArg String targetName) {
-		if (sender instanceof Player) {
-			((Player) sender).chat("/skin " + NickNamerAPI.getRandomSkin(plugin.randomSkins) + (targetName != null ? " " + targetName : ""));
+	public void randomSkin(final CommandSender sender, @OptionalArg String targetName, @OptionalArg(def = "__default__") final String category) {
+		if (!plugin.randomSkins.containsKey(category)) {
+			sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.error.category.unknown", "skin.error.category.unknown", new MessageFormatter() {
+				@Override
+				public String format(String key, String message) {
+					return String.format(message, category);
+				}
+			}));
 		} else {
-			Bukkit.getServer().dispatchCommand(sender, "/skin " + NickNamerAPI.getRandomSkin(plugin.randomSkins) + (targetName != null ? " " + targetName : ""));
+			if (sender instanceof Player) {
+				((Player) sender).chat("/skin " + NickNamerAPI.getRandomSkin(plugin.randomSkins.get(category)) + (targetName != null ? " " + targetName : ""));
+			} else {
+				Bukkit.getServer().dispatchCommand(sender, "/skin " + NickNamerAPI.getRandomSkin(plugin.randomSkins.get(category)) + (targetName != null ? " " + targetName : ""));
+			}
 		}
 	}
 

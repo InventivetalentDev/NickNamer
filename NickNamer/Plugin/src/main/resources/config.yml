@@ -19,9 +19,10 @@ random:
   nick:
   - "inventivetalent"
   - "md_5"
-  - "jeb_"
-  - "Notch"
-  - "Dinnerbone"
+  - mojang: # Name category
+    - "jeb_"
+    - "Notch"
+    - "Dinnerbone"
   skin:
   - "md_5"
   - "inventivetalent"
@@ -58,11 +59,15 @@ messages:
       cleared: "&aCleared &b%player%'s &aname"
       error:
         length: "&cThe specified name is too long"
+        category:
+          unknown: "&cUnknown category: %s"
     skin:
       changed: "&aChanged &b%player%'s &askin to &b%skin%''s&a skin."
       cleared: "&aCleared &b%player%'s &askin"
       error:
         length: "&cThe specified skin is too long"
+        categors:
+          unknown: "&cUnknown category: %s"
     error:
       unknown: "&cUnknown error while executing command. See console for details."
       permission: "&cYou are missing the following permission: %s"
