@@ -219,17 +219,6 @@ public class PacketListener extends PacketHandler {
 		String nick = nickDisguiseEvent.isDisguised() ? nickDisguiseEvent.getNick() : name;
 		String skin = skinDisguiseEvent.isDisguised() ? skinDisguiseEvent.getSkin() : name;
 
-		//		if(name.equals(nick)&&name.equals(skin)){
-		//			return profileWrapper;//Both nick & skin stayed the same
-		//		}
-
-		//		if (NickNamer.getNickManager().isNicked(id)) {
-		//			nick = NickNamer.getNickManager().getNick(id);
-		//		}
-		//		if (NickNamer.getNickManager().hasSkin(id)) {
-		//			skin = NickNamer.getNickManager().getSkin(id);
-		//		}
-
 		{//TODO: deprecate event, as it is no longer necessary
 			//Call the update event
 			NickNamerUpdateEvent event = new NickNamerUpdateEvent(toDisguise, observer, nick, skin);
@@ -249,27 +238,7 @@ public class PacketListener extends PacketHandler {
 
 		GameProfileWrapper profileClone = new GameProfileWrapper(id, name);// Create a clone of the profile since the server's PlayerList will use the original profiles
 
-		//		final Object profileClone = GameProfile.getConstructor(UUID.class, String.class).newInstance(id, name);// Create a clone of the profile since the server's PlayerList will use the original profiles
-		//		Object propertyMapClone = SkinLoader.PropertyMap.newInstance();
-		//		SkinLoader.PropertyMap.getSuperclass().getMethod("putAll", SkinLoader.Multimap).invoke(propertyMapClone, propertyMap);
-
-		//		if (NickNamer.getNickManager().hasSkin(id)) {
-		if (skinDisguiseEvent.isDisguised()) {
-			//			JSONObject skinData = SkinLoader.getSkin(skin);
-			//			if (skinData != null && skinData.containsKey("properties")) {
-			//				skinData = (JSONObject) ((JSONArray) skinData.get("properties")).get(0);
-			//
-			//				if (skinData != null) {
-			//					classPropertyMap.getMethod("clear").invoke(propertyMapClone);
-			//					classPropertyMap.getSuperclass().getMethod("put", Object.class, Object.class).invoke(propertyMapClone, "textures", classProperty.getConstructor(String.class, String.class, String.class).newInstance("textures", skinData.get("value"), skinData.get("signature")));
-			//				}
-			//			} else {
-			//				if (NickNamer.LOADING_SKIN) {
-			//					// Clear the skin data to display the Steve/Alex skin
-			//					classPropertyMap.getMethod("clear").invoke(propertyMapClone);
-			//				}
-			//			}
-
+		{
 			GameProfileWrapper skinProfile = skin != null ? SkinLoader.getSkinProfile(skin) : null;
 			if (skinProfile != null) {
 				PropertyMapWrapper clonedSkinProperties = profileClone.getProperties();
@@ -279,26 +248,11 @@ public class PacketListener extends PacketHandler {
 			} else {
 				//TODO: loading skin
 			}
-
-			//			Object skinProfile = SkinLoader.getSkinProfileHandle(skin);
-			//			if (skinProfile != null) {
-			//				Field propertiesField = SkinLoader.GameProfileFieldResolver.resolve("properties");
-			//				propertiesField.set(profileClone, propertiesField.get(skinProfile));
-			//			} else if (NickNamer.LOADING_SKIN) {
-			//				// Clear the skin data to display the Steve/Alex skin
-			//				SkinLoader.PropertyMap.getMethod("clear").invoke(propertyMapClone);
-			//				propertyMapField.set(profileClone, propertyMapClone);
-			//			}
-
 		}
 
-		if (nickDisguiseEvent.isDisguised()) {
+		{
 			profileClone.setName(nick);
 		}
-
-		//		if (NickNamer.getNickManager().isNicked(id)) {
-		//			nameField.set(profileClone, nick);
-		//		}
 		return profileClone;
 	}
 
