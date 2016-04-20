@@ -316,6 +316,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void on(final NickDisguiseEvent event) {
+		if (event.isCancelled()) { return; }
 		if (getAPI().isNicked(event.getDisguised().getUniqueId())) {
 			event.setNick(getAPI().getNick(event.getDisguised().getUniqueId()));
 		} else {
@@ -331,6 +332,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void on(final SkinDisguiseEvent event) {
+		if (event.isCancelled()) { return; }
 		if (getAPI().hasSkin(event.getDisguised().getUniqueId())) {
 			event.setSkin(getAPI().getSkin(event.getDisguised().getUniqueId()));
 		} else {
