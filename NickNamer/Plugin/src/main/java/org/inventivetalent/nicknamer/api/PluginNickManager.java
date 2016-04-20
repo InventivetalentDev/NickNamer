@@ -321,9 +321,7 @@ public class PluginNickManager extends SimpleNickManager {
 
 	@Override
 	public String getSkin(@Nonnull UUID uuid) {
-		if (hasSkin(uuid)) { return skinDataProvider.get(uuid); }
-		Player player = Bukkit.getPlayer(uuid);
-		return player != null ? player.getName() : null;
+		return skinDataProvider.get(uuid);
 	}
 
 	@Override
