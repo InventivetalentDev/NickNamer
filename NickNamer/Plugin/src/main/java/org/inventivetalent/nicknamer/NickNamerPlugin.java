@@ -298,7 +298,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 					target.get("__default__").add((String) randomObject);
 				} else if (randomObject instanceof Map) {
 					for (Map.Entry<?, ?> entry : ((Map<?, ?>) randomObject).entrySet()) {
-						Collection<String> collection = target.get( entry.getKey());
+						Collection<String> collection = target.get(entry.getKey());
 						if (collection == null) { collection = new ArrayList<>(); }
 						collection.addAll(((List<String>) entry.getValue()));
 						target.put((String) entry.getKey(), collection);
@@ -315,16 +315,32 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	// Internal event listeners
 
 	@EventHandler(priority = EventPriority.LOWEST)
-	public void on(NickDisguiseEvent event) {
+	public void on(final NickDisguiseEvent event) {
 		if (getAPI().isNicked(event.getDisguised().getUniqueId())) {
 			event.setNick(getAPI().getNick(event.getDisguised().getUniqueId()));
+		} else {
+			Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
+				@Override
+				public void run() {
+					String nick = getAPI().getNick(event.getDisguised().getUniqueId());
+					if (nick != null && !event.getDisguised().getName().equals(nick)) { getAPI().refreshPlayer(event.getDisguised().getUniqueId()); }
+				}
+			});
 		}
 	}
 
 	@EventHandler(priority = EventPriority.LOWEST)
-	public void on(SkinDisguiseEvent event) {
+	public void on(final SkinDisguiseEvent event) {
 		if (getAPI().hasSkin(event.getDisguised().getUniqueId())) {
 			event.setSkin(getAPI().getSkin(event.getDisguised().getUniqueId()));
+		} else {
+			Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
+				@Override
+				public void run() {
+					String skin = getAPI().getSkin(event.getDisguised().getUniqueId());
+					if (skin != null && !event.getDisguised().getName().equals(skin)) { getAPI().refreshPlayer(event.getDisguised().getUniqueId()); }
+				}
+			});
 		}
 	}
 
