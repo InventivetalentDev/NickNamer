@@ -48,7 +48,10 @@ public class SkinCommands {
 	}
 
 	@Command(name = "skin",
-			 aliases = {},
+			 aliases = {
+					 "setskin",
+					 "changeskin",
+					 "skinset" },
 			 usage = "<Skin> [Player]",
 			 description = "Set your own, or another player's skin",
 			 min = 1,
