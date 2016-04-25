@@ -40,6 +40,8 @@ import org.inventivetalent.pluginannotations.command.Permission;
 import org.inventivetalent.pluginannotations.command.exception.PermissionException;
 import org.inventivetalent.pluginannotations.message.MessageFormatter;
 
+import java.util.IllegalFormatException;
+
 public class NickCommands {
 
 	private NickNamerPlugin plugin;
@@ -72,8 +74,18 @@ public class NickCommands {
 		if ((!sender.hasPermission("nick.name." + nick) && !sender.hasPermission("nick.name.*")) /*|| sender.hasPermission("-nick.name." + nick)*/) {
 			throw new PermissionException("nick.name." + nick);
 		}
+
+		try {
+			nick = String.format(plugin.namesFormat, nick);
+		} catch (IllegalFormatException e) {
+			plugin.getLogger().warning("Cannot format name, invalid name format: " + plugin.namesFormat);
+		}
+
 		if (sender.hasPermission("nick.colored")) {
 			nick = ChatColor.translateAlternateColorCodes('&', nick);
+		}
+		if (nick.length() > 16) {
+			nick = nick.substring(0, 16);
 		}
 
 		final String finalNick = nick;

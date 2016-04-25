@@ -105,6 +105,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@ConfigValue(path = "bungeecord") public boolean bungeecord;
 
+	@ConfigValue(path = "names.format") public String namesFormat = "%s";
+
 	@ConfigValue(path = "storage.type") String storageType = "local";
 
 	@ConfigValue(path = "storage.sql.address") String sqlAddress;
