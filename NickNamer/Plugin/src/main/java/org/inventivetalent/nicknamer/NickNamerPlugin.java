@@ -44,6 +44,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.inventivetalent.apihelper.APIManager;
@@ -399,6 +400,70 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				}
 			}, true);
 			event.setJoinMessage(replacedMessage);
+		}
+
+		if (event.getPlayer().hasPermission("nicknamer.join.skin")) {
+			Bukkit.getScheduler().runTaskLater(this, new Runnable() {
+				@Override
+				public void run() {
+					String skin = null;
+					for (PermissionAttachmentInfo info : event.getPlayer().getEffectivePermissions()) {
+						if (info.getValue() && info.getPermission().startsWith("nicknamer.join.skin.")) {
+							if (skin != null) {
+								getLogger().warning(event.getPlayer().getName() + " has multiple join-skin permissions");
+							}
+							skin = info.getPermission().substring("nicknamer.join.skin.".length());
+						}
+					}
+					if (skin == null) {
+						event.getPlayer().chat("/randomSkin");
+					} else {
+						event.getPlayer().chat("/changeskin " + skin);
+					}
+				}
+			}, 10);
+
+			if (event.getPlayer().hasPermission("nicknamer.join.nick")) {
+				Bukkit.getScheduler().runTaskLater(this, new Runnable() {
+					@Override
+					public void run() {
+						String name = null;
+						for (PermissionAttachmentInfo info : event.getPlayer().getEffectivePermissions()) {
+							if (info.getValue() && info.getPermission().startsWith("nicknamer.join.nick.")) {
+								if (name != null) {
+									getLogger().warning(event.getPlayer().getName() + " has multiple join-nick permissions");
+								}
+								name = info.getPermission().substring("nicknamer.join.nick.".length());
+							}
+						}
+						if (name == null) {
+							event.getPlayer().chat("/randomNick");
+						} else {
+							// Convert tp upper case
+							String tempName = name;
+							name = "";
+							boolean toUpper = false;
+							for (int i = 0; i < tempName.length(); i++) {
+								char c = tempName.charAt(i);
+								if (c == '^') {// found an identifier -> continue
+									toUpper = true;
+								} else if (toUpper) {// change following character to upper case
+									name += Character.toUpperCase(c);
+									toUpper = false;
+								} else {// no changes
+									name += c;
+								}
+							}
+							if (toUpper) {
+								getLogger().warning("Trailing upper-case identifier in " + event.getPlayer().getName() + "'s permission: " + tempName);
+							}
+
+							event.getPlayer().chat("/nickname " + name);
+						}
+					}
+				}, 20);
+			}
+
 		}
 	}
 
