@@ -31,6 +31,9 @@ names:
   # Format for names, for example '&9%s' would color all names blue. Note: names can't be longer than 16 charcters and will be shortened.
   format: "%s"
 
+  # Format for names in chat messages
+  chatFormat: "%s&r"
+
 #Enable this if this server is behind a BungeeCord server
 bungeecord: false
 

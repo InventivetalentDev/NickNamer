@@ -105,7 +105,10 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@ConfigValue(path = "bungeecord") public boolean bungeecord;
 
-	@ConfigValue(path = "names.format") public String namesFormat = "%s";
+	@ConfigValue(path = "names.format",
+				 colorChar = '&') public String namesFormat     = "%s";
+	@ConfigValue(path = "names.chatFormat",
+				 colorChar = '&') public String namesChatFormat = "%s§r";
 
 	@ConfigValue(path = "storage.type") String storageType = "local";
 
@@ -520,7 +523,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	public void on(ChatReplacementEvent event) {
 		if (replaceChatPlayer) {
 			if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
-				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
+				event.setReplacement(String.format(namesChatFormat, NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId())));
 			}
 		}
 	}
@@ -529,7 +532,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	public void on(ChatOutReplacementEvent event) {
 		if (replaceChatOut) {
 			if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
-				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
+				event.setReplacement(String.format(namesChatFormat, NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId())));
 			}
 		}
 	}
