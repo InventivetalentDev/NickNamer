@@ -64,17 +64,27 @@ messages:
     name:
       changed: "&aChanged &b%player%'s &aname to &b%name%&a."
       cleared: "&aCleared &b%player%'s &aname"
+      list:
+        used: "&eUsed names:"
+        format: "&r%s &eis used by&r %s"
       error:
         length: "&cThe specified name is too long"
         category:
           unknown: "&cUnknown category: %s"
+        list:
+          empty: "&cThere are no used names"
     skin:
       changed: "&aChanged &b%player%'s &askin to &b%skin%''s&a skin."
       cleared: "&aCleared &b%player%'s &askin"
+      list:
+        used: "&eUsed names:"
+        format: "&r%s &eis used by&r %s"
       error:
         length: "&cThe specified skin is too long"
-        categors:
+        category:
           unknown: "&cUnknown category: %s"
+        list:
+          empty: "&cThere are no used skins"
     error:
       unknown: "&cUnknown error while executing command. See console for details."
       permission: "&cYou are missing the following permission: %s"

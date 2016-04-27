@@ -40,6 +40,7 @@ import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -235,6 +236,11 @@ public class SimpleNickManager implements NickManager {
 	@Nonnull
 	@Override
 	public List<UUID> getPlayersWithSkin(@Nonnull String skin) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Collection<String> getUsedSkins() {
 		throw new UnsupportedOperationException();
 	}
 

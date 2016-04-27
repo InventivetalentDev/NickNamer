@@ -29,6 +29,7 @@
 package org.inventivetalent.nicknamer.command;
 
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.inventivetalent.nicknamer.NickNamerPlugin;
@@ -38,6 +39,11 @@ import org.inventivetalent.pluginannotations.command.OptionalArg;
 import org.inventivetalent.pluginannotations.command.Permission;
 import org.inventivetalent.pluginannotations.command.exception.PermissionException;
 import org.inventivetalent.pluginannotations.message.MessageFormatter;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public class SkinCommands {
 
@@ -139,6 +145,41 @@ public class SkinCommands {
 			} else {
 				Bukkit.getServer().dispatchCommand(sender, "/skin " + NickNamerAPI.getRandomSkin(plugin.randomSkins.get(category)) + (targetName != null ? " " + targetName : ""));
 			}
+		}
+	}
+
+	@Command(name = "listSkins",
+			 aliases = {
+					 "skinList",
+					 "listSkin" },
+			 description = "Get a list of used skins",
+			 max = 0)
+	@Permission("nick.command.skin.list")
+	public void listNick(final CommandSender sender) {
+		Collection<String> usedSkins = NickNamerAPI.getNickManager().getUsedSkins();
+		if (usedSkins.isEmpty()) {
+			sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.error.list.empty", "skin.error.list.empty"));
+			return;
+		}
+
+		sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.list.used", "skin.list.used"));
+		for (final String used : usedSkins) {
+			Collection<UUID> usedByIds = NickNamerAPI.getNickManager().getPlayersWithSkin(used);
+			final Set<String> usedByNames = new HashSet<>();
+			for (UUID uuid : usedByIds) {
+				OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
+				if (player != null) {
+					usedByNames.add(player.getName());
+				} else {
+					usedByNames.add(uuid.toString());
+				}
+			}
+			sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.list.format", "skin.list.format", new MessageFormatter() {
+				@Override
+				public String format(String key, String message) {
+					return String.format(message, used, usedByNames.toString());
+				}
+			}));
 		}
 	}
 

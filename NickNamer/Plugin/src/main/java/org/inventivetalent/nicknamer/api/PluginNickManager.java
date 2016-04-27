@@ -344,6 +344,17 @@ public class PluginNickManager extends SimpleNickManager {
 		return list;
 	}
 
+	@NonNull
+	@Override
+	public List<String> getUsedSkins() {
+		List<String> skins = new ArrayList<>();
+		for (UUID uuid : skinDataProvider.keysK()) {
+			String nick = skinDataProvider.get(uuid);
+			if (nick != null) { skins.add(nick); }
+		}
+		return skins;
+	}
+
 	@Override
 	@Deprecated
 	public void updatePlayer(Player player, boolean updateName, boolean updateSkin, boolean updateSelf) {
