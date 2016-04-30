@@ -125,7 +125,7 @@ public class SkinCommands {
 	}
 
 	@Command(name = "randomSkin",
-			 aliases = { "skinRandom" },
+			 aliases = { "skinrandom" },
 			 usage = "[Player] [Category]",
 			 description = "Get a random skin",
 			 min = 0,
@@ -150,8 +150,8 @@ public class SkinCommands {
 
 	@Command(name = "listSkins",
 			 aliases = {
-					 "skinList",
-					 "listSkin" },
+					 "skinlist",
+					 "listskin" },
 			 description = "Get a list of used skins",
 			 max = 0)
 	@Permission("nick.command.skin.list")

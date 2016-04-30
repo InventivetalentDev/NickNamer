@@ -132,7 +132,7 @@ public class NickCommands {
 	}
 
 	@Command(name = "randomNick",
-			 aliases = { "nickRandom" },
+			 aliases = { "nickrandom" },
 			 usage = "[Player] [Category]",
 			 description = "Get a random nick name",
 			 min = 0,
@@ -157,10 +157,10 @@ public class NickCommands {
 
 	@Command(name = "refreshNick",
 			 aliases = {
-					 "nickRefresh",
-					 "refreshSkin",
-					 "reloadSkin",
-					 "reloadNick" },
+					 "nickrefresh",
+					 "refreshskin",
+					 "reloadskin",
+					 "reloadnick" },
 			 usage = "[Player]",
 			 description = "Refresh the displayed skin",
 			 min = 0,
@@ -179,8 +179,8 @@ public class NickCommands {
 
 	@Command(name = "listNames",
 			 aliases = {
-					 "nickList",
-					 "listNick" },
+					 "nicklist",
+					 "listnick" },
 			 description = "Get a list of used names",
 			 max = 0)
 	@Permission("nick.command.name.list")
