@@ -61,6 +61,7 @@ import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.replace.*;
 import org.inventivetalent.nicknamer.api.event.skin.SkinLoadedEvent;
+import org.inventivetalent.nicknamer.command.GeneralCommands;
 import org.inventivetalent.nicknamer.command.NickCommands;
 import org.inventivetalent.nicknamer.command.SkinCommands;
 import org.inventivetalent.nicknamer.database.NickEntry;
@@ -85,8 +86,9 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	public static NickNamerPlugin instance;
 
-	public NickCommands nickCommands;
-	public SkinCommands skinCommands;
+	public GeneralCommands generalCommands;
+	public NickCommands    nickCommands;
+	public SkinCommands    skinCommands;
 
 	final Executor storageExecutor = Executors.newSingleThreadExecutor();
 
@@ -138,12 +140,9 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		Bukkit.getPluginManager().registerEvents(this, this);
 
 		saveDefaultConfig();
-		PluginAnnotations.CONFIG.loadValues(this, this);
+		reload();
 
-		// Random nicks & skins
-		parseListOrCategories("random.nick", randomNicks);
-		parseListOrCategories("random.skin", randomSkins);
-
+		PluginAnnotations.COMMAND.registerCommands(this, generalCommands = new GeneralCommands(this));
 		PluginAnnotations.COMMAND.registerCommands(this, nickCommands = new NickCommands(this));
 		PluginAnnotations.COMMAND.registerCommands(this, skinCommands = new SkinCommands(this));
 
@@ -183,6 +182,14 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			}
 		} catch (Exception e) {
 		}
+	}
+
+	void reload() {
+		PluginAnnotations.CONFIG.loadValues(this, this);
+
+		// Random nicks & skins
+		parseListOrCategories("random.nick", randomNicks);
+		parseListOrCategories("random.skin", randomSkins);
 	}
 
 	@Override
@@ -296,6 +303,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	}
 
 	void parseListOrCategories(String path, Map<String, Collection<String>> target) {
+		target.clear();
+
 		List randomList = (List) getConfig().get(path);
 		target.put("__default__", new ArrayList<String>());
 		for (Object randomObject : randomList) {
