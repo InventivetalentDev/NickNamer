@@ -38,9 +38,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * Event called when the name or skin of a player is updated to a observer <br/>
- * All changes made to the event only affect the current observer <br/>
- * If the name or skin is set to null, the original value will be used
+ * Event called when the name or skin of a player is updated to a observer All changes made to the event only affect the current observer If the name or skin is set to null, the original value will be used
  */
 public class NickNamerUpdateEvent extends Event implements Cancellable {
 

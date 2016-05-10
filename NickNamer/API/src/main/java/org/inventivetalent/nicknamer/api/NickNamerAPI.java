@@ -64,6 +64,12 @@ public class NickNamerAPI implements API, Listener {
 
 	/**
 	 * Replaces all specified names in the string and calls the {@link NameReplacer} for every name
+	 *
+	 * @param original original message
+	 * @param namesToReplace names to replace
+	 * @param replacer {@link NameReplacer}
+	 * @param ignoreCase whether to ignore case
+	 * @return the replaced message
 	 */
 	public static String replaceNames(@Nonnull final String original, @Nonnull final Iterable<String> namesToReplace, @Nonnull final NameReplacer replacer, boolean ignoreCase) {
 		String replaced = original;
