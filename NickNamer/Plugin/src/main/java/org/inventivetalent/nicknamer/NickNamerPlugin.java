@@ -70,6 +70,9 @@ import org.inventivetalent.nicknamer.database.SkinEntry;
 import org.inventivetalent.packetlistener.PacketListenerAPI;
 import org.inventivetalent.pluginannotations.PluginAnnotations;
 import org.inventivetalent.pluginannotations.config.ConfigValue;
+import org.inventivetalent.update.spiget.SpigetUpdate;
+import org.inventivetalent.update.spiget.UpdateCallback;
+import org.inventivetalent.update.spiget.comparator.VersionComparator;
 import org.mcstats.MetricsLite;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -124,6 +127,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "storage.redis.port")            int    redisPort;
 	@ConfigValue(path = "storage.redis.pass")            String redisPass;
 	@ConfigValue(path = "storage.redis.max-connections") int    redisMaxConnections;
+
+	SpigetUpdate spigetUpdate;
 
 	@Override
 	public void onLoad() {
@@ -180,6 +185,19 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			if (metrics.start()) {
 				getLogger().info("Metrics started");
 			}
+
+			spigetUpdate = new SpigetUpdate(this, 5341).setUserAgent("NickNamer/" + getDescription().getVersion()).setVersionComparator(VersionComparator.SEM_VER);
+			spigetUpdate.checkForUpdate(new UpdateCallback() {
+				@Override
+				public void updateAvailable(String s, String s1, boolean b) {
+					getLogger().info("A new version is available (" + s + "). Download it from https://r.spiget.org/5341");
+				}
+
+				@Override
+				public void upToDate() {
+					getLogger().info("The plugin is up-to-date.");
+				}
+			});
 		} catch (Exception e) {
 		}
 	}
@@ -478,6 +496,19 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				}, 20);
 			}
 
+		}
+
+		if (event.getPlayer().hasPermission("nicknamer.updatecheck")) {
+			spigetUpdate.checkForUpdate(new UpdateCallback() {
+				@Override
+				public void updateAvailable(String s, String s1, boolean b) {
+					event.getPlayer().sendMessage("§aA new version for §6NickNamer §ais available (§7v" + s + "§a). Download it from https://r.spiget.org/5341");
+				}
+
+				@Override
+				public void upToDate() {
+				}
+			});
 		}
 	}
 

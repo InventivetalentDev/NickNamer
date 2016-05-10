@@ -85,7 +85,7 @@
                                     <include>org.inventivetalent:apimanager**</include>
                                     <include>org.inventivetalent:reflectionhelper**</include>
                                     <include>org.inventivetalent:pluginannotations**</include>
-                                    <include>org.inventivetalent.update:**</include>
+                                    <include>org.inventivetalent.spiget-update:bukkit**</include>
                                     <include>org.inventivetalent.data:**</include>
                                     <include>org.inventivetalent:mc-wrappers**</include>
                                     <include>redis.clients:jedis**</include>
@@ -173,6 +173,12 @@
             <groupId>org.inventivetalent.data</groupId>
             <artifactId>api-cache</artifactId>
             <version>[0.0.1-SNAPSHOT,)</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.inventivetalent.spiget-update</groupId>
+            <artifactId>bukkit</artifactId>
+            <version>[1.0.1,)</version>
         </dependency>
 
         <dependency>
