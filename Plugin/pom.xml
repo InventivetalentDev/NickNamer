@@ -107,10 +107,6 @@
                                     <shadedPattern>org.inventivetalent.nicknamer.commons-pool</shadedPattern>
                                 </relocation>
                                 <relocation>
-                                    <pattern>com.google.gson</pattern>
-                                    <shadedPattern>org.inventivetalent.nicknamer.gson</shadedPattern>
-                                </relocation>
-                                <relocation>
                                     <pattern>org.inventivetalent.reflection</pattern>
                                     <shadedPattern>org.inventivetalent.nicknamer.reflection</shadedPattern>
                                 </relocation>
