@@ -357,7 +357,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				@Override
 				public void run() {
 					String nick = getAPI().getNick(event.getDisguised().getUniqueId());
-					if (nick != null && !event.getDisguised().getName().equals(nick)) { getAPI().refreshPlayer(event.getDisguised().getUniqueId()); }
+					if (nick != null && !nick.equals(event.getDisguised().getName())) { getAPI().refreshPlayer(event.getDisguised().getUniqueId()); }
 				}
 			});
 		}
