@@ -16,6 +16,9 @@ replace:
     chat: false
 
 random:
+  join:
+    nick: false
+    skin: false
   nick:
   - "inventivetalent"
   - "md_5"

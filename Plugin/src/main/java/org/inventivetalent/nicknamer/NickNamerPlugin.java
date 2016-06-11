@@ -104,9 +104,11 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.tabComplete.chat") boolean replaceTabCompleteChat;
 
 	//	@ConfigValue(path = "random.nick")
-	public Map<String, Collection<String>> randomNicks = new HashMap<>();
+	public                                         Map<String, Collection<String>> randomNicks    = new HashMap<>();
 	//	@ConfigValue(path = "random.skin")
-	public Map<String, Collection<String>> randomSkins = new HashMap<>();
+	public                                         Map<String, Collection<String>> randomSkins    = new HashMap<>();
+	@ConfigValue(path = "random.join.nick") public boolean                         randomJoinNick = false;
+	@ConfigValue(path = "random.join.skin") public boolean                         randomJoinSkin = false;
 
 	@ConfigValue(path = "bungeecord") public boolean bungeecord;
 
@@ -434,7 +436,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			event.setJoinMessage(replacedMessage);
 		}
 
-		if (event.getPlayer().hasPermission("nicknamer.join.skin")) {
+		if (randomJoinSkin && event.getPlayer().hasPermission("nicknamer.join.skin")) {
 			Bukkit.getScheduler().runTaskLater(this, new Runnable() {
 				@Override
 				public void run() {
@@ -455,7 +457,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				}
 			}, 10);
 		}
-		if (event.getPlayer().hasPermission("nicknamer.join.nick")) {
+		if (randomJoinNick && event.getPlayer().hasPermission("nicknamer.join.nick")) {
 			Bukkit.getScheduler().runTaskLater(this, new Runnable() {
 				@Override
 				public void run() {
