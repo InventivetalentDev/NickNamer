@@ -101,6 +101,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.chat.in.general")  boolean replaceChatInGeneral;
 	@ConfigValue(path = "replace.chat.in.command")  boolean replaceChatInCommand;
 	@ConfigValue(path = "replace.scoreboard")       boolean replaceScoreboard;
+	@ConfigValue(path = "replace.scoreboardScore")  boolean replaceScoreboardScore;
 	@ConfigValue(path = "replace.tabComplete.chat") boolean replaceTabCompleteChat;
 
 	//	@ConfigValue(path = "random.nick")
@@ -595,6 +596,15 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.LOW)
 	public void on(ScoreboardReplacementEvent event) {
 		if (replaceScoreboard) {
+			if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
+				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOW)
+	public void on(ScoreboardScoreReplacementEvent event) {
+		if (replaceScoreboardScore) {
 			if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
 				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
 			}

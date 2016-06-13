@@ -12,6 +12,7 @@ replace:
       # Replace names in general (non-command) incoming messages
       general: false
   scoreboard: false
+  scoreboardScore: false
   tabComplete:
     chat: false
 

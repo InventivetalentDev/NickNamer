@@ -37,10 +37,7 @@ import org.inventivetalent.mcwrapper.auth.properties.PropertyMapWrapper;
 import org.inventivetalent.nicknamer.api.event.NickNamerUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
-import org.inventivetalent.nicknamer.api.event.replace.ChatInReplacementEvent;
-import org.inventivetalent.nicknamer.api.event.replace.ChatOutReplacementEvent;
-import org.inventivetalent.nicknamer.api.event.replace.NameReplacer;
-import org.inventivetalent.nicknamer.api.event.replace.ScoreboardReplacementEvent;
+import org.inventivetalent.nicknamer.api.event.replace.*;
 import org.inventivetalent.packetlistener.handler.PacketHandler;
 import org.inventivetalent.packetlistener.handler.PacketOptions;
 import org.inventivetalent.packetlistener.handler.ReceivedPacket;
@@ -160,6 +157,25 @@ public class PacketListener extends PacketHandler {
 							}
 						}, true);
 						packet.setPacketValue("b", replacedB);
+					}
+				}
+				if ("PacketPlayOutScoreboardScore".equals(packet.getPacketName())) {
+					if (ScoreboardScoreReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+						final String a = (String) packet.getPacketValue("a");
+						final String replacedA = NickNamerAPI.replaceNames(a, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+							@Override
+							public String replace(String original) {
+								Player player = Bukkit.getPlayer(original);
+								if (player != null) {
+									ScoreboardScoreReplacementEvent replacementEvent = new ScoreboardScoreReplacementEvent(player, packet.getPlayer(), a, original, original);
+									Bukkit.getPluginManager().callEvent(replacementEvent);
+									if (replacementEvent.isCancelled()) { return original; }
+									return replacementEvent.getReplacement();
+								}
+								return original;
+							}
+						}, true);
+						packet.setPacketValue("a", replacedA);
 					}
 				}
 			}
