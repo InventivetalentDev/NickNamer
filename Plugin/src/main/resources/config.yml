@@ -100,3 +100,10 @@ messages:
       parse: "&cFailed to parse argument '%s' to %s"
       target:
         notFound: "&cPlayer could not be found"
+
+# Disable the features below, if you're only interested in utilizing the API.
+pluginFeatures:
+  commands:
+    general: true
+    nick: true
+    skin: true

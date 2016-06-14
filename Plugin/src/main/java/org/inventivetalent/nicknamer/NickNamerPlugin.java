@@ -131,6 +131,10 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "storage.redis.pass")            String redisPass;
 	@ConfigValue(path = "storage.redis.max-connections") int    redisMaxConnections;
 
+	@ConfigValue(path = "pluginFeatures.commands.general") boolean featureCommandGeneral = true;
+	@ConfigValue(path = "pluginFeatures.commands.nick")    boolean featureCommandNick    = true;
+	@ConfigValue(path = "pluginFeatures.commands.skin")    boolean featureCommandSkin    = true;
+
 	SpigetUpdate spigetUpdate;
 
 	@Override
@@ -150,9 +154,21 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		saveDefaultConfig();
 		reload();
 
-		PluginAnnotations.COMMAND.registerCommands(this, generalCommands = new GeneralCommands(this));
-		PluginAnnotations.COMMAND.registerCommands(this, nickCommands = new NickCommands(this));
-		PluginAnnotations.COMMAND.registerCommands(this, skinCommands = new SkinCommands(this));
+		if (featureCommandGeneral) {
+			PluginAnnotations.COMMAND.registerCommands(this, generalCommands = new GeneralCommands(this));
+		} else {
+			getLogger().info("General commands disabled");
+		}
+		if (featureCommandNick) {
+			PluginAnnotations.COMMAND.registerCommands(this, nickCommands = new NickCommands(this));
+		} else {
+			getLogger().info("Nick commands disabled");
+		}
+		if (featureCommandSkin) {
+			PluginAnnotations.COMMAND.registerCommands(this, skinCommands = new SkinCommands(this));
+		} else {
+			getLogger().info("Skin commands disabled");
+		}
 
 		if (bungeecord) {
 			if (Bukkit.getOnlineMode()) {
