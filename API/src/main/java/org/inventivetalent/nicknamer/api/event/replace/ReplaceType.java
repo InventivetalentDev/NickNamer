@@ -49,6 +49,8 @@ public enum ReplaceType {
 	 * Names included in a scoreboard
 	 */
 	SCOREBOARD,
+	SCOREBOARD_SCORE,
+	SCOREBOARD_TEAM,
 	/**
 	 * Name in player join messages
 	 */

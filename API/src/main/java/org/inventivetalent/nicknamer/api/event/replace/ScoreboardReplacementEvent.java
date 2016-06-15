@@ -42,4 +42,7 @@ public class ScoreboardReplacementEvent extends NameReplacementEvent {
 		super(disguised, receiver, ReplaceType.SCOREBOARD, context, original, replacement);
 	}
 
+	public ScoreboardReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull ReplaceType replaceType, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
+		super(disguised, receiver, replaceType, context, original, replacement);
+	}
 }

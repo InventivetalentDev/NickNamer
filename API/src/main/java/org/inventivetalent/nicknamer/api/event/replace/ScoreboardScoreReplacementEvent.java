@@ -38,6 +38,6 @@ import javax.annotation.Nullable;
  */
 public class ScoreboardScoreReplacementEvent extends ScoreboardReplacementEvent {
 	public ScoreboardScoreReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
-		super(disguised, receiver, context, original, replacement);
+		super(disguised, receiver, ReplaceType.SCOREBOARD_SCORE, context, original, replacement);
 	}
 }
