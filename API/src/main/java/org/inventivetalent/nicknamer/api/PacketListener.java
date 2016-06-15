@@ -181,7 +181,10 @@ public class PacketListener extends PacketHandler {
 				}
 				if ("PacketPlayOutScoreboardTeam".equals(packet.getPacketName())) {
 					if (ScoreboardTeamReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						final List<String> h = (List<String>) packet.getPacketValue("h");
+						final List<String> h = (List<String>)
+								(Minecraft.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? packet.getPacketValue("e") :
+										Minecraft.VERSION.olderThan(Minecraft.Version.v1_9_R1) ? packet.getPacketValue("g") :
+												packet.getPacketValue("h"));
 						for (ListIterator<String> iterator = h.listIterator(); iterator.hasNext(); ) {
 							final String entry = iterator.next();
 							final String replacedEntry = NickNamerAPI.replaceNames(entry, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
