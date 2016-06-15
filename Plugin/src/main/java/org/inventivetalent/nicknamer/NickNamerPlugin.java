@@ -36,6 +36,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -555,7 +556,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	public void on(PlayerChatTabCompleteEvent event) {
 		if (ChatTabCompleteReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
-			for (Iterator<String> iterator = event.getTabCompletions().iterator(); iterator.hasNext(); ) {
+			for (ListIterator<String> iterator = ((List<String>) event.getTabCompletions()).listIterator(); iterator.hasNext(); ) {
 				final String completion = iterator.next();
 				String replacedCompletion = NickNamerAPI.replaceNames(completion, nickedPlayerNames, new NameReplacer() {
 					@Override
@@ -570,6 +571,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 						return original;
 					}
 				}, true);
+				iterator.set(ChatColor.stripColor(replacedCompletion));
 			}
 		}
 	}
