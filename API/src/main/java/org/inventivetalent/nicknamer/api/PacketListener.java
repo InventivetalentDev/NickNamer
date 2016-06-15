@@ -52,6 +52,7 @@ import org.inventivetalent.reflection.resolver.minecraft.OBCClassResolver;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -176,6 +177,26 @@ public class PacketListener extends PacketHandler {
 							}
 						}, true);
 						packet.setPacketValue("a", replacedA);
+					}
+				}
+				if ("PacketPlayOutScoreboardTeam".equals(packet.getPacketName())) {
+					final List<String> h = (List<String>) packet.getPacketValue("h");
+					for (ListIterator<String> iterator = h.listIterator(); iterator.hasNext(); ) {
+						final String entry = iterator.next();
+						final String replacedEntry = NickNamerAPI.replaceNames(entry, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+							@Override
+							public String replace(String original) {
+								Player player = Bukkit.getPlayer(original);
+								if (player != null) {
+									ScoreboardTeamReplacementEvent replacementEvent = new ScoreboardTeamReplacementEvent(player, packet.getPlayer(), entry, original, original);
+									Bukkit.getPluginManager().callEvent(replacementEvent);
+									if (replacementEvent.isCancelled()) { return original; }
+									return replacementEvent.getReplacement();
+								}
+								return original;
+							}
+						}, true);
+						iterator.set(replacedEntry);
 					}
 				}
 			}
