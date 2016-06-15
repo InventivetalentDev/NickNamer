@@ -13,6 +13,7 @@ replace:
       general: false
   scoreboard: false
   scoreboardScore: false
+  scoreboardTeam: false
   tabComplete:
     chat: false
 
