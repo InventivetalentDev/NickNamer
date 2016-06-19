@@ -121,6 +121,8 @@ public class SimpleNickManager implements NickManager {
 					Location location = player.getLocation();
 					int level = player.getLevel();
 					float xp = player.getExp();
+					double maxHealth = player.getMaxHealth();
+					double health = player.getHealth();
 
 					NickNamerAPI.packetListener.sendPacket(player, respawnPlayer);
 
@@ -129,6 +131,8 @@ public class SimpleNickManager implements NickManager {
 					player.updateInventory();
 					player.setLevel(level);
 					player.setExp(xp);
+					player.setMaxHealth(maxHealth);
+					player.setHealth(health);
 
 					NickNamerAPI.packetListener.sendPacket(player, addPlayer);
 				}
