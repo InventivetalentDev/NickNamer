@@ -61,7 +61,7 @@ public class PacketListener extends PacketHandler {
 	static NMSClassResolver nmsClassResolver = new NMSClassResolver();
 	static OBCClassResolver obcClassResolver = new OBCClassResolver();
 
-	static Class<?> PlayerInfoData     = nmsClassResolver.resolveSilent("PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
+	static Class<?> PlayerInfoData     = nmsClassResolver.resolveSilent("PlayerInfoData", "PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
 	static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent");
 	static Class<?> PacketPlayInChat   = nmsClassResolver.resolveSilent("PacketPlayInChat");
 	static Class<?> ChatSerializer     = nmsClassResolver.resolveSilent("ChatSerializer", "IChatBaseComponent$ChatSerializer");
