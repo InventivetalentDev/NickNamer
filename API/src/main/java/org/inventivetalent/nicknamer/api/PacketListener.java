@@ -299,6 +299,7 @@ public class PacketListener extends PacketHandler {
 	}
 
 	String serializeChat(Object chatComponent) {
+		if (chatComponent == null) { return null; }
 		try {
 			return (String) ChatSerializerMethodResolver.resolve(new ResolverQuery("a", IChatBaseComponent)).invoke(null, chatComponent);
 		} catch (Exception e) {
@@ -307,6 +308,7 @@ public class PacketListener extends PacketHandler {
 	}
 
 	Object deserializeChat(String serialized) {
+		if (serialized == null) { return null; }
 		try {
 			return ChatSerializerMethodResolver.resolve(new ResolverQuery("a", String.class)).invoke(null, serialized);
 		} catch (Exception e) {
