@@ -43,7 +43,7 @@
 
 
     <properties>
-        <nn.version>3.11.7</nn.version>
+        <nn.version>3.11.8-SNAPSHOT</nn.version>
     </properties>
 
 

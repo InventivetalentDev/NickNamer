@@ -64,7 +64,7 @@ public class NickCommands {
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
 		if (target == null) { return; }
 
-		if (!sender.hasPermission("nick.other")) {
+		if (otherTarget && !sender.hasPermission("nick.other")) {
 			throw new PermissionException("nick.other");
 		}
 
@@ -113,7 +113,7 @@ public class NickCommands {
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
 		if (target == null) { return; }
 
-		if (!sender.hasPermission("nick.other")) {
+		if (otherTarget && !sender.hasPermission("nick.other")) {
 			throw new PermissionException("nick.other");
 		}
 
@@ -171,7 +171,7 @@ public class NickCommands {
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
 		if (target == null) { return; }
 
-		if (!sender.hasPermission("nick.other")) {
+		if (otherTarget && !sender.hasPermission("nick.other")) {
 			throw new PermissionException("nick.other");
 		}
 		NickNamerAPI.getNickManager().refreshPlayer(target.getUniqueId());

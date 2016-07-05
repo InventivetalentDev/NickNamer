@@ -69,7 +69,7 @@ public class SkinCommands {
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
 		if (target == null) { return; }
 
-		if (!sender.hasPermission("skin.other")) {
+		if (otherTarget && !sender.hasPermission("skin.other")) {
 			throw new PermissionException("skin.other");
 		}
 
@@ -106,7 +106,7 @@ public class SkinCommands {
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
 		if (target == null) { return; }
 
-		if (!sender.hasPermission("skin.other")) {
+		if (otherTarget && !sender.hasPermission("skin.other")) {
 			throw new PermissionException("skin.other");
 		}
 
