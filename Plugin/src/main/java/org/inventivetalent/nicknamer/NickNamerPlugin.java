@@ -434,9 +434,25 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		} else {
 			((PluginNickManager) getAPI()).getSkin(event.getDisguised().getUniqueId(), new DataCallback<String>() {
 				@Override
-				public void provide(@Nullable String skin) {
+				public void provide(@Nullable final String skin) {
 					if (skin != null && !skin.equals(event.getDisguised().getName())) {
-						getAPI().refreshPlayer(event.getDisguised().getUniqueId());
+						GameProfileWrapper skinProfile = SkinLoader.getSkinProfile(skin);
+						if (skinProfile == null) {
+							Bukkit.getScheduler().runTaskAsynchronously(NickNamerPlugin.instance, new Runnable() {
+								@Override
+								public void run() {
+									SkinLoader.loadSkin(skin);
+									Bukkit.getScheduler().runTaskLater(NickNamerPlugin.instance, new Runnable() {
+										@Override
+										public void run() {
+											getAPI().refreshPlayer(event.getDisguised().getUniqueId());
+										}
+									}, 10);
+								}
+							});
+						}else{
+							getAPI().refreshPlayer(event.getDisguised().getUniqueId());
+						}
 					}
 				}
 			});
