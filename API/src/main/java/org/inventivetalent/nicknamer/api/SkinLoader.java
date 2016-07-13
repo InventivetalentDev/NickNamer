@@ -31,6 +31,8 @@ package org.inventivetalent.nicknamer.api;
 import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
 import org.inventivetalent.data.DataProvider;
+import org.inventivetalent.data.async.DataCallback;
+import org.inventivetalent.data.mapper.AsyncCacheMapper;
 import org.inventivetalent.data.mapper.MapMapper;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.event.skin.SkinLoadedEvent;
@@ -42,6 +44,8 @@ import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class SkinLoader {
 
@@ -124,6 +128,25 @@ public class SkinLoader {
 	@Nullable
 	public static Object loadSkinHandle(@Nonnull String owner) {
 		Object profile = getSkinProfileHandle(owner);
+		if (profile == null && skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			final CountDownLatch latch = new CountDownLatch(1);
+			final Object[] profile1 = new Object[1];
+ 			((AsyncCacheMapper.CachedDataProvider<JsonObject>)skinDataProvider).get(owner, new DataCallback<JsonObject>() {
+				@Override
+				public void provide(@Nullable JsonObject jsonObject) {
+					profile1[0] = jsonToProfile(jsonObject);
+					latch.countDown();
+				}
+			});
+			try {
+				latch.await(10, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+			if (profile1[0] != null) {
+				return profile1[0];
+			}
+		}
 		if (profile == null) {
 			try {
 				Object cache = TileEntitySkullFieldResolver.resolve("skinCache").get(null);
