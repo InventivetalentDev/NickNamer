@@ -32,39 +32,45 @@ import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.inventivetalent.data.api.DataProvider;
-import org.inventivetalent.data.api.temporary.ConcurrentTemporaryDataProvider;
-import org.inventivetalent.data.api.wrapper.WrappedKeyDataProvider;
+import org.inventivetalent.data.DataProvider;
+import org.inventivetalent.data.async.DataCallback;
+import org.inventivetalent.data.mapper.AsyncCacheMapper;
+import org.inventivetalent.data.mapper.MapMapper;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.NickNamerPlugin;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
 public class PluginNickManager extends SimpleNickManager {
 
-	final WrappedKeyDataProvider<UUID, String> nickDataProvider = new WrappedKeyDataProvider<UUID, String>(String.class, new ConcurrentTemporaryDataProvider<>(String.class)) {
-		@Override
-		public UUID stringToKey(@NonNull String s) {
-			return UUID.fromString(s);
-		}
-	};
-	final WrappedKeyDataProvider<UUID, String> skinDataProvider = new WrappedKeyDataProvider<UUID, String>(String.class, new ConcurrentTemporaryDataProvider<>(String.class)) {
-		@Override
-		public UUID stringToKey(@NonNull String s) {
-			return UUID.fromString(s);
-		}
-	};
+	DataProvider<String> nickDataProvider = MapMapper.sync(new HashMap<String, String>());
+	DataProvider<String> skinDataProvider = MapMapper.sync(new HashMap<String, String>());
+
+	//	final WrappedKeyDataProvider<UUID, String> nickDataProvider = new WrappedKeyDataProvider<UUID, String>(String.class, new ConcurrentTemporaryDataProvider<>(String.class)) {
+	//		@Override
+	//		public UUID stringToKey(@NonNull String s) {
+	//			return UUID.fromString(s);
+	//		}
+	//	};
+	//	final WrappedKeyDataProvider<UUID, String> skinDataProvider = new WrappedKeyDataProvider<UUID, String>(String.class, new ConcurrentTemporaryDataProvider<>(String.class)) {
+	//		@Override
+	//		public UUID stringToKey(@NonNull String s) {
+	//			return UUID.fromString(s);
+	//		}
+	//	};
 
 	public void setNickDataProvider(DataProvider<String> provider) {
-		nickDataProvider.setDataProvider(provider);
+		this.nickDataProvider = provider;
 	}
 
 	public void setSkinDataProvider(DataProvider<String> provider) {
-		skinDataProvider.setDataProvider(provider);
+		this.skinDataProvider = provider;
 	}
 
 	public PluginNickManager(NickNamerPlugin plugin) {
@@ -74,12 +80,12 @@ public class PluginNickManager extends SimpleNickManager {
 
 	@Override
 	public boolean isNicked(@Nonnull UUID uuid) {
-		return nickDataProvider.contains(uuid);
+		return nickDataProvider.contains(uuid.toString());
 	}
 
 	@Override
 	public boolean isNickUsed(@Nonnull String nick) {
-		for (UUID uuid : nickDataProvider.keysK()) {
+		for (String uuid : nickDataProvider.keys()) {
 			if (nick.equals(nickDataProvider.get(uuid))) {
 				return true;
 			}
@@ -89,7 +95,27 @@ public class PluginNickManager extends SimpleNickManager {
 
 	@Override
 	public String getNick(@Nonnull UUID id) {
-		return nickDataProvider.get(id);
+		String nick = nickDataProvider.get(id.toString());
+		System.out.println("Nick, cached: " + nick);
+		if (nick == null) {
+			if (nickDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+				((AsyncCacheMapper.CachedDataProvider<String>) nickDataProvider).get(id.toString(), new DataCallback<String>() {// Refresh cache
+					@Override
+					public void provide(@Nullable String s) {
+						System.out.println("Nick, direct: " + s);
+					}
+				});
+			}
+		}
+		return nick;
+	}
+
+	public void getNick(@Nonnull UUID uuid, DataCallback<String> callback) {
+		if (nickDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			((AsyncCacheMapper.CachedDataProvider<String>) nickDataProvider).get(uuid.toString(), callback);
+		} else {
+			callback.provide(null);
+		}
 	}
 
 	@Override
@@ -101,7 +127,7 @@ public class PluginNickManager extends SimpleNickManager {
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 			@Override
 			public void run() {
-				nickDataProvider.put(uuid, nick);
+				nickDataProvider.put(uuid.toString(), nick);
 
 				//		Player player = Bukkit.getPlayer(uuid);
 				//		if (player != null) {
@@ -148,7 +174,7 @@ public class PluginNickManager extends SimpleNickManager {
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 			@Override
 			public void run() {
-				nickDataProvider.remove(uuid);
+				nickDataProvider.remove(uuid.toString());
 
 				//		Player player = Bukkit.getPlayer(uuid);
 				//		if (player != null) {
@@ -201,8 +227,8 @@ public class PluginNickManager extends SimpleNickManager {
 	@Override
 	public List<UUID> getPlayersWithNick(@Nonnull String nick) {
 		List<UUID> list = new ArrayList<>();
-		for (UUID uuid : nickDataProvider.keysK()) {
-			if (nick.equals(nickDataProvider.get(uuid))) { list.add(uuid); }
+		for (String uuid : nickDataProvider.keys()) {
+			if (nick.equals(nickDataProvider.get(uuid))) { list.add(UUID.fromString(uuid)); }
 		}
 		//		for (Map.Entry<UUID, String> entry : nicks.entrySet()) {
 		//			if (entry.getValue().equals(nick)) {
@@ -216,7 +242,7 @@ public class PluginNickManager extends SimpleNickManager {
 	@Override
 	public List<String> getUsedNicks() {
 		List<String> nicks = new ArrayList<>();
-		for (UUID uuid : nickDataProvider.keysK()) {
+		for (String uuid : nickDataProvider.keys()) {
 			String nick = nickDataProvider.get(uuid);
 			if (nick != null) { nicks.add(nick); }
 		}
@@ -235,7 +261,7 @@ public class PluginNickManager extends SimpleNickManager {
 				//		@SuppressWarnings("deprecation")
 				//		UUID skinID = Bukkit.getOfflinePlayer(skinOwner).getUniqueId();
 
-				skinDataProvider.put(uuid, skinOwner);
+				skinDataProvider.put(uuid.toString(), skinOwner);
 
 				//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", skinOwner);
 
@@ -264,12 +290,12 @@ public class PluginNickManager extends SimpleNickManager {
 
 	@Override
 	public void loadCustomSkin(@Nonnull String key, @Nonnull Object gameProfile) {
-		SkinLoader.skinDataProvider.put(key, gameProfile);
+		loadCustomSkin(key, new GameProfileWrapper(gameProfile));
 	}
 
 	@Override
 	public void loadCustomSkin(@Nonnull String key, @Nonnull GameProfileWrapper profileWrapper) {
-		loadCustomSkin(key, profileWrapper.getHandle());
+		SkinLoader.skinDataProvider.put(key, profileWrapper.toJson());
 	}
 
 	@Override
@@ -291,7 +317,7 @@ public class PluginNickManager extends SimpleNickManager {
 	@Override
 	public void setCustomSkin(@Nonnull UUID uuid, @Nonnull String skin) {
 		if (!SkinLoader.skinDataProvider.contains(skin)) { throw new IllegalStateException("Specified skin has not been loaded yet"); }
-		skinDataProvider.put(uuid, skin);
+		skinDataProvider.put(uuid.toString(), skin);
 
 		//		updatePlayer(id, false, true, (boolean) getConfigOption("selfUpdate"));
 		refreshPlayer(uuid);
@@ -302,7 +328,7 @@ public class PluginNickManager extends SimpleNickManager {
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 			@Override
 			public void run() {
-				skinDataProvider.remove(uuid);
+				skinDataProvider.remove(uuid.toString());
 
 				//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", "reset");
 
@@ -321,20 +347,40 @@ public class PluginNickManager extends SimpleNickManager {
 
 	@Override
 	public String getSkin(@Nonnull UUID uuid) {
-		return skinDataProvider.get(uuid);
+		String skin = skinDataProvider.get(uuid.toString());
+		System.out.println("Skin, cached: " + skin);
+		if (skin == null) {
+			if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+				((AsyncCacheMapper.CachedDataProvider<String>) skinDataProvider).get(uuid.toString(), new DataCallback<String>() {// Refresh cache
+					@Override
+					public void provide(@Nullable String s) {
+						System.out.println("Skin, direct: " + s);
+					}
+				});
+			}
+		}
+		return skin;
+	}
+
+	public void getSkin(@Nonnull UUID uuid, DataCallback<String> callback) {
+		if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			((AsyncCacheMapper.CachedDataProvider<String>) skinDataProvider).get(uuid.toString(), callback);
+		} else {
+			callback.provide(null);
+		}
 	}
 
 	@Override
 	public boolean hasSkin(@Nonnull UUID uuid) {
-		return skinDataProvider.contains(uuid);
+		return skinDataProvider.contains(uuid.toString());
 	}
 
 	@Nonnull
 	@Override
 	public List<UUID> getPlayersWithSkin(@Nonnull String skin) {
 		List<UUID> list = new ArrayList<>();
-		for (UUID uuid : skinDataProvider.keysK()) {
-			if (skin.equals(skinDataProvider.get(uuid))) { list.add(uuid); }
+		for (String uuid : skinDataProvider.keys()) {
+			if (skin.equals(skinDataProvider.get(uuid))) { list.add(UUID.fromString(uuid)); }
 		}
 		//		for (Map.Entry<UUID, String> entry : skinDataProvider.entrySet()) {
 		//			if (entry.getValue().equals(skin)) {
@@ -348,7 +394,7 @@ public class PluginNickManager extends SimpleNickManager {
 	@Override
 	public List<String> getUsedSkins() {
 		List<String> skins = new ArrayList<>();
-		for (UUID uuid : skinDataProvider.keysK()) {
+		for (String uuid : skinDataProvider.keys()) {
 			String nick = skinDataProvider.get(uuid);
 			if (nick != null) { skins.add(nick); }
 		}

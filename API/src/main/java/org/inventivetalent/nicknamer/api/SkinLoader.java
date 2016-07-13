@@ -29,13 +29,9 @@
 package org.inventivetalent.nicknamer.api;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import lombok.NonNull;
 import org.bukkit.Bukkit;
-import org.inventivetalent.data.api.SerializationDataProvider;
-import org.inventivetalent.data.api.gson.parser.GsonDataParser;
-import org.inventivetalent.data.api.gson.serializer.GsonDataSerializer;
-import org.inventivetalent.data.api.temporary.ConcurrentTemporaryDataProvider;
+import org.inventivetalent.data.DataProvider;
+import org.inventivetalent.data.mapper.MapMapper;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.event.skin.SkinLoadedEvent;
 import org.inventivetalent.reflection.resolver.ClassResolver;
@@ -45,6 +41,7 @@ import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.HashMap;
 
 public class SkinLoader {
 
@@ -63,34 +60,55 @@ public class SkinLoader {
 	static MethodResolver CacheMethodResolver        = new MethodResolver(Cache);
 	static MethodResolver LoadingCacheMethodResolver = new MethodResolver(LoadingCache);
 
-	protected static SerializationDataProvider<Object> skinDataProvider;
+	protected static DataProvider<JsonObject> skinDataProvider;
 
 	static {
-		setSkinDataProvider(new ConcurrentTemporaryDataProvider<>(Object.class));
+		setSkinDataProvider(MapMapper.sync(new HashMap<String, JsonObject>()));
 	}
 
-	public static void setSkinDataProvider(SerializationDataProvider<Object> skinDataProvider) {
+	public static void setSkinDataProvider(DataProvider<JsonObject> skinDataProvider) {
 		SkinLoader.skinDataProvider = skinDataProvider;
-		SkinLoader.skinDataProvider.setSerializer(new GsonDataSerializer<Object>() {
-			@Override
-			public String serialize(@NonNull Object object) {
-				JsonObject jsonObject = new GameProfileWrapper(object).toJson();
-				jsonObject.addProperty("loadTime", System.currentTimeMillis());
-				return jsonObject.toString();
+	}
+
+//	public static void setSkinDataProvider(SerializationDataProvider<Object> skinDataProvider) {
+//		SkinLoader.skinDataProvider = skinDataProvider;
+//		SkinLoader.skinDataProvider.setSerializer(new GsonDataSerializer<Object>() {
+//			@Override
+//			public String serialize(@NonNull Object object) {
+//				JsonObject jsonObject = new GameProfileWrapper(object).toJson();
+//				jsonObject.addProperty("loadTime", System.currentTimeMillis());
+//				return jsonObject.toString();
+//			}
+//		});
+//		SkinLoader.skinDataProvider.setParser(new GsonDataParser<Object>(Object.class) {
+//			@Override
+//			public Object parse(@NonNull String string) {
+//				JsonObject jsonObject = new JsonParser().parse(string).getAsJsonObject();
+//				if (jsonObject.has("loadTime")) {
+//					if (System.currentTimeMillis() - jsonObject.get("loadTime").getAsLong() > 3600000/* 1 hour */) {
+//						return null;//return null, so the updated skin can be inserted
+//					}
+//				}
+//				return new GameProfileWrapper(jsonObject).getHandle();
+//			}
+//		});
+//	}
+
+	static Object jsonToProfile(JsonObject jsonObject) {
+		if (jsonObject == null) { return null; }
+		if (jsonObject.has("loadTime")) {
+			if (System.currentTimeMillis() - jsonObject.get("loadTime").getAsLong() > 3600000) {
+				return null;//return null, so the updated skin can be inserted
 			}
-		});
-		SkinLoader.skinDataProvider.setParser(new GsonDataParser<Object>(Object.class) {
-			@Override
-			public Object parse(@NonNull String string) {
-				JsonObject jsonObject = new JsonParser().parse(string).getAsJsonObject();
-				if (jsonObject.has("loadTime")) {
-					if (System.currentTimeMillis() - jsonObject.get("loadTime").getAsLong() > 3600000/* 1 hour */) {
-						return null;//return null, so the updated skin can be inserted
-					}
-				}
-				return new GameProfileWrapper(jsonObject).getHandle();
-			}
-		});
+		}
+		return new GameProfileWrapper(jsonObject).getHandle();
+	}
+
+	static JsonObject profileToJson(Object profile) {
+		if (profile == null) { return null; }
+		JsonObject jsonObject = new GameProfileWrapper(profile).toJson();
+		jsonObject.addProperty("loadTime", System.currentTimeMillis());
+		return jsonObject;
 	}
 
 	//Should be called asynchronously
@@ -103,6 +121,7 @@ public class SkinLoader {
 
 	@Nullable
 	public static GameProfileWrapper getSkinProfile(@Nonnull String owner) {
+		System.out.println(skinDataProvider.entries());
 		Object handle = getSkinProfileHandle(owner);
 		if (handle == null) { return null; }
 		return new GameProfileWrapper(handle);
@@ -117,7 +136,7 @@ public class SkinLoader {
 				Object cache = TileEntitySkullFieldResolver.resolve("skinCache").get(null);
 				profile = LoadingCacheMethodResolver.resolve("getUnchecked").invoke(cache, owner.toLowerCase());
 				if (profile != null) {
-					skinDataProvider.put(owner, profile);
+					skinDataProvider.put(owner, profileToJson(profile));
 					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile)));
 				}
 			} catch (ReflectiveOperationException e) {
@@ -129,13 +148,13 @@ public class SkinLoader {
 
 	@Nullable
 	public static Object getSkinProfileHandle(@Nonnull String owner) {
-		Object profile = skinDataProvider.get(owner);
+		Object profile = jsonToProfile(skinDataProvider.get(owner));
 		if (profile == null) {
 			try {
 				Object cache = TileEntitySkullFieldResolver.resolve("skinCache").get(null);
 				profile = CacheMethodResolver.resolve("getIfPresent").invoke(cache, owner);
 				if (profile != null) {
-					skinDataProvider.put(owner, profile);
+					skinDataProvider.put(owner, profileToJson(profile));
 					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile)));
 				}
 			} catch (ReflectiveOperationException e) {

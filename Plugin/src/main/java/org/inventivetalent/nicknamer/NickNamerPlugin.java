@@ -28,13 +28,13 @@
 
 package org.inventivetalent.nicknamer;
 
+import com.google.common.cache.CacheBuilder;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -49,13 +49,14 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.inventivetalent.apihelper.APIManager;
-import org.inventivetalent.data.api.SerializationDataProvider;
-import org.inventivetalent.data.api.bukkit.ebean.EbeanDataProvider;
-import org.inventivetalent.data.api.bukkit.ebean.KeyValueBean;
-import org.inventivetalent.data.api.redis.RedisDataProvider;
-import org.inventivetalent.data.api.sql.SQLDataProvider;
-import org.inventivetalent.data.api.wrapper.AsyncDataProviderWrapper;
-import org.inventivetalent.data.api.wrapper.CachedAsyncDataProviderWrapper;
+import org.inventivetalent.data.async.AsyncDataProvider;
+import org.inventivetalent.data.async.DataCallback;
+import org.inventivetalent.data.ebean.BeanProvider;
+import org.inventivetalent.data.ebean.EbeanDataProvider;
+import org.inventivetalent.data.mapper.AsyncCacheMapper;
+import org.inventivetalent.data.mapper.AsyncJsonValueMapper;
+import org.inventivetalent.data.mapper.AsyncStringValueMapper;
+import org.inventivetalent.data.redis.RedisDataProvider;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.*;
 import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
@@ -80,10 +81,13 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.PersistenceException;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessageListener, INickNamer {
@@ -192,9 +196,11 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				initStorageLocal();
 				break;
 			case "sql":
-				getLogger().info("Using SQL storage (" + sqlUser + "@" + sqlAddress + ")");
-				initStorageSQL();
-				break;
+				//TODO: SQL
+				throw new RuntimeException("SQL storage is not supported");
+				//				getLogger().info("Using SQL storage (" + sqlUser + "@" + sqlAddress + ")");
+				//				initStorageSQL();
+				//				break;
 			case "redis":
 				getLogger().info("Using Redis storage (" + redisHost + ":" + redisPort + ")");
 				initStorageRedis();
@@ -236,13 +242,10 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		APIManager.disableAPI(NickNamerAPI.class);
 	}
 
-	<D> SerializationDataProvider<D> wrapAsyncProvider(Class<? extends D> clazz, SerializationDataProvider<D> dataProvider) {
-		return new CachedAsyncDataProviderWrapper<>(clazz, new AsyncDataProviderWrapper<D>(dataProvider) {
-			@Override
-			public void dispatch(Runnable runnable) {
-				storageExecutor.execute(runnable);
-			}
-		});
+	<V> AsyncCacheMapper.CachedDataProvider<V> initCache(AsyncDataProvider<V> provider) {
+		return AsyncCacheMapper.create(provider, CacheBuilder.newBuilder()
+				.expireAfterAccess(5, TimeUnit.MINUTES)
+				.expireAfterWrite(30, TimeUnit.MINUTES), storageExecutor);
 	}
 
 	void initStorageLocal() {
@@ -260,11 +263,27 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (nickCount > 0) {
 			getLogger().info("Found " + nickCount + " player nick-data in database");
 		}
-		((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), NickEntry.class)));
+		((PluginNickManager) NickNamerAPI.getNickManager())
+				.setNickDataProvider(initCache(AsyncStringValueMapper
+						.ebean(new EbeanDataProvider<>(getDatabase(), NickEntry.class), new BeanProvider<NickEntry>() {
+							@Override
+							public NickEntry provide(String key, String value) {
+								return new NickEntry(key, value);
+							}
+						})));
+		//		((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), NickEntry.class)));
 		if (dataCount > 0) {
 			getLogger().info("Found " + skinCount + " player skin-data in database");
 		}
-		((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), SkinEntry.class)));
+		((PluginNickManager) NickNamerAPI.getNickManager())
+				.setSkinDataProvider(initCache(AsyncStringValueMapper
+						.ebean(new EbeanDataProvider<>(getDatabase(), SkinEntry.class), new BeanProvider<SkinEntry>() {
+							@Override
+							public SkinEntry provide(String key, String value) {
+								return new SkinEntry(key, value);
+							}
+						})));
+		//		((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), SkinEntry.class)));
 
 		if (dataCount > 0) {
 			getLogger().info("Found " + dataCount + " skin textures in database");
@@ -276,30 +295,39 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			}
 		}
 
-		SkinLoader.setSkinDataProvider(new EbeanDataProvider<Object>(Object.class/*We're using a custom parser/serializer, so this class doesn't matter*/, getDatabase(), SkinDataEntry.class) {
-			@Override
-			public KeyValueBean newBean() {
-				SkinDataEntry bean = new SkinDataEntry();
-				bean.setLoadTime(System.currentTimeMillis());
-				return bean;
-			}
-		});
+		SkinLoader.setSkinDataProvider(initCache(AsyncJsonValueMapper
+				.ebean(new EbeanDataProvider<>(getDatabase(), SkinDataEntry.class), new BeanProvider<SkinDataEntry>() {
+					@Override
+					public SkinDataEntry provide(String key, String value) {
+						SkinDataEntry bean = new SkinDataEntry(key, value);
+						bean.setLoadTime(System.currentTimeMillis());
+						return bean;
+					}
+				})));
+		//		SkinLoader.setSkinDataProvider(new EbeanDataProvider<Object>(Object.class/*We're using a custom parser/serializer, so this class doesn't matter*/, getDatabase(), SkinDataEntry.class) {
+		//			@Override
+		//			public KeyValueBean newBean() {
+		//				SkinDataEntry bean = new SkinDataEntry();
+		//				bean.setLoadTime(System.currentTimeMillis());
+		//				return bean;
+		//			}
+		//		});
 	}
 
-	void initStorageSQL() {
-		if (sqlPass == null || sqlPass.isEmpty()) { sqlPass = null; }
-
-		Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
-			@Override
-			public void run() {
-				//				getLogger().info("Connected to SQL");
-
-				((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_nick")));
-				((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_skin")));
-				SkinLoader.setSkinDataProvider(new SQLDataProvider<>(Object.class, sqlAddress, sqlUser, sqlPass, "nicknamer_skins"));
-			}
-		});
-	}
+	//	void initStorageSQL() {
+	//		if (sqlPass == null || sqlPass.isEmpty()) { sqlPass = null; }
+	//
+	//		Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
+	//			@Override
+	//			public void run() {
+	//				//				getLogger().info("Connected to SQL");
+	//
+	//				((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_nick")));
+	//				((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_skin")));
+	//				SkinLoader.setSkinDataProvider(new SQLDataProvider<>(Object.class, sqlAddress, sqlUser, sqlPass, "nicknamer_skins"));
+	//			}
+	//		});
+	//	}
 
 	void initStorageRedis() {
 		if (redisPass == null || redisPass.isEmpty()) { redisPass = null; }
@@ -310,20 +338,33 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				JedisPoolConfig config = new JedisPoolConfig();
 				config.setMaxTotal(redisMaxConnections);
 				final JedisPool pool = new JedisPool(config, redisHost, redisPort, 0, redisPass);
-				try (Jedis jedis = pool.getResource()) {
+				try (final Jedis jedis = pool.getResource()) {
 					jedis.ping();
 					getLogger().info("Connected to Redis");
 
-					((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:nick", "nn_data:(.*):nick")));
-					((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:skin", "nn_data:(.*):skin")));
-					SkinLoader.setSkinDataProvider(new RedisDataProvider<Object>(Object.class, pool, "nn_skins:%s", "nn_skins:(.*)") {
-						@Override
-						public void put(@NonNull String key, Object value) {
-							try (Jedis jedis = pool.getResource()) {
-								jedis.setex(key(key), 3600, getSerializer().serialize(value));
-							}
-						}
-					});
+					((PluginNickManager) NickNamerAPI.getNickManager())
+							.setNickDataProvider(initCache(AsyncStringValueMapper
+									.redis(new RedisDataProvider(jedis, "nn_data:%s:nick", "nn_data:(.*):nick"))));
+					//					((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:nick", "nn_data:(.*):nick")));
+					((PluginNickManager) NickNamerAPI.getNickManager())
+							.setSkinDataProvider(initCache(AsyncStringValueMapper
+									.redis(new RedisDataProvider(jedis, "nn_data:%s:skin", "nn_data:(.*):skin"))));
+					//					((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:skin", "nn_data:(.*):skin")));
+					SkinLoader.setSkinDataProvider(initCache(AsyncJsonValueMapper
+							.redis(new RedisDataProvider(jedis, "nn_skins:%s", "nn_skins:(.ü)") {
+								@Override
+								public void put(@Nonnull String key, @Nonnull String value) {
+									jedis.setex(formatKey(key), 3600, value);
+								}
+							})));
+					//					SkinLoader.setSkinDataProvider(new RedisDataProvider<Object>(Object.class, pool, "nn_skins:%s", "nn_skins:(.*)") {
+					//						@Override
+					//						public void put(@NonNull String key, Object value) {
+					//							try (Jedis jedis = pool.getResource()) {
+					//								jedis.setex(key(key), 3600, getSerializer().serialize(value));
+					//							}
+					//						}
+					//					});
 				} catch (JedisConnectionException e) {
 					pool.destroy();
 					throw new RuntimeException("Failed to connect to Redis", e);
@@ -374,11 +415,12 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (getAPI().isNicked(event.getDisguised().getUniqueId())) {
 			event.setNick(getAPI().getNick(event.getDisguised().getUniqueId()));
 		} else {
-			Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
+			((PluginNickManager) getAPI()).getNick(event.getDisguised().getUniqueId(), new DataCallback<String>() {
 				@Override
-				public void run() {
-					String nick = getAPI().getNick(event.getDisguised().getUniqueId());
-					if (nick != null && !nick.equals(event.getDisguised().getName())) { getAPI().refreshPlayer(event.getDisguised().getUniqueId()); }
+				public void provide(@Nullable String nick) {
+					if (nick != null && !nick.equals(event.getDisguised().getName())) {
+						getAPI().refreshPlayer(event.getDisguised().getUniqueId());
+					}
 				}
 			});
 		}
@@ -390,11 +432,12 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (getAPI().hasSkin(event.getDisguised().getUniqueId())) {
 			event.setSkin(getAPI().getSkin(event.getDisguised().getUniqueId()));
 		} else {
-			Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
+			((PluginNickManager) getAPI()).getSkin(event.getDisguised().getUniqueId(), new DataCallback<String>() {
 				@Override
-				public void run() {
-					String skin = getAPI().getSkin(event.getDisguised().getUniqueId());
-					if (skin != null && !skin.equals(event.getDisguised().getName())) { getAPI().refreshPlayer(event.getDisguised().getUniqueId()); }
+				public void provide(@Nullable String skin) {
+					if (skin != null && !skin.equals(event.getDisguised().getName())) {
+						getAPI().refreshPlayer(event.getDisguised().getUniqueId());
+					}
 				}
 			});
 		}
@@ -694,7 +737,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				try {
 					String owner = in.readUTF();
 					JsonObject data = new JsonParser().parse(in.readUTF()).getAsJsonObject();
-					SkinLoaderBridge.getSkinProvider().put(owner, new GameProfileWrapper(data));
+					SkinLoaderBridge.getSkinProvider().put(owner, new GameProfileWrapper(data).toJson());
 				} catch (JsonParseException e) {
 					e.printStackTrace();
 				}

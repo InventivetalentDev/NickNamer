@@ -282,6 +282,8 @@ public class PacketListener extends PacketHandler {
 
 		{
 			GameProfileWrapper skinProfile = skin != null ? SkinLoader.getSkinProfile(skin) : null;
+			System.out.println("Skin: " + skin);
+			System.out.println("Profile: "+skinProfile);
 			if (skinProfile != null) {
 				PropertyMapWrapper clonedSkinProperties = profileClone.getProperties();
 				// Copy the skin properties to the cloned profile

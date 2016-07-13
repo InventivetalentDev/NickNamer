@@ -28,11 +28,12 @@
 
 package org.inventivetalent.nicknamer.api;
 
-import org.inventivetalent.data.api.SerializationDataProvider;
+import com.google.gson.JsonObject;
+import org.inventivetalent.data.DataProvider;
 
 public class SkinLoaderBridge {
 
-	public static SerializationDataProvider<Object> getSkinProvider() {
+	public static DataProvider<JsonObject> getSkinProvider() {
 		return SkinLoader.skinDataProvider;
 	}
 
