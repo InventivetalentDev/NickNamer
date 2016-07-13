@@ -33,6 +33,7 @@ import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.inventivetalent.data.DataProvider;
+import org.inventivetalent.data.async.DataCallable;
 import org.inventivetalent.data.async.DataCallback;
 import org.inventivetalent.data.mapper.AsyncCacheMapper;
 import org.inventivetalent.data.mapper.MapMapper;
@@ -41,7 +42,6 @@ import org.inventivetalent.nicknamer.NickNamerPlugin;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -97,16 +97,6 @@ public class PluginNickManager extends SimpleNickManager {
 	public String getNick(@Nonnull UUID id) {
 		String nick = nickDataProvider.get(id.toString());
 		System.out.println("Nick, cached: " + nick);
-		if (nick == null) {
-			if (nickDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
-				((AsyncCacheMapper.CachedDataProvider<String>) nickDataProvider).get(id.toString(), new DataCallback<String>() {// Refresh cache
-					@Override
-					public void provide(@Nullable String s) {
-						System.out.println("Nick, direct: " + s);
-					}
-				});
-			}
-		}
 		return nick;
 	}
 
@@ -124,49 +114,23 @@ public class PluginNickManager extends SimpleNickManager {
 		if (isNicked(uuid)) {
 			removeNick(uuid);
 		}
-		Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-			@Override
-			public void run() {
-				nickDataProvider.put(uuid.toString(), nick);
-
-				//		Player player = Bukkit.getPlayer(uuid);
-				//		if (player != null) {
-				//			storedNames.put(uuid, player.getDisplayName());
-				//			if (getConfigOption("nick.chat")) {
-				//				p.setDisplayName(nick);
-				//			}
-				//			if (getConfigOption("nick.tab")) {
-				//				p.setPlayerListName(nick);
-				//			}
-				//			if (getConfigOption("nick.scoreboard")) {
-				//				Scoreboard sb = p.getScoreboard();
-				//				if (sb == null) {
-				//					sb = Bukkit.getScoreboardManager().getMainScoreboard();
-				//				}
-				//				if (sb != null) {
-				//					Team t = sb.getPlayerTeam(p);
-				//					if (t != null) {
-				//						t.removePlayer(p);
-				//						t.addEntry(nick);
-				//					}
-				//				}
-				//			}
-				//		}
-
-				//		nickNamer.sendPluginMessage(p, "name", nick);
-
-				//		updatePlayer(id, true, false, (boolean) getConfigOption("selfUpdate"));
-				//Wait for database
-				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-					@Override
-					public void run() {
-						refreshPlayer(uuid);
-					}
-				}, 10);
-			}
-		});
-
-		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "name", nick); }
+		if (nickDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			((AsyncCacheMapper.CachedDataProvider<String>) nickDataProvider).put(uuid.toString(), new DataCallable<String>() {
+				@Nonnull
+				@Override
+				public String provide() {
+					Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+						@Override
+						public void run() {
+							refreshPlayer(uuid);
+						}
+					}, 20);
+					return nick;
+				}
+			});
+		} else {
+			nickDataProvider.put(uuid.toString(), nick);
+		}
 	}
 
 	@Override
@@ -254,36 +218,24 @@ public class PluginNickManager extends SimpleNickManager {
 		if (hasSkin(uuid)) {
 			removeSkin(uuid);
 		}
-
-		Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
-			@Override
-			public void run() {
-				//		@SuppressWarnings("deprecation")
-				//		UUID skinID = Bukkit.getOfflinePlayer(skinOwner).getUniqueId();
-
-				skinDataProvider.put(uuid.toString(), skinOwner);
-
-				//		nickNamer.sendPluginMessage(Bukkit.getPlayer(id), "skin", skinOwner);
-
-				//		if (!Bukkit.getOnlineMode() && !NickNamer.BUNGEECORD) {
-				//			UUIDResolver.resolve(skinOwner);
-				//		} else {
-				//			long l = SkinLoader.load(skinOwner);
-				//			if (l == -1) {
-				//				updatePlayer(id, false, true, NickNamer.SELF_UPDATE);
-				//			}
-				//			return l;
-				SkinLoader.loadSkin(skinOwner);
-				//				Object profile = SkinLoader.loadSkin(skinOwner);
-				//				updatePlayer(id, false, true, (boolean) getConfigOption("selfUpdate"));
-				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-					@Override
-					public void run() {
-						refreshPlayer(uuid);
-					}
-				}, 10);
-			}
-		}, 2);
+		if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			((AsyncCacheMapper.CachedDataProvider<String>) skinDataProvider).put(uuid.toString(), new DataCallable<String>() {
+				@Nonnull
+				@Override
+				public String provide() {
+					SkinLoader.loadSkin(skinOwner);
+					Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+						@Override
+						public void run() {
+							refreshPlayer(uuid);
+						}
+					}, 20);
+					return skinOwner;
+				}
+			});
+		} else {
+			skinDataProvider.put(uuid.toString(), skinOwner);
+		}
 
 		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "skin", skinOwner); }
 	}
@@ -347,19 +299,7 @@ public class PluginNickManager extends SimpleNickManager {
 
 	@Override
 	public String getSkin(@Nonnull UUID uuid) {
-		String skin = skinDataProvider.get(uuid.toString());
-		System.out.println("Skin, cached: " + skin);
-		if (skin == null) {
-			if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
-				((AsyncCacheMapper.CachedDataProvider<String>) skinDataProvider).get(uuid.toString(), new DataCallback<String>() {// Refresh cache
-					@Override
-					public void provide(@Nullable String s) {
-						System.out.println("Skin, direct: " + s);
-					}
-				});
-			}
-		}
-		return skin;
+		return skinDataProvider.get(uuid.toString());
 	}
 
 	public void getSkin(@Nonnull UUID uuid, DataCallback<String> callback) {
