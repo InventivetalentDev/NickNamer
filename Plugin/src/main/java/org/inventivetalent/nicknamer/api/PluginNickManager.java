@@ -111,9 +111,6 @@ public class PluginNickManager extends SimpleNickManager {
 	@Override
 	public void setNick(@Nonnull final UUID uuid, @Nonnull final String nick) {
 		if (nick.length() > 16) { throw new IllegalArgumentException("Name is too long (" + nick.length() + " > 16)"); }
-		if (isNicked(uuid)) {
-			removeNick(uuid);
-		}
 		if (nickDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
 			((AsyncCacheMapper.CachedDataProvider<String>) nickDataProvider).put(uuid.toString(), new DataCallable<String>() {
 				@Nonnull
@@ -215,9 +212,6 @@ public class PluginNickManager extends SimpleNickManager {
 
 	@Override
 	public void setSkin(@Nonnull final UUID uuid, @Nonnull final String skinOwner) {
-		if (hasSkin(uuid)) {
-			removeSkin(uuid);
-		}
 		if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
 			((AsyncCacheMapper.CachedDataProvider<String>) skinDataProvider).put(uuid.toString(), new DataCallable<String>() {
 				@Nonnull
