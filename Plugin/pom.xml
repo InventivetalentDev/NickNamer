@@ -86,7 +86,7 @@
                                     <include>org.inventivetalent:reflectionhelper**</include>
                                     <include>org.inventivetalent:pluginannotations**</include>
                                     <include>org.inventivetalent.spiget-update:bukkit**</include>
-                                    <include>org.inventivetalent.data-api**</include>
+                                    <include>org.inventivetalent:data-api**</include>
                                     <include>org.inventivetalent:mc-wrappers**</include>
                                     <include>redis.clients:jedis**</include>
                                     <include>org.apache.commons:commons-pool**</include>
