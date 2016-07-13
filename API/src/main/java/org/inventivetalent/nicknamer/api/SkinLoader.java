@@ -96,18 +96,12 @@ public class SkinLoader {
 
 	static Object jsonToProfile(JsonObject jsonObject) {
 		if (jsonObject == null) { return null; }
-		if (jsonObject.has("loadTime")) {
-			if (System.currentTimeMillis() - jsonObject.get("loadTime").getAsLong() > 3600000) {
-				return null;//return null, so the updated skin can be inserted
-			}
-		}
 		return new GameProfileWrapper(jsonObject).getHandle();
 	}
 
 	static JsonObject profileToJson(Object profile) {
 		if (profile == null) { return null; }
 		JsonObject jsonObject = new GameProfileWrapper(profile).toJson();
-		jsonObject.addProperty("loadTime", System.currentTimeMillis());
 		return jsonObject;
 	}
 
@@ -121,7 +115,6 @@ public class SkinLoader {
 
 	@Nullable
 	public static GameProfileWrapper getSkinProfile(@Nonnull String owner) {
-		System.out.println(skinDataProvider.entries());
 		Object handle = getSkinProfileHandle(owner);
 		if (handle == null) { return null; }
 		return new GameProfileWrapper(handle);
