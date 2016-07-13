@@ -95,9 +95,7 @@ public class PluginNickManager extends SimpleNickManager {
 
 	@Override
 	public String getNick(@Nonnull UUID id) {
-		String nick = nickDataProvider.get(id.toString());
-		System.out.println("Nick, cached: " + nick);
-		return nick;
+		return nickDataProvider.get(id.toString());
 	}
 
 	public void getNick(@Nonnull UUID uuid, DataCallback<String> callback) {
