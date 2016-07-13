@@ -261,6 +261,8 @@ public class PacketListener extends PacketHandler {
 		String nick = nickDisguiseEvent.isDisguised() ? nickDisguiseEvent.getNick() : name;
 		String skin = skinDisguiseEvent.isDisguised() ? skinDisguiseEvent.getSkin() : name;
 
+		if (nick == null) { nick = name; }
+
 		{//TODO: deprecate event, as it is no longer necessary
 			//Call the update event
 			NickNamerUpdateEvent event = new NickNamerUpdateEvent(toDisguise, observer, nick, skin);
