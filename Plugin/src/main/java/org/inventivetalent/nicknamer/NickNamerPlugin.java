@@ -255,7 +255,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	<V> AsyncCacheMapper.CachedDataProvider<V> initCache(AsyncDataProvider<V> provider) {
 		return AsyncCacheMapper.create(provider, CacheBuilder.newBuilder()
 				.expireAfterAccess(5, TimeUnit.MINUTES)
-				.expireAfterWrite(30, TimeUnit.MINUTES), storageExecutor);
+				.expireAfterWrite(10, TimeUnit.MINUTES), storageExecutor);
 	}
 
 	void initStorageLocal() {
