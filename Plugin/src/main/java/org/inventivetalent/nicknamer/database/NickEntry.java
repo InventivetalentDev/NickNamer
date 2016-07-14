@@ -28,10 +28,19 @@
 
 package org.inventivetalent.nicknamer.database;
 
-import org.inventivetalent.data.api.bukkit.ebean.KeyValueBean;
+import org.inventivetalent.data.ebean.KeyValueBean;
 
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-@Entity @Table(name = "nicknamer_data_nick") public class NickEntry extends KeyValueBean {
+@Entity
+@Table(name = "nicknamer_data_nick")
+public class NickEntry extends KeyValueBean {
+
+	public NickEntry() {
+	}
+
+	public NickEntry(String key, String value) {
+		super(key, value);
+	}
 }

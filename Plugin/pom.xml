@@ -86,10 +86,10 @@
                                     <include>org.inventivetalent:reflectionhelper**</include>
                                     <include>org.inventivetalent:pluginannotations**</include>
                                     <include>org.inventivetalent.spiget-update:bukkit**</include>
-                                    <include>org.inventivetalent.data:**</include>
+                                    <include>org.inventivetalent:data-api**</include>
                                     <include>org.inventivetalent:mc-wrappers**</include>
-                                    <include>redis.clients:jedis**</include>
-                                    <include>org.apache.commons:commons-pool**</include>
+                                    <!--<include>redis.clients:jedis**</include>-->
+                                    <!--<include>org.apache.commons:commons-pool**</include>-->
                                     <include>com.google.code.gson:gson**</include>
                                 </includes>
                             </artifactSet>
@@ -98,14 +98,14 @@
                                     <pattern>org.mcstats</pattern>
                                     <shadedPattern>org.inventivetalent.nicknamer.mcstats</shadedPattern>
                                 </relocation>
-                                <relocation>
-                                    <pattern>redis.clients</pattern>
-                                    <shadedPattern>org.inventivetalent.nicknamer.redis</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.apache.commons.pool</pattern>
-                                    <shadedPattern>org.inventivetalent.nicknamer.commons-pool</shadedPattern>
-                                </relocation>
+                                <!--<relocation>-->
+                                    <!--<pattern>redis.clients</pattern>-->
+                                    <!--<shadedPattern>org.inventivetalent.nicknamer.redis</shadedPattern>-->
+                                <!--</relocation>-->
+                                <!--<relocation>-->
+                                    <!--<pattern>org.apache.commons.pool</pattern>-->
+                                    <!--<shadedPattern>org.inventivetalent.nicknamer.commons-pool</shadedPattern>-->
+                                <!--</relocation>-->
                                 <relocation>
                                     <pattern>org.inventivetalent.reflection</pattern>
                                     <shadedPattern>org.inventivetalent.nicknamer.reflection</shadedPattern>
@@ -131,44 +131,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.inventivetalent.data</groupId>
-            <artifactId>api</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
-        </dependency>
-        <dependency>
-            <groupId>org.inventivetalent.data</groupId>
-            <artifactId>api-bukkit-ebean</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
-        </dependency>
-        <dependency>
-            <groupId>org.inventivetalent.data</groupId>
-            <artifactId>api-redis</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
-        </dependency>
-        <dependency>
-            <groupId>org.inventivetalent.data</groupId>
-            <artifactId>api</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
-        </dependency>
-        <dependency>
-            <groupId>org.inventivetalent.data</groupId>
-            <artifactId>api-bukkit-yaml</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
-        </dependency>
-        <dependency>
-            <groupId>org.inventivetalent.data</groupId>
-            <artifactId>api-gson</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
-        </dependency>
-        <dependency>
-            <groupId>org.inventivetalent.data</groupId>
-            <artifactId>api-sql</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
-        </dependency>
-        <dependency>
-            <groupId>org.inventivetalent.data</groupId>
-            <artifactId>api-cache</artifactId>
-            <version>[0.0.1-SNAPSHOT,)</version>
+            <groupId>org.inventivetalent</groupId>
+            <artifactId>data-api</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
