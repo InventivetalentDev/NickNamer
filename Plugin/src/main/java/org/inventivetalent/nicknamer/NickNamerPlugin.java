@@ -212,9 +212,10 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				initStorageSQL();
 				break;
 			case "redis":
-				getLogger().info("Using Redis storage (" + redisHost + ":" + redisPort + ")");
-				initStorageRedis();
-				break;
+				throw new RuntimeException("Redis storage is currently not supported.");
+//				getLogger().info("Using Redis storage (" + redisHost + ":" + redisPort + ")");
+//				initStorageRedis();
+//				break;
 		}
 
 		try {

@@ -55,8 +55,6 @@
                   <include>org.inventivetalent.spiget-update:bukkit**</include>
                   <include>org.inventivetalent:data-api**</include>
                   <include>org.inventivetalent:mc-wrappers**</include>
-                  <include>redis.clients:jedis**</include>
-                  <include>org.apache.commons:commons-pool**</include>
                   <include>com.google.code.gson:gson**</include>
                 </includes>
               </artifactSet>
@@ -64,14 +62,6 @@
                 <relocation>
                   <pattern>org.mcstats</pattern>
                   <shadedPattern>org.inventivetalent.nicknamer.mcstats</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>redis.clients</pattern>
-                  <shadedPattern>org.inventivetalent.nicknamer.redis</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.apache.commons.pool</pattern>
-                  <shadedPattern>org.inventivetalent.nicknamer.commons-pool</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.inventivetalent.reflection</pattern>
