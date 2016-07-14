@@ -57,6 +57,7 @@ import org.inventivetalent.data.mapper.AsyncCacheMapper;
 import org.inventivetalent.data.mapper.AsyncJsonValueMapper;
 import org.inventivetalent.data.mapper.AsyncStringValueMapper;
 import org.inventivetalent.data.redis.RedisDataProvider;
+import org.inventivetalent.data.sql.SQLDataProvider;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.*;
 import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
@@ -84,6 +85,9 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.PersistenceException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -196,11 +200,9 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				initStorageLocal();
 				break;
 			case "sql":
-				//TODO: SQL
-				throw new RuntimeException("SQL storage is not supported");
-				//				getLogger().info("Using SQL storage (" + sqlUser + "@" + sqlAddress + ")");
-				//				initStorageSQL();
-				//				break;
+				getLogger().info("Using SQL storage (" + sqlUser + "@" + sqlAddress + ")");
+				initStorageSQL();
+				break;
 			case "redis":
 				getLogger().info("Using Redis storage (" + redisHost + ":" + redisPort + ")");
 				initStorageRedis();
@@ -314,20 +316,28 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		//		});
 	}
 
-	//	void initStorageSQL() {
-	//		if (sqlPass == null || sqlPass.isEmpty()) { sqlPass = null; }
-	//
-	//		Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
-	//			@Override
-	//			public void run() {
-	//				//				getLogger().info("Connected to SQL");
-	//
-	//				((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_nick")));
-	//				((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new SQLDataProvider<>(String.class, sqlAddress, sqlUser, sqlPass, "nicknamer_data_skin")));
-	//				SkinLoader.setSkinDataProvider(new SQLDataProvider<>(Object.class, sqlAddress, sqlUser, sqlPass, "nicknamer_skins"));
-	//			}
-	//		});
-	//	}
+	void initStorageSQL() {
+		if (sqlPass == null || sqlPass.isEmpty()) { sqlPass = null; }
+
+		Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Connection connection = DriverManager.getConnection(sqlAddress, sqlUser, sqlPass);
+					((PluginNickManager) NickNamerAPI.getNickManager())
+							.setNickDataProvider(initCache(AsyncStringValueMapper
+									.sql(new SQLDataProvider(connection, "nicknamer_data_nick"))));
+					((PluginNickManager) NickNamerAPI.getNickManager())
+							.setSkinDataProvider(initCache(AsyncStringValueMapper
+									.sql(new SQLDataProvider(connection, "nicknamer_data_skin"))));
+					SkinLoader.setSkinDataProvider(initCache(AsyncJsonValueMapper
+							.sql(new SQLDataProvider(connection, "nicknamer_skins"))));
+				} catch (SQLException e) {
+					throw new RuntimeException("SQL connection failed", e);
+				}
+			}
+		});
+	}
 
 	void initStorageRedis() {
 		if (redisPass == null || redisPass.isEmpty()) { redisPass = null; }
@@ -450,7 +460,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 									}, 10);
 								}
 							});
-						}else{
+						} else {
 							getAPI().refreshPlayer(event.getDisguised().getUniqueId());
 						}
 					}
