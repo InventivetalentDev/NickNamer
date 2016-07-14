@@ -17,6 +17,8 @@ replace:
   tabComplete:
     chat: false
 
+updateSelf: true
+
 random:
   join:
     nick: false

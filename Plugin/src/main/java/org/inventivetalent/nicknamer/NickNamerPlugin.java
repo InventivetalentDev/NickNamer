@@ -62,6 +62,7 @@ import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.*;
 import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
+import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
 import org.inventivetalent.nicknamer.api.event.replace.*;
 import org.inventivetalent.nicknamer.api.event.skin.SkinLoadedEvent;
 import org.inventivetalent.nicknamer.command.GeneralCommands;
@@ -113,6 +114,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.scoreboardScore")  boolean replaceScoreboardScore;
 	@ConfigValue(path = "replace.scoreboardTeam")   boolean replaceScoreboardTeam;
 	@ConfigValue(path = "replace.tabComplete.chat") boolean replaceTabCompleteChat;
+
+	@ConfigValue(path = "updateSelf") boolean updateSelf = true;
 
 	//	@ConfigValue(path = "random.nick")
 	public                                         Map<String, Collection<String>> randomNicks    = new HashMap<>();
@@ -213,9 +216,9 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				break;
 			case "redis":
 				throw new RuntimeException("Redis storage is currently not supported.");
-//				getLogger().info("Using Redis storage (" + redisHost + ":" + redisPort + ")");
-//				initStorageRedis();
-//				break;
+				//				getLogger().info("Using Redis storage (" + redisHost + ":" + redisPort + ")");
+				//				initStorageRedis();
+				//				break;
 		}
 
 		try {
@@ -487,6 +490,11 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			}
 			sendPluginMessage(Bukkit.getOnlinePlayers().iterator().next(), "data", event.getOwner(), event.getGameProfile().toJson().toString());
 		}
+	}
+
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void on(PlayerRefreshEvent event) {
+		event.setSelf(updateSelf);
 	}
 
 	// Name replacement listeners
