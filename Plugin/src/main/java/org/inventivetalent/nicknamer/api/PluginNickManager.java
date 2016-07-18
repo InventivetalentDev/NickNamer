@@ -83,6 +83,14 @@ public class PluginNickManager extends SimpleNickManager {
 		return nickDataProvider.contains(uuid.toString());
 	}
 
+	public void isNicked(@Nonnull UUID uuid, @Nonnull DataCallback<Boolean> callback) {
+		if (nickDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			((AsyncCacheMapper.CachedDataProvider) nickDataProvider).contains(uuid.toString(), callback);
+		} else {
+			callback.provide(false);
+		}
+	}
+
 	@Override
 	public boolean isNickUsed(@Nonnull String nick) {
 		for (String uuid : nickDataProvider.keys()) {
@@ -305,6 +313,14 @@ public class PluginNickManager extends SimpleNickManager {
 	@Override
 	public boolean hasSkin(@Nonnull UUID uuid) {
 		return skinDataProvider.contains(uuid.toString());
+	}
+
+	public void hasSkin(@Nonnull UUID uuid, DataCallback<Boolean> callback) {
+		if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			((AsyncCacheMapper.CachedDataProvider) skinDataProvider).contains(uuid.toString(), callback);
+		} else {
+			callback.provide(false);
+		}
 	}
 
 	@Nonnull
