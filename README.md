@@ -1,6 +1,6 @@
 # NickNamer
 
-[![Build Status](http://ci.inventivetalent.org/job/NickNamer/badge/icon)](https://ci.inventivetalent.org/job/NickNamer/)
+[![Build Status](https://travis-ci.org/InventivetalentDev/NickNamer.svg?branch=master)](https://travis-ci.org/InventivetalentDev/NickNamer)
 
 Nick & Skin changer plugin with an integrated API to modify name/skin information.
 
