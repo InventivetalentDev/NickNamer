@@ -219,7 +219,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				//				initStorageRedis();
 				//				break;
 		}
-		
+
 		spigetUpdate = new SpigetUpdate(this, 5341).setUserAgent("NickNamer/" + getDescription().getVersion()).setVersionComparator(VersionComparator.SEM_VER);
 		spigetUpdate.checkForUpdate(new UpdateCallback() {
 			@Override
