@@ -122,7 +122,7 @@
         <dependency>
             <groupId>org.inventivetalent.nicknamer</groupId>
             <artifactId>api</artifactId>
-            <version>[3.0.0,)</version>
+            <version>${nn.version}</version>
         </dependency>
         <dependency>
             <groupId>org.inventivetalent</groupId>
