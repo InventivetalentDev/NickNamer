@@ -77,7 +77,6 @@ import org.inventivetalent.pluginannotations.config.ConfigValue;
 import org.inventivetalent.update.spiget.SpigetUpdate;
 import org.inventivetalent.update.spiget.UpdateCallback;
 import org.inventivetalent.update.spiget.comparator.VersionComparator;
-import org.mcstats.MetricsLite;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -220,27 +219,19 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				//				initStorageRedis();
 				//				break;
 		}
-
-		try {
-			MetricsLite metrics = new MetricsLite(this);
-			if (metrics.start()) {
-				getLogger().info("Metrics started");
+		
+		spigetUpdate = new SpigetUpdate(this, 5341).setUserAgent("NickNamer/" + getDescription().getVersion()).setVersionComparator(VersionComparator.SEM_VER);
+		spigetUpdate.checkForUpdate(new UpdateCallback() {
+			@Override
+			public void updateAvailable(String s, String s1, boolean b) {
+				getLogger().info("A new version is available (" + s + "). Download it from https://r.spiget.org/5341");
 			}
 
-			spigetUpdate = new SpigetUpdate(this, 5341).setUserAgent("NickNamer/" + getDescription().getVersion()).setVersionComparator(VersionComparator.SEM_VER);
-			spigetUpdate.checkForUpdate(new UpdateCallback() {
-				@Override
-				public void updateAvailable(String s, String s1, boolean b) {
-					getLogger().info("A new version is available (" + s + "). Download it from https://r.spiget.org/5341");
-				}
-
-				@Override
-				public void upToDate() {
-					getLogger().info("The plugin is up-to-date.");
-				}
-			});
-		} catch (Exception e) {
-		}
+			@Override
+			public void upToDate() {
+				getLogger().info("The plugin is up-to-date.");
+			}
+		});
 	}
 
 	void reload() {
