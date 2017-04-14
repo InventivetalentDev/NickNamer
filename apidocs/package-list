@@ -1,0 +1,11 @@
+org.inventivetalent.nicknamer
+org.inventivetalent.nicknamer.api
+org.inventivetalent.nicknamer.api.event
+org.inventivetalent.nicknamer.api.event.disguise
+org.inventivetalent.nicknamer.api.event.random
+org.inventivetalent.nicknamer.api.event.refresh
+org.inventivetalent.nicknamer.api.event.replace
+org.inventivetalent.nicknamer.api.event.skin
+org.inventivetalent.nicknamer.command
+org.inventivetalent.nicknamer.database
+org.inventivetalent.nicknamer.metrics
