@@ -207,9 +207,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				getLogger().info("Using temporary storage");
 				break;
 			case "local":
-				getLogger().info("Using local storage");
-				initStorageLocal();
-				break;
+				throw new RuntimeException("LOCAL STORAGE IS NO LONGER SUPPORTED! SWITCH TO SQL OR TEMP.");
+
 			case "sql":
 				getLogger().info("Using SQL storage (" + sqlUser + "@" + sqlAddress + ")");
 				initStorageSQL();
@@ -256,7 +255,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				.expireAfterWrite(10, TimeUnit.MINUTES), storageExecutor);
 	}
 
-	void initStorageLocal() {
+	/*void initStorageLocal() {
 		int nickCount = -1;
 		int skinCount = -1;
 		int dataCount = -1;
@@ -296,7 +295,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (dataCount > 0) {
 			getLogger().info("Found " + dataCount + " skin textures in database");
 			for (SkinDataEntry entry : getDatabase().find(SkinDataEntry.class).findSet()) {
-				if (System.currentTimeMillis() - entry.getLoadTime() > 3600000/*1 hour*/) {
+				if (System.currentTimeMillis() - entry.getLoadTime() > 3600000) {
 					getLogger().info("Deleting old skin for " + entry.getKey());
 					getDatabase().delete(entry);
 				}
@@ -312,7 +311,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 						return bean;
 					}
 				})));
-		//		SkinLoader.setSkinDataProvider(new EbeanDataProvider<Object>(Object.class/*We're using a custom parser/serializer, so this class doesn't matter*/, getDatabase(), SkinDataEntry.class) {
+		//		SkinLoader.setSkinDataProvider(new EbeanDataProvider<Object>(Object.class/*We're using a custom parser/serializer, so this class doesn't matter, getDatabase(), SkinDataEntry.class) {
 		//			@Override
 		//			public KeyValueBean newBean() {
 		//				SkinDataEntry bean = new SkinDataEntry();
@@ -320,7 +319,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		//				return bean;
 		//			}
 		//		});
-	}
+	}*/
 
 	void initStorageSQL() {
 		if (sqlPass == null || sqlPass.isEmpty()) { sqlPass = null; }
@@ -389,7 +388,6 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		});
 	}
 
-	@Override
 	public List<Class<?>> getDatabaseClasses() {
 		List<Class<?>> list = new ArrayList<>();
 		list.add(SkinDataEntry.class);
