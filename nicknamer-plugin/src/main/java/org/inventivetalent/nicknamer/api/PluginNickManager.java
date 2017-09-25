@@ -1,7 +1,6 @@
 package org.inventivetalent.nicknamer.api;
 
 import com.google.gson.JsonObject;
-import com.sun.istack.internal.NotNull;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -89,7 +88,7 @@ public class PluginNickManager extends SimpleNickManager {
 	}
 
 	@Override
-	public void setNick(@NotNull final UUID uuid, @NonNull final String nick) {
+	public void setNick(@NonNull final UUID uuid, @NonNull final String nick) {
 		if (nick.length() > 16) {
 			throw new IllegalArgumentException("Name is too long (" + nick.length() + " > 16)");
 		}

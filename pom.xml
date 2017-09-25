@@ -6,7 +6,7 @@
 
     <groupId>org.inventivetalent.nicknamer</groupId>
     <artifactId>nicknamer-parent</artifactId>
-    <version>3.13.3-SNAPSHOT</version>
+    <version>3.13.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>NickNamer</name>
