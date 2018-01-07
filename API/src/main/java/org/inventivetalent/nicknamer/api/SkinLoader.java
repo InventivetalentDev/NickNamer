@@ -74,29 +74,29 @@ public class SkinLoader {
 		SkinLoader.skinDataProvider = skinDataProvider;
 	}
 
-//	public static void setSkinDataProvider(SerializationDataProvider<Object> skinDataProvider) {
-//		SkinLoader.skinDataProvider = skinDataProvider;
-//		SkinLoader.skinDataProvider.setSerializer(new GsonDataSerializer<Object>() {
-//			@Override
-//			public String serialize(@NonNull Object object) {
-//				JsonObject jsonObject = new GameProfileWrapper(object).toJson();
-//				jsonObject.addProperty("loadTime", System.currentTimeMillis());
-//				return jsonObject.toString();
-//			}
-//		});
-//		SkinLoader.skinDataProvider.setParser(new GsonDataParser<Object>(Object.class) {
-//			@Override
-//			public Object parse(@NonNull String string) {
-//				JsonObject jsonObject = new JsonParser().parse(string).getAsJsonObject();
-//				if (jsonObject.has("loadTime")) {
-//					if (System.currentTimeMillis() - jsonObject.get("loadTime").getAsLong() > 3600000/* 1 hour */) {
-//						return null;//return null, so the updated skin can be inserted
-//					}
-//				}
-//				return new GameProfileWrapper(jsonObject).getHandle();
-//			}
-//		});
-//	}
+	//	public static void setSkinDataProvider(SerializationDataProvider<Object> skinDataProvider) {
+	//		SkinLoader.skinDataProvider = skinDataProvider;
+	//		SkinLoader.skinDataProvider.setSerializer(new GsonDataSerializer<Object>() {
+	//			@Override
+	//			public String serialize(@NonNull Object object) {
+	//				JsonObject jsonObject = new GameProfileWrapper(object).toJson();
+	//				jsonObject.addProperty("loadTime", System.currentTimeMillis());
+	//				return jsonObject.toString();
+	//			}
+	//		});
+	//		SkinLoader.skinDataProvider.setParser(new GsonDataParser<Object>(Object.class) {
+	//			@Override
+	//			public Object parse(@NonNull String string) {
+	//				JsonObject jsonObject = new JsonParser().parse(string).getAsJsonObject();
+	//				if (jsonObject.has("loadTime")) {
+	//					if (System.currentTimeMillis() - jsonObject.get("loadTime").getAsLong() > 3600000/* 1 hour */) {
+	//						return null;//return null, so the updated skin can be inserted
+	//					}
+	//				}
+	//				return new GameProfileWrapper(jsonObject).getHandle();
+	//			}
+	//		});
+	//	}
 
 	static Object jsonToProfile(JsonObject jsonObject) {
 		if (jsonObject == null) { return null; }
@@ -131,7 +131,7 @@ public class SkinLoader {
 		if (profile == null && skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
 			final CountDownLatch latch = new CountDownLatch(1);
 			final Object[] profile1 = new Object[1];
- 			((AsyncCacheMapper.CachedDataProvider<JsonObject>)skinDataProvider).get(owner, new DataCallback<JsonObject>() {
+			((AsyncCacheMapper.CachedDataProvider<JsonObject>) skinDataProvider).get(owner, new DataCallback<JsonObject>() {
 				@Override
 				public void provide(@Nullable JsonObject jsonObject) {
 					profile1[0] = jsonToProfile(jsonObject);

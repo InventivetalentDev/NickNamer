@@ -132,7 +132,19 @@ public class PluginNickManager extends SimpleNickManager {
 				}
 			});
 		} else {
-			nickDataProvider.put(uuid.toString(), nick);
+			Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+				@Override
+				public void run() {
+					nickDataProvider.put(uuid.toString(), nick);
+					Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+						@Override
+						public void run() {
+							refreshPlayer(uuid);
+						}
+					}, 20);
+				}
+			});
+
 		}
 	}
 
@@ -234,7 +246,19 @@ public class PluginNickManager extends SimpleNickManager {
 				}
 			});
 		} else {
-			skinDataProvider.put(uuid.toString(), skinOwner);
+			Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+				@Override
+				public void run() {
+					skinDataProvider.put(uuid.toString(), skinOwner);
+					SkinLoader.loadSkin(skinOwner);
+					Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+						@Override
+						public void run() {
+							refreshPlayer(uuid);
+						}
+					}, 20);
+				}
+			});
 		}
 
 		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "skin", skinOwner); }

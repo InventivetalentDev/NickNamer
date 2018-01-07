@@ -107,7 +107,8 @@ public class PacketListener extends PacketHandler {
 						List list = new ArrayList<>((List) profileHandle);
 						for (Object object : list) {
 							Field field = PlayerInfoDataFieldResolver.resolve("d");
-							field.set(object, disguiseProfile(packet.getPlayer(), new GameProfileWrapper(field.get(object))).getHandle());
+							Object disguised=disguiseProfile(packet.getPlayer(), new GameProfileWrapper(field.get(object))).getHandle();
+							field.set(object, disguised);
 						}
 					}
 				} catch (Exception e) {
