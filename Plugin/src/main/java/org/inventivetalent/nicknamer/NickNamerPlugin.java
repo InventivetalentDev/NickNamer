@@ -51,8 +51,6 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.inventivetalent.apihelper.APIManager;
 import org.inventivetalent.data.async.AsyncDataProvider;
 import org.inventivetalent.data.async.DataCallback;
-import org.inventivetalent.data.ebean.BeanProvider;
-import org.inventivetalent.data.ebean.EbeanDataProvider;
 import org.inventivetalent.data.mapper.AsyncCacheMapper;
 import org.inventivetalent.data.mapper.AsyncJsonValueMapper;
 import org.inventivetalent.data.mapper.AsyncStringValueMapper;
@@ -85,7 +83,6 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -131,7 +128,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "names.chatFormat",
 				 colorChar = '&') public String namesChatFormat = "%s§r";
 
-	@ConfigValue(path = "storage.type") String storageType = "local";
+	@ConfigValue(path = "storage.type") String storageType = "temporary";
 
 	@ConfigValue(path = "storage.sql.address") String sqlAddress;
 	//	@ConfigValue(path = "storage.sql.host") String sqlHost;

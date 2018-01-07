@@ -48,13 +48,11 @@ storage:
   # Storage type
   # - temporary
   #     saves all data in memory until the server is stopped
-  # - local (recommended)
-  #     creates a local database or uses the database specified in bukkit.yml
   # - sql
   #     uses an SQL server
   # - redis
   #     uses a Redis server
-  type: "local"
+  type: "temporary"
   sql:
     address: "jdbc:mysql://localhost:3306/minecraft"
     user: ""
