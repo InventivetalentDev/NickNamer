@@ -48,11 +48,13 @@ storage:
   # Storage type
   # - temporary
   #     saves all data in memory until the server is stopped
+  # - local (recommended)
+  #     creates a local database
   # - sql
   #     uses an SQL server
   # - redis
   #     uses a Redis server
-  type: "temporary"
+  type: "local"
   sql:
     address: "jdbc:mysql://localhost:3306/minecraft"
     user: ""
