@@ -56,6 +56,7 @@ import org.inventivetalent.data.mapper.AsyncJsonValueMapper;
 import org.inventivetalent.data.mapper.AsyncStringValueMapper;
 import org.inventivetalent.data.redis.RedisDataProvider;
 import org.inventivetalent.data.sql.SQLDataProvider;
+import org.inventivetalent.data.sqlite.SQLiteDataProvider;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.*;
 import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
@@ -83,6 +84,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -204,8 +206,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				getLogger().info("Using temporary storage");
 				break;
 			case "local":
-				throw new RuntimeException("LOCAL STORAGE IS NO LONGER SUPPORTED! SWITCH TO SQL OR TEMP.");
-
+				initStorageLocal();
+				break;
 			case "sql":
 				getLogger().info("Using SQL storage (" + sqlUser + "@" + sqlAddress + ")");
 				initStorageSQL();
@@ -317,6 +319,25 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		//			}
 		//		});
 	}*/
+
+	void initStorageLocal() {
+		File dbFile = new File(getDataFolder(), "nicknamer.db");
+		String url = "jdbc:sqlite:" + dbFile.getAbsolutePath();
+		try {
+			Connection connection = DriverManager.getConnection(url);
+
+			((PluginNickManager) NickNamerAPI.getNickManager())
+					.setNickDataProvider(initCache(AsyncStringValueMapper
+							.sqlite(new SQLiteDataProvider(connection, "nicknamer_data_nick"))));
+			((PluginNickManager) NickNamerAPI.getNickManager())
+					.setSkinDataProvider(initCache(AsyncStringValueMapper
+							.sqlite(new SQLiteDataProvider(connection, "nicknamer_data_skin"))));
+			SkinLoader.setSkinDataProvider(initCache(AsyncJsonValueMapper
+					.sqlite(new SQLiteDataProvider(connection, "nicknamer_skins"))));
+		} catch (SQLException e) {
+			throw new RuntimeException("Local SQL connection failed", e);
+		}
+	}
 
 	void initStorageSQL() {
 		if (sqlPass == null || sqlPass.isEmpty()) { sqlPass = null; }
