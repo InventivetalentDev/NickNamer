@@ -40,9 +40,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 /**
- * Note: If you only use the API artifact without the plugin installed, you will only be able to use the {@link #refreshPlayer(UUID)} methods.
- * <p>
- * It's recommended to use the {@link org.inventivetalent.nicknamer.api.event.disguise.ProfileDisguiseEvent}s, but you can also use these methods if the plugin is installed
+ * Note: If you only use the API artifact without the plugin installed, you will only be able to use the {@link #refreshPlayer(UUID)} methods. <p> It's recommended to use the {@link org.inventivetalent.nicknamer.api.event.disguise.ProfileDisguiseEvent}s, but you can also use these methods if the plugin is installed
  */
 public interface NickManager {
 
@@ -91,6 +89,13 @@ public interface NickManager {
 	Collection<String> getUsedNicks();
 
 	////////////////////////
+
+	/**
+	 * @param uuid     {@link UUID} of the player
+	 * @param skin     skin owner
+	 * @param callback Callback to be called when the skin has been loaded and applied to the player
+	 */
+	void setSkin(@Nonnull UUID uuid, @Nonnull String skin, @Nullable Callback callback);
 
 	/**
 	 * @param uuid {@link UUID} of the player

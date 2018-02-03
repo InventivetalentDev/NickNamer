@@ -39,6 +39,7 @@ import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -188,6 +189,11 @@ public class SimpleNickManager implements NickManager {
 	@Nonnull
 	@Override
 	public List<String> getUsedNicks() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setSkin(@Nonnull UUID uuid, @Nonnull String skin, @Nullable Callback callback) {
 		throw new UnsupportedOperationException();
 	}
 

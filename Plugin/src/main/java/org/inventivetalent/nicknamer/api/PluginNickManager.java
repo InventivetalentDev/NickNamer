@@ -42,6 +42,7 @@ import org.inventivetalent.nicknamer.NickNamerPlugin;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -229,7 +230,7 @@ public class PluginNickManager extends SimpleNickManager {
 	}
 
 	@Override
-	public void setSkin(@Nonnull final UUID uuid, @Nonnull final String skinOwner) {
+	public void setSkin(@Nonnull final UUID uuid, @Nonnull final String skinOwner, @Nullable final Callback callback) {
 		if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
 			((AsyncCacheMapper.CachedDataProvider<String>) skinDataProvider).put(uuid.toString(), new DataCallable<String>() {
 				@Nonnull
@@ -242,6 +243,9 @@ public class PluginNickManager extends SimpleNickManager {
 							refreshPlayer(uuid);
 						}
 					}, 20);
+					if (callback != null) {
+						callback.call();
+					}
 					return skinOwner;
 				}
 			});
@@ -257,11 +261,19 @@ public class PluginNickManager extends SimpleNickManager {
 							refreshPlayer(uuid);
 						}
 					}, 20);
+					if (callback != null) {
+						callback.call();
+					}
 				}
 			});
 		}
 
 		if (((NickNamerPlugin) plugin).bungeecord) { ((NickNamerPlugin) plugin).sendPluginMessage(Bukkit.getPlayer(uuid), "skin", skinOwner); }
+	}
+
+	@Override
+	public void setSkin(@Nonnull UUID uuid, @Nonnull String skinOwner) {
+		setSkin(uuid, skinOwner, null);
 	}
 
 	@Override

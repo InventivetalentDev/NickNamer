@@ -33,6 +33,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.inventivetalent.nicknamer.NickNamerPlugin;
+import org.inventivetalent.nicknamer.api.Callback;
 import org.inventivetalent.nicknamer.api.NickNamerAPI;
 import org.inventivetalent.pluginannotations.command.Command;
 import org.inventivetalent.pluginannotations.command.OptionalArg;
@@ -64,7 +65,7 @@ public class SkinCommands {
 			 max = 2,
 			 errorHandler = NickNamerErrorHandler.class)
 	@Permission("nick.command.skin")
-	public void skin(CommandSender sender, final String skin, @OptionalArg String targetName) {
+	public void skin(final CommandSender sender, final String skin, @OptionalArg String targetName) {
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
 		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
 		if (target == null) { return; }
@@ -81,14 +82,24 @@ public class SkinCommands {
 			throw new PermissionException("nick.skin." + skin);
 		}
 
-		sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.changed", "skin.changed", new MessageFormatter() {
+		sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.changing", "skin.changing", new MessageFormatter() {
 			@Override
 			public String format(String key, String message) {
 				return message.replace("%player%", target.getName()).replace("%skin%", skin);
 			}
 		}));
 		//		if (!skin.equals(NickNamerAPI.getNickManager().getSkin(target.getUniqueId()))) {
-		NickNamerAPI.getNickManager().setSkin(target.getUniqueId(), skin);
+		NickNamerAPI.getNickManager().setSkin(target.getUniqueId(), skin, new Callback() {
+			@Override
+			public void call() {
+				sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.changed", "skin.changed", new MessageFormatter() {
+					@Override
+					public String format(String key, String message) {
+						return message.replace("%player%", target.getName()).replace("%skin%", skin);
+					}
+				}));
+			}
+		});
 		//		}
 	}
 
