@@ -229,6 +229,12 @@ public class PluginNickManager extends SimpleNickManager {
 		return nicks;
 	}
 
+	public void refreshCachedNick(@Nonnull UUID player) {
+		if (nickDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			((AsyncCacheMapper.CachedDataProvider) nickDataProvider).refresh(player.toString());
+		}
+	}
+
 	@Override
 	public void setSkin(@Nonnull final UUID uuid, @Nonnull final String skinOwner, @Nullable final Callback callback) {
 		if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
@@ -274,6 +280,12 @@ public class PluginNickManager extends SimpleNickManager {
 	@Override
 	public void setSkin(@Nonnull UUID uuid, @Nonnull String skinOwner) {
 		setSkin(uuid, skinOwner, null);
+	}
+
+	public void refreshCachedSkin(UUID player) {
+		if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			((AsyncCacheMapper.CachedDataProvider) skinDataProvider).refresh(player.toString());
+		}
 	}
 
 	@Override

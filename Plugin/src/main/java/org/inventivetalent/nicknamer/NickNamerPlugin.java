@@ -446,6 +446,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (event.isCancelled()) { return; }
 		if (getAPI().isNicked(event.getDisguised().getUniqueId())) {
 			event.setNick(getAPI().getNick(event.getDisguised().getUniqueId()));
+
+			((PluginNickManager) getAPI()).refreshCachedNick(event.getDisguised().getUniqueId());
 		} else {
 			((PluginNickManager) getAPI()).getNick(event.getDisguised().getUniqueId(), new DataCallback<String>() {
 				@Override
@@ -463,6 +465,9 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (event.isCancelled()) { return; }
 		if (getAPI().hasSkin(event.getDisguised().getUniqueId())) {
 			event.setSkin(getAPI().getSkin(event.getDisguised().getUniqueId()));
+
+			((PluginNickManager) getAPI()).refreshCachedSkin(event.getDisguised().getUniqueId());
+			if (event.getSkin() != null) { SkinLoader.refreshCachedData(event.getSkin()); }
 		} else {
 			((PluginNickManager) getAPI()).getSkin(event.getDisguised().getUniqueId(), new DataCallback<String>() {
 				@Override
@@ -488,6 +493,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 					}
 				}
 			});
+
 		}
 	}
 

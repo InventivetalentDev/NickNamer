@@ -180,4 +180,10 @@ public class SkinLoader {
 		return profile;
 	}
 
+	public static void refreshCachedData(@Nonnull String owner) {
+		if (skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
+			((AsyncCacheMapper.CachedDataProvider) skinDataProvider).refresh(owner);
+		}
+	}
+
 }
