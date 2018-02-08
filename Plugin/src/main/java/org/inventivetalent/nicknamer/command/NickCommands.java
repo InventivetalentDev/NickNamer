@@ -88,6 +88,9 @@ public class NickCommands {
 		if (nick.length() > 16) {
 			nick = nick.substring(0, 16);
 		}
+		if (plugin.nameSpaces) {
+			nick = nick.replace("_", " ").replace("  ", "_");
+		}
 
 		final String finalNick = nick;
 		sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("name.changed", "name.changed", new MessageFormatter() {
@@ -102,7 +105,8 @@ public class NickCommands {
 	@Command(name = "clearNick",
 			 aliases = {
 					 "nickclear",
-					 "resetnick" },
+					 "resetnick"
+			 },
 			 usage = "[Player]",
 			 description = "Reset your own, or another player's nick name",
 			 min = 0,
@@ -160,7 +164,8 @@ public class NickCommands {
 					 "nickrefresh",
 					 "refreshskin",
 					 "reloadskin",
-					 "reloadnick" },
+					 "reloadnick"
+			 },
 			 usage = "[Player]",
 			 description = "Refresh the displayed skin",
 			 min = 0,
@@ -180,7 +185,8 @@ public class NickCommands {
 	@Command(name = "listNames",
 			 aliases = {
 					 "nicklist",
-					 "listnick" },
+					 "listnick"
+			 },
 			 description = "Get a list of used names",
 			 max = 0)
 	@Permission("nick.command.name.list")

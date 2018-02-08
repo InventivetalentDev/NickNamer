@@ -41,6 +41,9 @@ names:
   # Format for names in chat messages
   chatFormat: "%s&r"
 
+  # Allow names with spaces. This replaces underscores ("_") in names with a space - Double underscores ("__") are displayed as single underscores.
+  spaces: false
+
 #Enable this if this server is behind a BungeeCord server
 bungeecord: false
 

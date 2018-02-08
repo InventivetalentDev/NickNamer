@@ -125,10 +125,11 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@ConfigValue(path = "bungeecord") public boolean bungeecord;
 
+	@ConfigValue(path = "names.spaces") public boolean nameSpaces      = false;
 	@ConfigValue(path = "names.format",
-				 colorChar = '&') public String namesFormat     = "%s";
+				 colorChar = '&') public       String  namesFormat     = "%s";
 	@ConfigValue(path = "names.chatFormat",
-				 colorChar = '&') public String namesChatFormat = "%s§r";
+				 colorChar = '&') public       String  namesChatFormat = "%s§r";
 
 	@ConfigValue(path = "storage.type") String storageType = "temporary";
 
