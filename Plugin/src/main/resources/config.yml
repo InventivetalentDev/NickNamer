@@ -88,7 +88,7 @@ messages:
       changed: "&aChanged &b%player%'s &askin to &b%skin%'s&a skin."
       cleared: "&aCleared &b%player%'s &askin"
       list:
-        used: "&eUsed names:"
+        used: "&eUsed skins:"
         format: "&r%s &eis used by&r %s"
       error:
         length: "&cThe specified skin is too long"
