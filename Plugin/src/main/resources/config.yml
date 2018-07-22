@@ -84,7 +84,7 @@ messages:
         list:
           empty: "&cThere are no used names"
     skin:
-      changing: "&7Changing &b%player's &7skin to &b%skin%'s&7 skin..."
+      changing: "&7Changing &b%player%'s &7skin to &b%skin%'s&7 skin..."
       changed: "&aChanged &b%player%'s &askin to &b%skin%'s&a skin."
       cleared: "&aCleared &b%player%'s &askin"
       list:
