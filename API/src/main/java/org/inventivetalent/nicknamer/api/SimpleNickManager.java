@@ -116,6 +116,9 @@ public class SimpleNickManager implements NickManager {
 
 			NickNamerAPI.packetListener.sendPacket(player, removePlayer);
 
+			//TODO: might want to send two respawn packets to get rid of the chunk unloading weirdness
+			//  (https://wiki.vg/Protocol#Respawn)
+
 			Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
 				@Override
 				public void run() {
