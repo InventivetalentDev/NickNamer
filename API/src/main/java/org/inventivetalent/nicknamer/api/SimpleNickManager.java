@@ -36,6 +36,7 @@ import org.bukkit.plugin.Plugin;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.event.NickNamerSelfUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
+import org.inventivetalent.reflection.minecraft.Minecraft;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
@@ -50,9 +51,10 @@ import java.util.UUID;
  */
 public class SimpleNickManager implements NickManager {
 
-	Class EnumDifficulty = SkinLoader.nmsClassResolver.resolveSilent("EnumDifficulty");
-	Class WorldType      = SkinLoader.nmsClassResolver.resolveSilent("WorldType");
-	Class EnumGamemode   = SkinLoader.nmsClassResolver.resolveSilent("WorldSettings$EnumGamemode", "EnumGamemode");
+	Class DimensionManager = SkinLoader.nmsClassResolver.resolveSilent("DimensionManager");
+	Class EnumDifficulty   = SkinLoader.nmsClassResolver.resolveSilent("EnumDifficulty");
+	Class WorldType        = SkinLoader.nmsClassResolver.resolveSilent("WorldType");
+	Class EnumGamemode     = SkinLoader.nmsClassResolver.resolveSilent("WorldSettings$EnumGamemode", "EnumGamemode");
 
 	protected Plugin plugin;
 
@@ -108,27 +110,58 @@ public class SimpleNickManager implements NickManager {
 		try {
 			final Object removePlayer = ClassBuilder.buildPlayerInfoPacket(4, event.getGameProfile(), 0, event.getGameMode().ordinal(), event.getName());
 			final Object addPlayer = ClassBuilder.buildPlayerInfoPacket(0, event.getGameProfile(), 0, event.getGameMode().ordinal(), event.getName());
-			int dimension = player.getWorld().getEnvironment().getId();
-			Object difficulty = EnumDifficulty.getDeclaredMethod("getById", int.class).invoke(null, event.getDifficulty().getValue());
-			Object type = ((Object[]) WorldType.getDeclaredField("types").get(null))[0];
-			Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
-			final Object respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn").getConstructor(int.class, EnumDifficulty, WorldType, EnumGamemode).newInstance(dimension, difficulty, type, gamemode);
 
 			NickNamerAPI.packetListener.sendPacket(player, removePlayer);
 
 			//TODO: might want to send two respawn packets to get rid of the chunk unloading weirdness
 			//  (https://wiki.vg/Protocol#Respawn)
+			//   -> tried that, turns out the client needs a chunk update right after the respawn packet, so we'd have to add that aswell
+
+			final Object respawnPlayer;
+			if (Minecraft.VERSION.newerThan(Minecraft.Version.v1_13_R1)) {
+				Object dimensionManager;
+				switch (player.getWorld().getEnvironment()) {
+					case NETHER:
+						dimensionManager = DimensionManager.getDeclaredField("NETHER").get(null);
+						break;
+					case THE_END:
+						dimensionManager = DimensionManager.getDeclaredField("THE_END").get(null);
+						break;
+					case NORMAL:
+					default:
+						dimensionManager = DimensionManager.getDeclaredField("OVERWORLD").get(null);
+						break;
+				}
+
+				Object difficulty = EnumDifficulty.getEnumConstants()[event.getDifficulty().ordinal()];
+
+				Object type = ((Object[]) WorldType.getDeclaredField("types").get(null))[0];
+				Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
+
+				respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
+						.getConstructor(DimensionManager, EnumDifficulty, WorldType, EnumGamemode)
+						.newInstance(dimensionManager, difficulty, type, gamemode);
+			} else {
+				int dimension = player.getWorld().getEnvironment().getId();
+				Object difficulty = EnumDifficulty.getDeclaredMethod("getById", int.class).invoke(null, event.getDifficulty().getValue());
+				Object type = ((Object[]) WorldType.getDeclaredField("types").get(null))[0];
+				Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
+
+				respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
+						.getConstructor(int.class, EnumDifficulty, WorldType, EnumGamemode)
+						.newInstance(dimension, difficulty, type, gamemode);
+			}
+
+			final boolean flying = player.isFlying();
+			final Location location = player.getLocation();
+			final int level = player.getLevel();
+			final float xp = player.getExp();
+			final double maxHealth = player.getMaxHealth();
+			final double health = player.getHealth();
 
 			Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
 				@Override
 				public void run() {
-					boolean flying = player.isFlying();
-					Location location = player.getLocation();
-					int level = player.getLevel();
-					float xp = player.getExp();
-					double maxHealth = player.getMaxHealth();
-					double health = player.getHealth();
-
 					NickNamerAPI.packetListener.sendPacket(player, respawnPlayer);
 
 					player.setFlying(flying);
