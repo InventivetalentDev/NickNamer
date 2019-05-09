@@ -157,7 +157,6 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		int majorVersion = Integer.parseInt(javaVersion.split("\\.")[1]);
 		if (majorVersion < 8) {
 			getLogger().severe("Please use Java 8 or higher (is " + majorVersion + ")");
-			throw new RuntimeException("NickNamer requires Java 8+");
 		}
 
 		APIManager.require(PacketListenerAPI.class, this);
