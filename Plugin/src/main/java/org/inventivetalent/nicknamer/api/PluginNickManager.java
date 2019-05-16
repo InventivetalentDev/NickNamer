@@ -414,14 +414,12 @@ public class PluginNickManager extends SimpleNickManager {
 		return false;
 	}
 
-	private void executeUnnickCommands(final UUID uuid)
-	{
+	private void executeUnnickCommands(final UUID uuid)	{
 		NickNamerPlugin.instance.getConfig().getStringList("execution.on-unnick.console").forEach( cmd -> Bukkit.getServer().dispatchCommand( Bukkit.getConsoleSender(), cmd ) );
 		NickNamerPlugin.instance.getConfig().getStringList("execution.on-unnick.player").forEach( cmd -> Optional.ofNullable(Bukkit.getServer().getPlayer(uuid)).ifPresent( p -> p.performCommand(cmd) ) );
 	}
 
-	private void executeNickCommands(final UUID uuid)
-	{
+	private void executeNickCommands(final UUID uuid) {
 		NickNamerPlugin.instance.getConfig().getStringList("execution.on-nick.console").forEach( cmd -> Bukkit.getServer().dispatchCommand( Bukkit.getConsoleSender(), cmd ) );
 		NickNamerPlugin.instance.getConfig().getStringList("execution.on-nick.player").forEach( cmd -> Optional.ofNullable(Bukkit.getServer().getPlayer(uuid)).ifPresent( p -> p.performCommand(cmd) ) );
 	}
