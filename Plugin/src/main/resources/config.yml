@@ -68,6 +68,25 @@ storage:
     pass: ""
     max-connections: 4
 
+execution:
+
+  on-nick:
+    # Commands that should be executed by the console when players nick themselves.
+    console:
+      #- aCommand
+
+    # Commands that should be executed by players when they nick themselves.
+    player:
+      #- ping
+
+  on-unnick:
+    # Commands that should be executed by the console when players unnick themselves.
+    console:
+      #- aCommand
+
+    # Commands that should be executed by players when they unnick themselves.
+    player:
+      #- ping
 
 messages:
   command:

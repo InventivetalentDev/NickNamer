@@ -43,10 +43,7 @@ import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class PluginNickManager extends SimpleNickManager {
 
@@ -127,6 +124,7 @@ public class PluginNickManager extends SimpleNickManager {
 						@Override
 						public void run() {
 							refreshPlayer(uuid);
+							executeNickCommands(uuid);
 						}
 					}, 20);
 					return nick;
@@ -141,6 +139,7 @@ public class PluginNickManager extends SimpleNickManager {
 						@Override
 						public void run() {
 							refreshPlayer(uuid);
+							executeNickCommands(uuid);
 						}
 					}, 20);
 				}
@@ -195,6 +194,7 @@ public class PluginNickManager extends SimpleNickManager {
 					@Override
 					public void run() {
 						refreshPlayer(uuid);
+						executeUnnickCommands(uuid);
 					}
 				}, 10);
 			}
@@ -412,5 +412,15 @@ public class PluginNickManager extends SimpleNickManager {
 	@Override
 	public boolean isSimple() {
 		return false;
+	}
+
+	private void executeUnnickCommands(final UUID uuid)	{
+		NickNamerPlugin.instance.getConfig().getStringList("execution.on-unnick.console").forEach( cmd -> Bukkit.getServer().dispatchCommand( Bukkit.getConsoleSender(), cmd ) );
+		NickNamerPlugin.instance.getConfig().getStringList("execution.on-unnick.player").forEach( cmd -> Optional.ofNullable(Bukkit.getServer().getPlayer(uuid)).ifPresent( p -> p.performCommand(cmd) ) );
+	}
+
+	private void executeNickCommands(final UUID uuid) {
+		NickNamerPlugin.instance.getConfig().getStringList("execution.on-nick.console").forEach( cmd -> Bukkit.getServer().dispatchCommand( Bukkit.getConsoleSender(), cmd ) );
+		NickNamerPlugin.instance.getConfig().getStringList("execution.on-nick.player").forEach( cmd -> Optional.ofNullable(Bukkit.getServer().getPlayer(uuid)).ifPresent( p -> p.performCommand(cmd) ) );
 	}
 }
