@@ -71,6 +71,7 @@ import org.inventivetalent.nicknamer.database.NickEntry;
 import org.inventivetalent.nicknamer.database.SkinDataEntry;
 import org.inventivetalent.nicknamer.database.SkinEntry;
 import org.inventivetalent.nicknamer.metrics.Metrics;
+import org.inventivetalent.nicknamer.util.NickNamerPlaceholders;
 import org.inventivetalent.packetlistener.PacketListenerAPI;
 import org.inventivetalent.pluginannotations.PluginAnnotations;
 import org.inventivetalent.pluginannotations.config.ConfigValue;
@@ -233,6 +234,11 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				getLogger().info("The plugin is up-to-date.");
 			}
 		});
+
+		if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null){
+			getLogger().info("Registering placeholders.");
+			new NickNamerPlaceholders().register();
+		};
 	}
 
 	void reload() {
