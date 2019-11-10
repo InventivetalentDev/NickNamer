@@ -53,9 +53,13 @@ public class NickDisguiseEvent extends ProfileDisguiseEvent implements Cancellab
 	private final String originalNick;
 	private       String nick;
 
-	public NickDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String nick) {
-		super(disguised, receiver, gameProfile);
+	public NickDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String nick, boolean async) {
+		super(disguised, receiver, gameProfile, async);
 		this.originalNick = this.nick = nick;
+	}
+
+	public NickDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String nick) {
+		this(disguised, receiver, gameProfile, nick, false);
 	}
 
 	/**

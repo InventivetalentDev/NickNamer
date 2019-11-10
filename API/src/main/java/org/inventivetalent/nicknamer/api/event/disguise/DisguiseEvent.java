@@ -43,9 +43,14 @@ public abstract class DisguiseEvent extends Event implements Cancellable {
 
 	private boolean cancelled;
 
-	public DisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver) {
+	public DisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, boolean async) {
+		super(async);
 		this.disguised = disguised;
 		this.receiver = receiver;
+	}
+
+	public DisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver) {
+		this(disguised, receiver, false);
 	}
 
 	@Nullable

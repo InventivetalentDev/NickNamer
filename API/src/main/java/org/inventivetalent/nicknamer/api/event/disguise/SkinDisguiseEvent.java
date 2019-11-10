@@ -53,9 +53,13 @@ public class SkinDisguiseEvent extends ProfileDisguiseEvent implements Cancellab
 	private final String originalSkin;
 	private       String skin;
 
-	public SkinDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String skin) {
-		super(disguised, receiver, gameProfile);
+	public SkinDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String skin, boolean async) {
+		super(disguised, receiver, gameProfile, async);
 		this.originalSkin = this.skin = skin;
+	}
+
+	public SkinDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String skin) {
+		this(disguised, receiver, gameProfile, skin, false);
 	}
 
 	/**

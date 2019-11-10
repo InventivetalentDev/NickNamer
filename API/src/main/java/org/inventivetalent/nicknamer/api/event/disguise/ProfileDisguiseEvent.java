@@ -45,9 +45,13 @@ public abstract class ProfileDisguiseEvent extends DisguiseEvent implements Canc
 
 	private boolean cancelled;
 
-	public ProfileDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile) {
-		super(disguised, receiver);
+	public ProfileDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, boolean async) {
+		super(disguised, receiver, async);
 		this.gameProfile = gameProfile;
+	}
+
+	public ProfileDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile) {
+		this(disguised, receiver, gameProfile, false);
 	}
 
 	/**
