@@ -138,9 +138,15 @@ public class SimpleNickManager implements NickManager {
 				Object type = ((Object[]) WorldType.getDeclaredField("types").get(null))[0];
 				Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
 
-				respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
-						.getConstructor(DimensionManager, EnumDifficulty, WorldType, EnumGamemode)
-						.newInstance(dimensionManager, difficulty, type, gamemode);
+				if (Minecraft.VERSION.newerThan(Minecraft.Version.v1_14_R1)) {
+					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
+							.getConstructor(DimensionManager, WorldType, EnumGamemode)
+							.newInstance(dimensionManager, type, gamemode);
+				} else {
+					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
+							.getConstructor(DimensionManager, EnumDifficulty, WorldType, EnumGamemode)
+							.newInstance(dimensionManager, difficulty, type, gamemode);
+				}
 			} else {
 				int dimension = player.getWorld().getEnvironment().getId();
 				Object difficulty = EnumDifficulty.getDeclaredMethod("getById", int.class).invoke(null, event.getDifficulty().getValue());
