@@ -250,8 +250,10 @@ public class PacketListener extends PacketHandler {
 			return profileWrapper;//Player to disguise doesn't exist
 		}
 
-		NickDisguiseEvent nickDisguiseEvent = new NickDisguiseEvent(toDisguise, observer, profileWrapper, name);
-		SkinDisguiseEvent skinDisguiseEvent = new SkinDisguiseEvent(toDisguise, observer, profileWrapper, name);
+		boolean async = !getPlugin().getServer().isPrimaryThread();
+
+		NickDisguiseEvent nickDisguiseEvent = new NickDisguiseEvent(toDisguise, observer, profileWrapper, name, async);
+		SkinDisguiseEvent skinDisguiseEvent = new SkinDisguiseEvent(toDisguise, observer, profileWrapper, name, async);
 		Bukkit.getPluginManager().callEvent(nickDisguiseEvent);
 		Bukkit.getPluginManager().callEvent(skinDisguiseEvent);
 
