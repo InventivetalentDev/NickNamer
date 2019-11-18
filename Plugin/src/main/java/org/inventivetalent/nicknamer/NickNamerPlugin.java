@@ -161,7 +161,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		boolean aboveJava8 = major > 1 || major == 1 && minor > 8;
 
 		getLogger().info("Java Version: " + javaVersion);
-		if (!aboveJava8 && Integer.parseInt(javaVersionParts[1]) < 8) {
+		if (!aboveJava8 && minor < 8) {
 			getLogger().severe("Please use Java 8 or higher (is " + javaVersionParts[1] + ")");
 		}
 
