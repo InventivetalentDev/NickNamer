@@ -74,7 +74,8 @@ public class SimpleNickManager implements NickManager {
 	public void refreshPlayer(@Nonnull final Player player) {
 		if (!player.isOnline()) { return; }
 
-		PlayerRefreshEvent refreshEvent = new PlayerRefreshEvent(player, true);
+		boolean async = !plugin.getServer().isPrimaryThread();
+		PlayerRefreshEvent refreshEvent = new PlayerRefreshEvent(player, true, async);
 		Bukkit.getPluginManager().callEvent(refreshEvent);
 		if (refreshEvent.isCancelled()) { return; }
 

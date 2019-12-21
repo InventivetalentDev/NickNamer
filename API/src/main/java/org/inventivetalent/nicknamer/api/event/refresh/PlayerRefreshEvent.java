@@ -40,6 +40,13 @@ public class PlayerRefreshEvent extends Event implements Cancellable {
 
 	private boolean cancelled;
 
+
+	public PlayerRefreshEvent(Player player, boolean self, boolean async) {
+		super(async);
+		this.player = player;
+		this.self = self;
+	}
+
 	public PlayerRefreshEvent(Player player, boolean self) {
 		this.player = player;
 		this.self = self;
