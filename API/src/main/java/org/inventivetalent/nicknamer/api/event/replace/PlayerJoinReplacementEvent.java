@@ -39,6 +39,10 @@ import java.util.Collection;
  */
 public class PlayerJoinReplacementEvent extends ChatReplacementEvent {
 
+	public PlayerJoinReplacementEvent(@Nonnull Player disguised, @Nonnull Collection<? extends Player> receivers, @Nonnull String context, @Nonnull String original, @Nullable String replacement, boolean async) {
+		super(disguised, receivers, ReplaceType.PLAYER_JOIN, context, original, replacement, async);
+	}
+
 	public PlayerJoinReplacementEvent(@Nonnull Player disguised, @Nonnull Collection<? extends Player> receivers, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
 		super(disguised, receivers, ReplaceType.PLAYER_JOIN, context, original, replacement);
 	}

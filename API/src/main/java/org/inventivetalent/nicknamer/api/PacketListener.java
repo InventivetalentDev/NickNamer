@@ -128,7 +128,8 @@ public class PacketListener extends PacketHandler {
 								public String replace(String original) {
 									Player player = Bukkit.getPlayer(original);
 									if (player != null) {
-										ChatOutReplacementEvent replacementEvent = new ChatOutReplacementEvent(player, packet.getPlayer(), message, original, original);
+										boolean async = !getPlugin().getServer().isPrimaryThread();
+										ChatOutReplacementEvent replacementEvent = new ChatOutReplacementEvent(player, packet.getPlayer(), message, original, original, async);
 										Bukkit.getPluginManager().callEvent(replacementEvent);
 										if (replacementEvent.isCancelled()) { return original; }
 										return replacementEvent.getReplacement();
@@ -150,7 +151,8 @@ public class PacketListener extends PacketHandler {
 							public String replace(String original) {
 								Player player = Bukkit.getPlayer(original);
 								if (player != null) {
-									ScoreboardReplacementEvent replacementEvent = new ScoreboardReplacementEvent(player, packet.getPlayer(), b, original, original);
+									boolean async = !getPlugin().getServer().isPrimaryThread();
+									ScoreboardReplacementEvent replacementEvent = new ScoreboardReplacementEvent(player, packet.getPlayer(), b, original, original, async);
 									Bukkit.getPluginManager().callEvent(replacementEvent);
 									if (replacementEvent.isCancelled()) { return original; }
 									return replacementEvent.getReplacement();
@@ -169,7 +171,8 @@ public class PacketListener extends PacketHandler {
 							public String replace(String original) {
 								Player player = Bukkit.getPlayer(original);
 								if (player != null) {
-									ScoreboardScoreReplacementEvent replacementEvent = new ScoreboardScoreReplacementEvent(player, packet.getPlayer(), a, original, original);
+									boolean async = !getPlugin().getServer().isPrimaryThread();
+									ScoreboardScoreReplacementEvent replacementEvent = new ScoreboardScoreReplacementEvent(player, packet.getPlayer(), a, original, original, async);
 									Bukkit.getPluginManager().callEvent(replacementEvent);
 									if (replacementEvent.isCancelled()) { return original; }
 									return replacementEvent.getReplacement();
@@ -193,7 +196,8 @@ public class PacketListener extends PacketHandler {
 								public String replace(String original) {
 									Player player = Bukkit.getPlayer(original);
 									if (player != null) {
-										ScoreboardTeamReplacementEvent replacementEvent = new ScoreboardTeamReplacementEvent(player, packet.getPlayer(), entry, original, original);
+										boolean async = !getPlugin().getServer().isPrimaryThread();
+										ScoreboardTeamReplacementEvent replacementEvent = new ScoreboardTeamReplacementEvent(player, packet.getPlayer(), entry, original, original, async);
 										Bukkit.getPluginManager().callEvent(replacementEvent);
 										if (replacementEvent.isCancelled()) { return original; }
 										return replacementEvent.getReplacement();
@@ -223,7 +227,8 @@ public class PacketListener extends PacketHandler {
 								public String replace(String original) {
 									Player player = Bukkit.getPlayer(original);
 									if (player != null) {
-										ChatInReplacementEvent replacementEvent = new ChatInReplacementEvent(player, packet.getPlayer(), message, original, original);
+										boolean async = !getPlugin().getServer().isPrimaryThread();
+										ChatInReplacementEvent replacementEvent = new ChatInReplacementEvent(player, packet.getPlayer(), message, original, original, async);
 										Bukkit.getPluginManager().callEvent(replacementEvent);
 										if (replacementEvent.isCancelled()) { return original; }
 										return replacementEvent.getReplacement();

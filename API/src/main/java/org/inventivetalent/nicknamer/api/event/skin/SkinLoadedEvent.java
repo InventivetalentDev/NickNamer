@@ -40,6 +40,12 @@ public class SkinLoadedEvent extends Event {
 	private String             owner;
 	private GameProfileWrapper gameProfileWrapper;
 
+	public SkinLoadedEvent(@NonNull String owner, @Nonnull GameProfileWrapper gameProfileWrapper, boolean async) {
+		super(async);
+		this.owner = owner;
+		this.gameProfileWrapper = gameProfileWrapper;
+	}
+
 	public SkinLoadedEvent(@NonNull String owner, @Nonnull GameProfileWrapper gameProfileWrapper) {
 		this.owner = owner;
 		this.gameProfileWrapper = gameProfileWrapper;

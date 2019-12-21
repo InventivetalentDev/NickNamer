@@ -47,6 +47,15 @@ public class NameReplacementEvent extends DisguiseEvent implements Cancellable {
 	private String      original;
 	private String      replacement;
 
+	public NameReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull ReplaceType replaceType, @Nonnull String context, @Nonnull String original, @Nullable String replacement, boolean async) {
+		super(disguised, receiver, async);
+		this.replaceType = replaceType;
+		this.context = context;
+		this.original = original;
+		this.replacement = replacement;
+	}
+
+
 	public NameReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull ReplaceType replaceType, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
 		super(disguised, receiver);
 		this.replaceType = replaceType;

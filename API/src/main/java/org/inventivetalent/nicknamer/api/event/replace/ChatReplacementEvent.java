@@ -42,8 +42,17 @@ public class ChatReplacementEvent extends NameReplacementEvent {
 
 	private Collection<Player> receivers = new HashSet<>();
 
+	public ChatReplacementEvent(@Nonnull Player disguised, @Nonnull Collection<? extends Player> receivers, @Nonnull String context, @Nonnull String original, @Nullable String replacement, boolean async) {
+		this(disguised, receivers, ReplaceType.PLAYER_CHAT, context, original, replacement, async);
+	}
+
 	public ChatReplacementEvent(@Nonnull Player disguised, @Nonnull Collection<? extends Player> receivers, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
 		this(disguised, receivers, ReplaceType.PLAYER_CHAT, context, original, replacement);
+	}
+
+	public ChatReplacementEvent(@Nonnull Player disguised, @Nonnull Collection<? extends Player> receivers, @Nonnull ReplaceType replaceType, @Nonnull String context, @Nonnull String original, @Nullable String replacement, boolean async) {
+		super(disguised, receivers.iterator().next(), replaceType, context, original, replacement, async);
+		this.receivers.addAll(receivers);
 	}
 
 	public ChatReplacementEvent(@Nonnull Player disguised, @Nonnull Collection<? extends Player> receivers, @Nonnull ReplaceType replaceType, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {

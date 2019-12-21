@@ -153,7 +153,8 @@ public class SkinLoader {
 				profile = LoadingCacheMethodResolver.resolve("getUnchecked").invoke(cache, owner.toLowerCase());
 				if (profile != null) {
 					skinDataProvider.put(owner, profileToJson(profile));
-					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile)));
+					boolean async = !Bukkit.getServer().isPrimaryThread();
+					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile), async));
 				}
 			} catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);
@@ -171,7 +172,8 @@ public class SkinLoader {
 				profile = CacheMethodResolver.resolve("getIfPresent").invoke(cache, owner);
 				if (profile != null) {
 					skinDataProvider.put(owner, profileToJson(profile));
-					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile)));
+					boolean async = !Bukkit.getServer().isPrimaryThread();
+					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile), async));
 				}
 			} catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);

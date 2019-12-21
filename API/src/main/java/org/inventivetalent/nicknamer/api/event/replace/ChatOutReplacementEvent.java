@@ -38,8 +38,14 @@ import javax.annotation.Nullable;
  */
 public class ChatOutReplacementEvent extends NameReplacementEvent {
 
+	public ChatOutReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull String context, @Nonnull String original, @Nullable String replacement, boolean async) {
+		super(disguised, receiver, ReplaceType.CHAT_OUT, context, original, replacement, async);
+	}
+
 	public ChatOutReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
 		super(disguised, receiver, ReplaceType.CHAT_OUT, context, original, replacement);
 	}
+
+
 
 }

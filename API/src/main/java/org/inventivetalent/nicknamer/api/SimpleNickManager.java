@@ -105,7 +105,8 @@ public class SimpleNickManager implements NickManager {
 		if (player == null || !player.isOnline()) { return; }
 		Object profile = ClassBuilder.getGameProfile(player);
 
-		NickNamerSelfUpdateEvent event = new NickNamerSelfUpdateEvent(player, isNicked(player.getUniqueId()) ? getNick(player.getUniqueId()) : player.getPlayerListName(), profile, player.getWorld().getDifficulty(), player.getGameMode());
+		boolean async = !plugin.getServer().isPrimaryThread();
+		NickNamerSelfUpdateEvent event = new NickNamerSelfUpdateEvent(player, isNicked(player.getUniqueId()) ? getNick(player.getUniqueId()) : player.getPlayerListName(), profile, player.getWorld().getDifficulty(), player.getGameMode(),async);
 		Bukkit.getPluginManager().callEvent(event);
 		if (event.isCancelled()) { return; }
 

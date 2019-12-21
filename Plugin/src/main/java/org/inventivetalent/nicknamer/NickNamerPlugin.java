@@ -535,7 +535,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				public String replace(String original) {
 					Player player = Bukkit.getPlayer(original);
 					if (player != null) {
-						NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original);
+						boolean async = !getServer().isPrimaryThread();
+						NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original, async);
 						Bukkit.getPluginManager().callEvent(replacementEvent);
 						if (replacementEvent.isCancelled()) { return original; }
 						return replacementEvent.getReplacement();

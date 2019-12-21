@@ -38,11 +38,22 @@ import javax.annotation.Nullable;
  */
 public class ScoreboardReplacementEvent extends NameReplacementEvent {
 
+	public ScoreboardReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull String context, @Nonnull String original, @Nullable String replacement, boolean async) {
+		super(disguised, receiver, ReplaceType.SCOREBOARD, context, original, replacement, async);
+	}
+
 	public ScoreboardReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
 		super(disguised, receiver, ReplaceType.SCOREBOARD, context, original, replacement);
+	}
+
+	public ScoreboardReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull ReplaceType replaceType, @Nonnull String context, @Nonnull String original, @Nullable String replacement, boolean async) {
+		super(disguised, receiver, replaceType, context, original, replacement, async);
 	}
 
 	public ScoreboardReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull ReplaceType replaceType, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
 		super(disguised, receiver, replaceType, context, original, replacement);
 	}
+
+
+
 }

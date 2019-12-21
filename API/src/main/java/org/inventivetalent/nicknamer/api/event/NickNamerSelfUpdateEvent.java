@@ -50,6 +50,15 @@ public class NickNamerSelfUpdateEvent extends Event implements Cancellable {
 
 	private boolean cancelled;
 
+	public NickNamerSelfUpdateEvent(Player player, String name, Object gameProfile,Difficulty difficulty, GameMode gameMode, boolean async) {
+		super(async);
+		this.player = player;
+		this.name = name;
+		this.gameProfile = gameProfile;
+		this.difficulty = difficulty;
+		this.gameMode = gameMode;
+	}
+
 	public NickNamerSelfUpdateEvent(Player player, String name, Object gameProfile,Difficulty difficulty, GameMode gameMode) {
 		this.player = player;
 		this.name = name;

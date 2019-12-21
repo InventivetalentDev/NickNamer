@@ -34,6 +34,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ScoreboardTeamReplacementEvent extends ScoreboardReplacementEvent {
+	public ScoreboardTeamReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull String context, @Nonnull String original, @Nullable String replacement, boolean async) {
+		super(disguised, receiver, ReplaceType.SCOREBOARD_TEAM, context, original, replacement, async);
+	}
+
 	public ScoreboardTeamReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver, @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
 		super(disguised, receiver, ReplaceType.SCOREBOARD_TEAM, context, original, replacement);
 	}

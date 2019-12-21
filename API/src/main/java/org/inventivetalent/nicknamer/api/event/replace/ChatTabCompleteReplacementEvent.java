@@ -35,6 +35,10 @@ import javax.annotation.Nullable;
 
 public class ChatTabCompleteReplacementEvent extends NameReplacementEvent {
 
+	public ChatTabCompleteReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver,  @Nonnull String context, @Nonnull String original, @Nullable String replacement, boolean async) {
+		super(disguised, receiver, ReplaceType.CHAT_TAB_COMPLETE, context, original, replacement, async);
+	}
+
 	public ChatTabCompleteReplacementEvent(@Nonnull Player disguised, @Nonnull Player receiver,  @Nonnull String context, @Nonnull String original, @Nullable String replacement) {
 		super(disguised, receiver, ReplaceType.CHAT_TAB_COMPLETE, context, original, replacement);
 	}
