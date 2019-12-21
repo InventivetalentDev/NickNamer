@@ -145,7 +145,8 @@ public class PacketListener extends PacketHandler {
 				}
 				if ("PacketPlayOutScoreboardObjective".equals(packet.getPacketName())) {
 					if (ScoreboardReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						final String b = (String) packet.getPacketValue("b");
+						boolean isChatComponent = Minecraft.VERSION.newerThan(Minecraft.Version.v1_13_R1);// It's a chat component instead of a string since 1.13
+						final String b = isChatComponent ? serializeChat(packet.getPacketValue("b")):  (String)packet.getPacketValue("b") ;
 						final String replacedB = NickNamerAPI.replaceNames(b, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
 							@Override
 							public String replace(String original) {
@@ -160,7 +161,7 @@ public class PacketListener extends PacketHandler {
 								return original;
 							}
 						}, true);
-						packet.setPacketValue("b", replacedB);
+						packet.setPacketValue("b", isChatComponent ? deserializeChat(replacedB) :  replacedB);
 					}
 				}
 				if ("PacketPlayOutScoreboardScore".equals(packet.getPacketName())) {
