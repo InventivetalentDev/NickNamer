@@ -55,6 +55,7 @@ public class SimpleNickManager implements NickManager {
 	Class EnumDifficulty   = SkinLoader.nmsClassResolver.resolveSilent("EnumDifficulty");
 	Class WorldType        = SkinLoader.nmsClassResolver.resolveSilent("WorldType");
 	Class EnumGamemode     = SkinLoader.nmsClassResolver.resolveSilent("WorldSettings$EnumGamemode", "EnumGamemode");
+	Class WorldData        = SkinLoader.nmsClassResolver.resolveSilent("WorldData");
 
 	protected Plugin plugin;
 
@@ -138,7 +139,13 @@ public class SimpleNickManager implements NickManager {
 				Object type = ((Object[]) WorldType.getDeclaredField("types").get(null))[0];
 				Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
 
-				if (Minecraft.VERSION.newerThan(Minecraft.Version.v1_14_R1)) {
+				if (Minecraft.VERSION.newerThan(Minecraft.Version.v1_15_R1)) {// https://wiki.vg/Protocol_History#19w36a - new hashed seed field in respawn packet
+					long seedHash = (long) WorldData.getDeclaredMethod("c", Long.TYPE).invoke(null, player.getWorld().getSeed());
+
+					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
+							.getConstructor(DimensionManager, Long.TYPE, WorldType, EnumGamemode)
+							.newInstance(dimensionManager, seedHash, type, gamemode);
+				} else if (Minecraft.VERSION.newerThan(Minecraft.Version.v1_14_R1)) {
 					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
 							.getConstructor(DimensionManager, WorldType, EnumGamemode)
 							.newInstance(dimensionManager, type, gamemode);
