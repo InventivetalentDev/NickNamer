@@ -3,7 +3,8 @@ main: org.inventivetalent.nicknamer.NickNamerPlugin
 author: inventivetalent
 version: ${project.version}
 
-softdepend: [PacketListenerApi,PlaceholderAPI]
+depend: [PacketListenerApi]
+softdepend: [PlaceholderAPI]
 database: true
 
 commands:
