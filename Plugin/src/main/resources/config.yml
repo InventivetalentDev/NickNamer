@@ -6,11 +6,17 @@ replace:
     # Replaces names in ALL outgoing messages
     out: false
     in:
-      # Replace names in incoming commands
+      # Replace real names in incoming commands with the player's nickname
       command: false
+      # Replace incoming command nicknames with the player's real name
+      # (If multiple players use the same nickname, it will default to the first available player's real name)
+      commandReverse: false
 
-      # Replace names in general (non-command) incoming messages
+      # Replace real names in general (non-command) incoming messages with the player's nickname
       general: false
+      # Replace incoming nicknames with the player's real name
+      # (If multiple players use the same nickname, it will default to the first available player's real name)
+      generalReverse: false
   scoreboard: false
   scoreboardScore: false
   scoreboardTeam: false

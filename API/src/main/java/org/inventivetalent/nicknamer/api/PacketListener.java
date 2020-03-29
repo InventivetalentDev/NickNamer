@@ -50,10 +50,7 @@ import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 import org.inventivetalent.reflection.resolver.minecraft.OBCClassResolver;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
 public class PacketListener extends PacketHandler {
@@ -107,7 +104,7 @@ public class PacketListener extends PacketHandler {
 						List list = new ArrayList<>((List) profileHandle);
 						for (Object object : list) {
 							Field field = PlayerInfoDataFieldResolver.resolve("d");
-							Object disguised=disguiseProfile(packet.getPlayer(), new GameProfileWrapper(field.get(object))).getHandle();
+							Object disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(field.get(object))).getHandle();
 							field.set(object, disguised);
 						}
 					}
@@ -142,11 +139,37 @@ public class PacketListener extends PacketHandler {
 							getPlugin().getLogger().log(Level.SEVERE, "", e);
 						}
 					}
+					if (ChatOutReverseReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+						Object a = packet.getPacketValue("a");
+						try {
+							final String message = serializeChat(a);
+							final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), new NameReplacer() {
+								@Override
+								public String replace(String original) {
+									Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
+									if (playersWithNick.size() > 0) {
+										Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
+										if (player != null) {
+											boolean async = !getPlugin().getServer().isPrimaryThread();
+											ChatOutReverseReplacementEvent replacementEvent = new ChatOutReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+											Bukkit.getPluginManager().callEvent(replacementEvent);
+											if (replacementEvent.isCancelled()) { return original; }
+											return replacementEvent.getReplacement();
+										}
+									}
+									return original;
+								}
+							}, true);
+							packet.setPacketValue("a", deserializeChat(replacedMessage));
+						} catch (Exception e) {
+							getPlugin().getLogger().log(Level.SEVERE, "", e);
+						}
+					}
 				}
 				if ("PacketPlayOutScoreboardObjective".equals(packet.getPacketName())) {
 					if (ScoreboardReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 						boolean isChatComponent = Minecraft.VERSION.newerThan(Minecraft.Version.v1_13_R1);// It's a chat component instead of a string since 1.13
-						final String b = isChatComponent ? serializeChat(packet.getPacketValue("b")):  (String)packet.getPacketValue("b") ;
+						final String b = isChatComponent ? serializeChat(packet.getPacketValue("b")) : (String) packet.getPacketValue("b");
 						final String replacedB = NickNamerAPI.replaceNames(b, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
 							@Override
 							public String replace(String original) {
@@ -161,7 +184,7 @@ public class PacketListener extends PacketHandler {
 								return original;
 							}
 						}, true);
-						packet.setPacketValue("b", isChatComponent ? deserializeChat(replacedB) :  replacedB);
+						packet.setPacketValue("b", isChatComponent ? deserializeChat(replacedB) : replacedB);
 					}
 				}
 				if ("PacketPlayOutScoreboardScore".equals(packet.getPacketName())) {
@@ -233,6 +256,31 @@ public class PacketListener extends PacketHandler {
 										Bukkit.getPluginManager().callEvent(replacementEvent);
 										if (replacementEvent.isCancelled()) { return original; }
 										return replacementEvent.getReplacement();
+									}
+									return original;
+								}
+							}, true);
+							PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
+						} catch (Exception e) {
+							getPlugin().getLogger().log(Level.SEVERE, "", e);
+						}
+					}
+					if (ChatInReverseReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+						try {
+							final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
+							String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), new NameReplacer() {
+								@Override
+								public String replace(String original) {
+									Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
+									if (playersWithNick.size() > 0) {
+										Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
+										if (player != null) {
+											boolean async = !getPlugin().getServer().isPrimaryThread();
+											ChatInReverseReplacementEvent replacementEvent = new ChatInReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+											Bukkit.getPluginManager().callEvent(replacementEvent);
+											if (replacementEvent.isCancelled()) { return original; }
+											return replacementEvent.getReplacement();
+										}
 									}
 									return original;
 								}

@@ -109,7 +109,9 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@ConfigValue(path = "replace.chat.player")      boolean replaceChatPlayer;
 	@ConfigValue(path = "replace.chat.out")         boolean replaceChatOut;
 	@ConfigValue(path = "replace.chat.in.general")  boolean replaceChatInGeneral;
+	@ConfigValue(path = "replace.chat.in.generalReverse") boolean replaceChatInGeneralReverse;
 	@ConfigValue(path = "replace.chat.in.command")  boolean replaceChatInCommand;
+	@ConfigValue(path = "replace.chat.in.commandReverse") boolean replaceChatInCommandReverse;
 	@ConfigValue(path = "replace.scoreboard")       boolean replaceScoreboard;
 	@ConfigValue(path = "replace.scoreboardScore")  boolean replaceScoreboardScore;
 	@ConfigValue(path = "replace.scoreboardTeam")   boolean replaceScoreboardTeam;
@@ -716,11 +718,27 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (replaceChatInGeneral || replaceChatInCommand) {
 			if (replaceChatInCommand && event.getContext().startsWith("/")) { // Command
 				if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
-					event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
+					String nick = NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId());
+					event.setReplacement(nick);
 				}
 			} else if (replaceChatInGeneral) {
 				if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
 					event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
+				}
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOW)
+	public void on(ChatInReverseReplacementEvent event) {
+		if (replaceChatInGeneralReverse || replaceChatInCommandReverse) {
+			if (replaceChatInCommandReverse && event.getContext().startsWith("/")) { // Command
+				if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
+					event.setReplacement(event.getDisguised().getName());
+				}
+			} else if (replaceChatInGeneralReverse) {
+				if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
+					event.setReplacement(event.getDisguised().getName());
 				}
 			}
 		}
