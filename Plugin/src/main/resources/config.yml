@@ -25,6 +25,9 @@ replace:
 
 updateSelf: true
 
+# Whether to allow offline players as command targets when changing nicks/skins
+allowOfflineTargets: false
+
 random:
   join:
     nick: false
@@ -121,6 +124,7 @@ messages:
           unknown: "&cUnknown category: %s"
         list:
           empty: "&cThere are no used skins"
+    offlineInfo: "&eThe requested player is currently offline. Changes will be applied when they come online."
     error:
       unknown: "&cUnknown error while executing command. See console for details."
       permission: "&cYou are missing the following permission: %s"
