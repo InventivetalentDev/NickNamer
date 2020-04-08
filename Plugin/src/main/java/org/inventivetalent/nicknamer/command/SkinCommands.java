@@ -67,7 +67,7 @@ public class SkinCommands {
 	@Permission("nick.command.skin")
 	public void skin(final CommandSender sender, final String skin, @OptionalArg String targetName) {
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
-		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
+		final CommandUtil.TargetInfo target = CommandUtil.findTargetInfo(sender, targetName, otherTarget, plugin.allowOfflineTargets);
 		if (target == null) { return; }
 
 		if (otherTarget && !sender.hasPermission("skin.other")) {
@@ -85,17 +85,17 @@ public class SkinCommands {
 		sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.changing", "skin.changing", new MessageFormatter() {
 			@Override
 			public String format(String key, String message) {
-				return message.replace("%player%", target.getName()).replace("%skin%", skin);
+				return message.replace("%player%", target.name).replace("%skin%", skin);
 			}
 		}));
 		//		if (!skin.equals(NickNamerAPI.getNickManager().getSkin(target.getUniqueId()))) {
-		NickNamerAPI.getNickManager().setSkin(target.getUniqueId(), skin, new Callback() {
+		NickNamerAPI.getNickManager().setSkin(target.uuid, skin, new Callback() {
 			@Override
 			public void call() {
 				sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.changed", "skin.changed", new MessageFormatter() {
 					@Override
 					public String format(String key, String message) {
-						return message.replace("%player%", target.getName()).replace("%skin%", skin);
+						return message.replace("%player%", target.name).replace("%skin%", skin);
 					}
 				}));
 			}
@@ -114,21 +114,21 @@ public class SkinCommands {
 	@Permission("nick.command.skin.clear")
 	public void clearSkin(final CommandSender sender, @OptionalArg String targetName) {
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
-		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
+		final CommandUtil.TargetInfo target = CommandUtil.findTargetInfo(sender, targetName, otherTarget, plugin.allowOfflineTargets);
 		if (target == null) { return; }
 
 		if (otherTarget && !sender.hasPermission("skin.other")) {
 			throw new PermissionException("skin.other");
 		}
 
-		NickNamerAPI.getNickManager().removeSkin(target.getUniqueId());
+		NickNamerAPI.getNickManager().removeSkin(target.uuid);
 		Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
 			@Override
 			public void run() {
 				sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("skin.cleared", "skin.cleared", new MessageFormatter() {
 					@Override
 					public String format(String key, String message) {
-						return message.replace("%player%", target.getName());
+						return message.replace("%player%", target.name);
 					}
 				}));
 			}

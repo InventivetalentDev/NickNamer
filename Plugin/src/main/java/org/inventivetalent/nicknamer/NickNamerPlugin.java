@@ -106,18 +106,20 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	final Executor storageExecutor = Executors.newSingleThreadExecutor();
 
 	//	@ConfigValue(path = "replace.tab") boolean replaceTab;
-	@ConfigValue(path = "replace.chat.player")      boolean replaceChatPlayer;
-	@ConfigValue(path = "replace.chat.out")         boolean replaceChatOut;
-	@ConfigValue(path = "replace.chat.in.general")  boolean replaceChatInGeneral;
+	@ConfigValue(path = "replace.chat.player")            boolean replaceChatPlayer;
+	@ConfigValue(path = "replace.chat.out")               boolean replaceChatOut;
+	@ConfigValue(path = "replace.chat.in.general")        boolean replaceChatInGeneral;
 	@ConfigValue(path = "replace.chat.in.generalReverse") boolean replaceChatInGeneralReverse;
-	@ConfigValue(path = "replace.chat.in.command")  boolean replaceChatInCommand;
+	@ConfigValue(path = "replace.chat.in.command")        boolean replaceChatInCommand;
 	@ConfigValue(path = "replace.chat.in.commandReverse") boolean replaceChatInCommandReverse;
-	@ConfigValue(path = "replace.scoreboard")       boolean replaceScoreboard;
-	@ConfigValue(path = "replace.scoreboardScore")  boolean replaceScoreboardScore;
-	@ConfigValue(path = "replace.scoreboardTeam")   boolean replaceScoreboardTeam;
-	@ConfigValue(path = "replace.tabComplete.chat") boolean replaceTabCompleteChat;
+	@ConfigValue(path = "replace.scoreboard")             boolean replaceScoreboard;
+	@ConfigValue(path = "replace.scoreboardScore")        boolean replaceScoreboardScore;
+	@ConfigValue(path = "replace.scoreboardTeam")         boolean replaceScoreboardTeam;
+	@ConfigValue(path = "replace.tabComplete.chat")       boolean replaceTabCompleteChat;
 
 	@ConfigValue(path = "updateSelf") boolean updateSelf = true;
+
+	@ConfigValue(path = "allowOfflineTargets") public boolean allowOfflineTargets = false;
 
 	//	@ConfigValue(path = "random.nick")
 	public                                         Map<String, Collection<String>> randomNicks    = new HashMap<>();
@@ -242,10 +244,11 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			}
 		});
 
-		if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null){
+		if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
 			getLogger().info("Registering placeholders.");
 			new NickNamerPlaceholders().register();
-		};
+		}
+		;
 	}
 
 	void reload() {

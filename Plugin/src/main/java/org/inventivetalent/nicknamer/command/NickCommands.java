@@ -61,7 +61,7 @@ public class NickCommands {
 	@Permission("nick.command.name")
 	public void nick(CommandSender sender, String nick, @OptionalArg String targetName) {
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
-		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
+		final CommandUtil.TargetInfo target = CommandUtil.findTargetInfo(sender, targetName, otherTarget, plugin.allowOfflineTargets);
 		if (target == null) { return; }
 
 		if (otherTarget && !sender.hasPermission("nick.other")) {
@@ -96,10 +96,10 @@ public class NickCommands {
 		sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("name.changed", "name.changed", new MessageFormatter() {
 			@Override
 			public String format(String key, String message) {
-				return message.replace("%player%", target.getName()).replace("%name%", finalNick);
+				return message.replace("%player%", target.name).replace("%name%", finalNick);
 			}
 		}));
-		NickNamerAPI.getNickManager().setNick(target.getUniqueId(), nick);
+		NickNamerAPI.getNickManager().setNick(target.uuid, nick);
 	}
 
 	@Command(name = "clearNick",
@@ -114,21 +114,21 @@ public class NickCommands {
 	@Permission("nick.command.name.clear")
 	public void clearNick(final CommandSender sender, @OptionalArg String targetName) {
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
-		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
+		final CommandUtil.TargetInfo target = CommandUtil.findTargetInfo(sender, targetName, otherTarget, plugin.allowOfflineTargets);
 		if (target == null) { return; }
 
 		if (otherTarget && !sender.hasPermission("nick.other")) {
 			throw new PermissionException("nick.other");
 		}
 
-		NickNamerAPI.getNickManager().removeNick(target.getUniqueId());
+		NickNamerAPI.getNickManager().removeNick(target.uuid);
 		Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
 			@Override
 			public void run() {
 				sender.sendMessage(CommandUtil.MESSAGE_LOADER.getMessage("name.cleared", "name.cleared", new MessageFormatter() {
 					@Override
 					public String format(String key, String message) {
-						return message.replace("%player%", target.getName());
+						return message.replace("%player%", target.name);
 					}
 				}));
 			}
@@ -173,13 +173,13 @@ public class NickCommands {
 	@Permission("nick.command.refresh")
 	public void refreshNick(final CommandSender sender, @OptionalArg String targetName) {
 		boolean otherTarget = targetName != null && !targetName.isEmpty();
-		final Player target = CommandUtil.findTarget(sender, targetName, otherTarget);
+		final CommandUtil.TargetInfo target = CommandUtil.findTargetInfo(sender, targetName, otherTarget, plugin.allowOfflineTargets);
 		if (target == null) { return; }
 
 		if (otherTarget && !sender.hasPermission("nick.other")) {
 			throw new PermissionException("nick.other");
 		}
-		NickNamerAPI.getNickManager().refreshPlayer(target.getUniqueId());
+		NickNamerAPI.getNickManager().refreshPlayer(target.uuid);
 	}
 
 	@Command(name = "listNames",
