@@ -29,7 +29,7 @@ public class NickNamerPlaceholders extends PlaceholderExpansion
     @Override
     public String onPlaceholderRequest(Player player, String identifier){
 
-        if(player == null){
+        if(player == null) {
             return "";
         }
 
