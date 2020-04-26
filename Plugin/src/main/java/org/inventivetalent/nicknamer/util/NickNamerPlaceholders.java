@@ -29,23 +29,29 @@ public class NickNamerPlaceholders extends PlaceholderExpansion
     @Override
     public String onPlaceholderRequest(Player player, String identifier){
 
-        if(player == null){
+        if(player == null) {
             return "";
         }
 
-        if(identifier.equals("is_disguised")){
-            return String.valueOf( NickNamerAPI.getNickManager().hasSkin(player.getUniqueId()) );
+        switch (identifier) {
+
+            case "is_disguised":
+            case "has_skin":
+                return String.valueOf( NickNamerAPI.getNickManager().hasSkin(player.getUniqueId()) );
+
+            case "is_nicked":
+            case "has_nickname":
+                return String.valueOf( NickNamerAPI.getNickManager().isNicked(player.getUniqueId()) );
+
+
+            case "display_name":
+            case "nickname":
+                return NickNamerAPI.getNickManager().isNicked(player.getUniqueId()) ? NickNamerAPI.getNickManager().getNick(player.getUniqueId()) : player.getName();
+
+            default:
+                return null;
         }
 
-        if(identifier.equals("is_nicked")){
-            return String.valueOf( NickNamerAPI.getNickManager().isNicked(player.getUniqueId()) );
-        }
-
-        if(identifier.equals("display_name")){
-            return NickNamerAPI.getNickManager().isNicked(player.getUniqueId()) ? NickNamerAPI.getNickManager().getNick(player.getUniqueId()) : player.getName();
-        }
-
-        return null;
     }
 
 }
