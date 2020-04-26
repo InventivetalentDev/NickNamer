@@ -103,6 +103,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	public NickCommands    nickCommands;
 	public SkinCommands    skinCommands;
 
+	final String channelIdentifier = "nicknamer:main";
 	final Executor storageExecutor = Executors.newSingleThreadExecutor();
 
 	//	@ConfigValue(path = "replace.tab") boolean replaceTab;
@@ -204,8 +205,8 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			if (Bukkit.getOnlineMode()) {
 				getLogger().warning("Bungeecord is enabled, but server is in online mode!");
 			}
-			Bukkit.getMessenger().registerIncomingPluginChannel(this, "NickNamer", this);
-			Bukkit.getMessenger().registerOutgoingPluginChannel(this, "NickNamer");
+			Bukkit.getMessenger().registerIncomingPluginChannel(this, channelIdentifier, this);
+			Bukkit.getMessenger().registerOutgoingPluginChannel(this, channelIdentifier);
 		}
 
 		//Replace the default NickManager
@@ -799,13 +800,13 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		for (String s : values) {
 			out.writeUTF(s);
 		}
-		player.sendPluginMessage(instance, "NickNamer", out.toByteArray());
+		player.sendPluginMessage(instance, channelIdentifier, out.toByteArray());
 	}
 
 	@Override
 	public void onPluginMessageReceived(String s, Player player, byte[] bytes) {
 		if (!bungeecord) { return; }
-		if ("NickNamer".equals(s)) {
+		if (channelIdentifier.equals(s)) {
 			ByteArrayDataInput in = ByteStreams.newDataInput(bytes);
 			String sub = in.readUTF();
 			UUID who = UUID.fromString(in.readUTF());
