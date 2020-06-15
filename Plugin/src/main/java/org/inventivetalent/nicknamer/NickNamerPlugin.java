@@ -653,7 +653,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void on(final PlayerQuitEvent event) {
-		if (PlayerJoinReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+		if (PlayerQuitReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 			final String message = event.getQuitMessage();
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
 			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
@@ -684,7 +684,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 					public String replace(String original) {
 						Player player = Bukkit.getPlayer(original);
 						if (player != null) {
-							PlayerQuitReplacementEvent replacementEvent = new PlayerQuitReplacementEvent(player, Bukkit.getOnlinePlayers(), completion, original, original);
+							ChatTabCompleteReplacementEvent replacementEvent = new ChatTabCompleteReplacementEvent(player, event.getPlayer(), completion, original, original);
 							Bukkit.getPluginManager().callEvent(replacementEvent);
 							if (replacementEvent.isCancelled()) { return original; }
 							return replacementEvent.getReplacement();
