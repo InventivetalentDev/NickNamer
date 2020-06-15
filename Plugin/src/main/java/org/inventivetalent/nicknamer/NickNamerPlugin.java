@@ -779,7 +779,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	public void on(ChatTabCompleteReplacementEvent event) {
 		if (replaceTabCompleteChat) {
 			if (NickNamerAPI.getNickManager().isNicked(event.getDisguised().getUniqueId())) {
-				event.setReplacement(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId()));
+				event.setReplacement(ChatColor.stripColor(NickNamerAPI.getNickManager().getNick(event.getDisguised().getUniqueId())));
 			}
 		}
 	}
