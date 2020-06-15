@@ -42,9 +42,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.server.TabCompleteEvent;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
@@ -674,17 +674,17 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	}
 
 	@EventHandler(priority = EventPriority.NORMAL)
-	public void on(TabCompleteEvent event) {
-		if (event.getSender() instanceof Player && ChatTabCompleteReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+	public void on(PlayerChatTabCompleteEvent event) {
+		if (ChatTabCompleteReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
-			for (ListIterator<String> iterator = ((List<String>) event.getCompletions()).listIterator(); iterator.hasNext(); ) {
+			for (ListIterator<String> iterator = ((List<String>) event.getTabCompletions()).listIterator(); iterator.hasNext(); ) {
 				final String completion = iterator.next();
 				String replacedCompletion = NickNamerAPI.replaceNames(completion, nickedPlayerNames, new NameReplacer() {
 					@Override
 					public String replace(String original) {
 						Player player = Bukkit.getPlayer(original);
 						if (player != null) {
-							ChatTabCompleteReplacementEvent replacementEvent = new ChatTabCompleteReplacementEvent(player, (Player) event.getSender(), completion, original, original);
+							ChatTabCompleteReplacementEvent replacementEvent = new ChatTabCompleteReplacementEvent(player, event.getPlayer(), completion, original, original);
 							Bukkit.getPluginManager().callEvent(replacementEvent);
 							if (replacementEvent.isCancelled()) { return original; }
 							return replacementEvent.getReplacement();
