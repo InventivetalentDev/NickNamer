@@ -81,7 +81,7 @@ public class NickDisguiseEvent extends ProfileDisguiseEvent implements Cancellab
 	 * @return <code>true</code> if the name is disguised
 	 */
 	public boolean isDisguised() {
-		return !isCancelled() && nick != null && !originalNick.equals(nick);
+		return !isCancelled() && nick != null && !nick.equals(originalNick);
 	}
 
 	private static HandlerList handlerList = new HandlerList();

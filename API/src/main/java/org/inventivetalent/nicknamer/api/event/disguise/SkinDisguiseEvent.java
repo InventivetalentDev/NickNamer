@@ -81,7 +81,7 @@ public class SkinDisguiseEvent extends ProfileDisguiseEvent implements Cancellab
 	 * @return <code>true</code> if the skin is disguised
 	 */
 	public boolean isDisguised() {
-		return !isCancelled() && skin != null && !originalSkin.equals(skin);
+		return !isCancelled() && skin != null && !skin.equals(originalSkin);
 	}
 
 	private static HandlerList handlerList = new HandlerList();
