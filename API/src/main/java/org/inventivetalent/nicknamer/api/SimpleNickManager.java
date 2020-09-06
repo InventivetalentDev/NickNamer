@@ -37,6 +37,7 @@ import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.inventivetalent.nicknamer.api.event.NickNamerSelfUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
 import org.inventivetalent.reflection.minecraft.Minecraft;
+import org.inventivetalent.reflection.minecraft.MinecraftVersion;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
@@ -124,28 +125,36 @@ public class SimpleNickManager implements NickManager {
 			//   -> tried that, turns out the client needs a chunk update right after the respawn packet, so we'd have to add that aswell
 
 			final Object respawnPlayer;
-			if (Minecraft.VERSION.newerThan(Minecraft.Version.v1_13_R1)) {
-				Object dimensionManager;
+			if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_13_R1)) {
+				Object dimensionManagerKey;
 				switch (player.getWorld().getEnvironment()) {
 					case NETHER:
-						dimensionManager = DimensionManager.getDeclaredField("NETHER").get(null);
+						dimensionManagerKey = DimensionManager.getDeclaredField("NETHER").get(null);
 						break;
 					case THE_END:
-						dimensionManager = DimensionManager.getDeclaredField("THE_END").get(null);
+						dimensionManagerKey = DimensionManager.getDeclaredField("THE_END").get(null);
 						break;
 					case NORMAL:
 					default:
-						dimensionManager = DimensionManager.getDeclaredField("OVERWORLD").get(null);
+						dimensionManagerKey = DimensionManager.getDeclaredField("OVERWORLD").get(null);
 						break;
 				}
 
 				Object difficulty = EnumDifficulty.getEnumConstants()[event.getDifficulty().ordinal()];
 
 				Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
-				Object type = Minecraft.VERSION.olderThan(Minecraft.Version.v1_16_R1) ? ((Object[]) WorldType.getDeclaredField("types").get(null))[0] : null;
-				long seedHash = Minecraft.VERSION.olderThan(Minecraft.Version.v1_15_R1) ?  (long) WorldData.getDeclaredMethod("c", Long.TYPE).invoke(null, player.getWorld().getSeed()) : -1;
+				Object type = MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_16_R1) ? ((Object[]) WorldType.getDeclaredField("types").get(null))[0] : null;
+				long seedHash = MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_15_R1) ?  (long) WorldData.getDeclaredMethod("c", Long.TYPE).invoke(null, player.getWorld().getSeed()) : -1;
 
-				if (Minecraft.VERSION.newerThan(Minecraft.Version.v1_16_R1)) {
+				if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_16_R2)) {
+					Object nmsWorld = Minecraft.getHandle(player.getWorld());
+					Object dimensionManager = World.getDeclaredMethod("getDimensionManager").invoke(nmsWorld);
+					Object dimensionKey = World.getDeclaredMethod("getDimensionKey").invoke(nmsWorld);
+					boolean isFlatWorld = (boolean) WorldServer.getDeclaredMethod("isFlatWorld").invoke(nmsWorld);
+					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
+							.getConstructor(DimensionManager, ResourceKey, Long.TYPE, EnumGamemode, EnumGamemode, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE)
+							.newInstance(dimensionManager, dimensionKey, seedHash, gamemode, gamemode, false/*isDebugWorld*/, isFlatWorld, true/*keepAllPlayerData*/);
+				} else if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_16_R1)) {
 					Object nmsWorld = Minecraft.getHandle(player.getWorld());
 					Object typeKey = World.getDeclaredMethod("getTypeKey").invoke(nmsWorld);
 					Object dimensionKey = World.getDeclaredMethod("getDimensionKey").invoke(nmsWorld);
@@ -153,18 +162,18 @@ public class SimpleNickManager implements NickManager {
 					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
 							.getConstructor(ResourceKey, ResourceKey, Long.TYPE, EnumGamemode, EnumGamemode, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE)
 							.newInstance(typeKey, dimensionKey, seedHash, gamemode, gamemode, false/*isDebugWorld*/, isFlatWorld, true/*keepAllPlayerData*/);
-				} else if (Minecraft.VERSION.newerThan(Minecraft.Version.v1_15_R1)) {// https://wiki.vg/Protocol_History#19w36a - new hashed seed field in respawn packet
+				} else if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_15_R1)) {// https://wiki.vg/Protocol_History#19w36a - new hashed seed field in respawn packet
 					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
 							.getConstructor(DimensionManager, Long.TYPE, WorldType, EnumGamemode)
-							.newInstance(dimensionManager, seedHash, type, gamemode);
-				} else if (Minecraft.VERSION.newerThan(Minecraft.Version.v1_14_R1)) {
+							.newInstance(dimensionManagerKey, seedHash, type, gamemode);
+				} else if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_14_R1)) {
 					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
 							.getConstructor(DimensionManager, WorldType, EnumGamemode)
-							.newInstance(dimensionManager, type, gamemode);
+							.newInstance(dimensionManagerKey, type, gamemode);
 				} else {
 					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
 							.getConstructor(DimensionManager, EnumDifficulty, WorldType, EnumGamemode)
-							.newInstance(dimensionManager, difficulty, type, gamemode);
+							.newInstance(dimensionManagerKey, difficulty, type, gamemode);
 				}
 
 			} else {
