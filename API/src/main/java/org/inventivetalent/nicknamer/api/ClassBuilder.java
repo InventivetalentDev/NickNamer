@@ -30,6 +30,7 @@ package org.inventivetalent.nicknamer.api;
 
 import org.bukkit.entity.Player;
 import org.inventivetalent.reflection.minecraft.Minecraft;
+import org.inventivetalent.reflection.minecraft.MinecraftVersion;
 import org.inventivetalent.reflection.resolver.FieldResolver;
 import org.inventivetalent.reflection.resolver.MethodResolver;
 import org.inventivetalent.reflection.resolver.ResolverQuery;
@@ -47,7 +48,7 @@ public class ClassBuilder {
 		try {
 			Object packet = PacketPlayOutPlayerInfo.newInstance();
 
-			if (Minecraft.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
+			if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
 				PacketPlayOutPlayerInfoFieldResolver.resolve("action").set(packet, action);
 				PacketPlayOutPlayerInfoFieldResolver.resolve("player").set(packet, profile);
 				PacketPlayOutPlayerInfoFieldResolver.resolve("gamemode").set(packet, gamemodeOrdinal);
@@ -94,7 +95,7 @@ public class ClassBuilder {
 	}
 
 	public static Class<?> getNMUtilClass(String name) throws ClassNotFoundException {
-		if (Minecraft.VERSION.olderThan(Minecraft.Version.v1_8_R1)) { return Class.forName("net.minecraft.util." + name); } else { return Class.forName(name); }
+		if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) { return Class.forName("net.minecraft.util." + name); } else { return Class.forName(name); }
 	}
 
 	static NMSClassResolver nmsClassResolver = new NMSClassResolver();

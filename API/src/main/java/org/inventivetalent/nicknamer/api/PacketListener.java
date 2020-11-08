@@ -43,6 +43,7 @@ import org.inventivetalent.packetlistener.handler.PacketOptions;
 import org.inventivetalent.packetlistener.handler.ReceivedPacket;
 import org.inventivetalent.packetlistener.handler.SentPacket;
 import org.inventivetalent.reflection.minecraft.Minecraft;
+import org.inventivetalent.reflection.minecraft.MinecraftVersion;
 import org.inventivetalent.reflection.resolver.FieldResolver;
 import org.inventivetalent.reflection.resolver.MethodResolver;
 import org.inventivetalent.reflection.resolver.ResolverQuery;
@@ -76,7 +77,7 @@ public class PacketListener extends PacketHandler {
 	public void onSend(final SentPacket packet) {
 		if (packet.hasPlayer()) {
 			//// Nametag / Skin disguise
-			if ("PacketPlayOutNamedEntitySpawn".equals(packet.getPacketName()) && Minecraft.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
+			if ("PacketPlayOutNamedEntitySpawn".equals(packet.getPacketName()) && MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
 				try {
 					Object profileHandle = packet.getPacketValue("b");
 					if (profileHandle != null) {
@@ -87,13 +88,13 @@ public class PacketListener extends PacketHandler {
 				}
 			}
 			if ("PacketPlayOutPlayerInfo".equals(packet.getPacketName())) {
-				if (Minecraft.VERSION.olderThan(Minecraft.Version.v1_8_R1) && (int) packet.getPacketValue("action") == 4) {
+				if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) && (int) packet.getPacketValue("action") == 4) {
 					return;// Cancel here if the player is currently being removed
 				}
 				try {
 					// (only a profile in < 1.8, otherwise it's a list of PlayerInfoData)
-					Object profileHandle = packet.getPacketValue(Minecraft.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? "player" : "b");
-					if (Minecraft.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
+					Object profileHandle = packet.getPacketValue(MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? "player" : "b");
+					if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
 						if (profileHandle != null) {
 							GameProfileWrapper disguisedWrapper = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(profileHandle));
 							profileHandle = disguisedWrapper.getHandle();
@@ -168,7 +169,7 @@ public class PacketListener extends PacketHandler {
 				}
 				if ("PacketPlayOutScoreboardObjective".equals(packet.getPacketName())) {
 					if (ScoreboardReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						boolean isChatComponent = Minecraft.VERSION.newerThan(Minecraft.Version.v1_13_R1);// It's a chat component instead of a string since 1.13
+						boolean isChatComponent = MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_13_R1);// It's a chat component instead of a string since 1.13
 						final String b = isChatComponent ? serializeChat(packet.getPacketValue("b")) : (String) packet.getPacketValue("b");
 						final String replacedB = NickNamerAPI.replaceNames(b, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
 							@Override
@@ -210,8 +211,8 @@ public class PacketListener extends PacketHandler {
 				if ("PacketPlayOutScoreboardTeam".equals(packet.getPacketName())) {
 					if (ScoreboardTeamReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 						final List<String> h = (List<String>)
-								(Minecraft.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? packet.getPacketValue("e") :
-										Minecraft.VERSION.olderThan(Minecraft.Version.v1_9_R1) ? packet.getPacketValue("g") :
+								(MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? packet.getPacketValue("e") :
+										MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_9_R1) ? packet.getPacketValue("g") :
 												packet.getPacketValue("h"));
 						for (ListIterator<String> iterator = h.listIterator(); iterator.hasNext(); ) {
 							final String entry = iterator.next();
