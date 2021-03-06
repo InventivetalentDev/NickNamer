@@ -557,7 +557,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void on(final PlayerJoinEvent event) {
 		if (PlayerJoinReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-			final String message = event.getJoinMessage();
+			final String message = event.getJoinMessage().length() > 0 ? event.getJoinMessage() : ChatColor.translateAlternateColorCodes('&', String.format("&e%s &ejoined the game", event.getPlayer().getName()));
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
 			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
 				@Override
@@ -654,7 +654,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void on(final PlayerQuitEvent event) {
 		if (PlayerQuitReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-			final String message = event.getQuitMessage();
+			final String message = event.getQuitMessage().length() > 0 ? event.getQuitMessage() : ChatColor.translateAlternateColorCodes('&', String.format("&e%s &eleft the game", event.getPlayer().getName()));
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
 			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
 				@Override
