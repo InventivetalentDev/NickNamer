@@ -311,7 +311,7 @@ public class PacketListener extends PacketHandler {
         final OfflinePlayer toDisguise = Bukkit.getOfflinePlayer(id);
 
         if (toDisguise == null /*|| !toDisguise.isOnline()*/) {
-            return profileWrapper;//Player to disguise doesn't exist
+            return null;//Player to disguise doesn't exist
         }
 
         boolean async = !getPlugin().getServer().isPrimaryThread();

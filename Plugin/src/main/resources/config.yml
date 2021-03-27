@@ -1,3 +1,7 @@
+disguise:
+  # Disguise nick & skin; disable both to prevent GameProfile packets from being modified
+  nick: true
+  skin: true
 replace:
   chat:
     # Replace names in messages sent by players

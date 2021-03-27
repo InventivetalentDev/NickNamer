@@ -107,6 +107,9 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	final Executor storageExecutor = Executors.newSingleThreadExecutor();
 
 	//	@ConfigValue(path = "replace.tab") boolean replaceTab;
+	@ConfigValue(path = "disguise.nick", defaultsTo = "true") boolean disguiseNick;
+	@ConfigValue(path = "disguise.skin", defaultsTo = "true") boolean disguiseSkin;
+
 	@ConfigValue(path = "replace.chat.player")            boolean replaceChatPlayer;
 	@ConfigValue(path = "replace.chat.out")               boolean replaceChatOut;
 	@ConfigValue(path = "replace.chat.in.general")        boolean replaceChatInGeneral;
@@ -461,6 +464,10 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void on(final NickDisguiseEvent event) {
 		if (event.isCancelled()) { return; }
+		if (!disguiseNick) {
+			event.setCancelled(true);
+			return;
+		}
 		if (getAPI().isNicked(event.getDisguised().getUniqueId())) {
 			event.setNick(getAPI().getNick(event.getDisguised().getUniqueId()));
 
@@ -480,6 +487,10 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void on(final SkinDisguiseEvent event) {
 		if (event.isCancelled()) { return; }
+		if (!disguiseSkin) {
+			event.setCancelled(true);
+			return;
+		}
 		if (getAPI().hasSkin(event.getDisguised().getUniqueId())) {
 			event.setSkin(getAPI().getSkin(event.getDisguised().getUniqueId()));
 
