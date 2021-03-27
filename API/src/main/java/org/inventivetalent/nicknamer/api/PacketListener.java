@@ -50,329 +50,338 @@ import org.inventivetalent.reflection.resolver.ResolverQuery;
 import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 import org.inventivetalent.reflection.resolver.minecraft.OBCClassResolver;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.logging.Level;
 
 public class PacketListener extends PacketHandler {
 
-	static NMSClassResolver nmsClassResolver = new NMSClassResolver();
-	static OBCClassResolver obcClassResolver = new OBCClassResolver();
+    static NMSClassResolver nmsClassResolver = new NMSClassResolver();
+    static OBCClassResolver obcClassResolver = new OBCClassResolver();
 
-	static Class<?> PlayerInfoData     = nmsClassResolver.resolveSilent("PlayerInfoData", "PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
-	static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent");
-	static Class<?> PacketPlayInChat   = nmsClassResolver.resolveSilent("PacketPlayInChat");
-	static Class<?> ChatSerializer     = nmsClassResolver.resolveSilent("ChatSerializer", "IChatBaseComponent$ChatSerializer");
+    static Class<?> PlayerInfoData = nmsClassResolver.resolveSilent("PlayerInfoData", "PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
+    static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent");
+    static Class<?> PacketPlayInChat = nmsClassResolver.resolveSilent("PacketPlayInChat");
+    static Class<?> ChatSerializer = nmsClassResolver.resolveSilent("ChatSerializer", "IChatBaseComponent$ChatSerializer");
 
-	static FieldResolver  PlayerInfoDataFieldResolver   = PlayerInfoData != null ? new FieldResolver(PlayerInfoData) : null;// 1.8+ only
-	static FieldResolver  PacketPlayInChatFieldResolver = new FieldResolver(PacketPlayInChat);
-	static MethodResolver ChatSerializerMethodResolver  = new MethodResolver(ChatSerializer);
+    static FieldResolver PlayerInfoDataFieldResolver = PlayerInfoData != null ? new FieldResolver(PlayerInfoData) : null;// 1.8+ only
+    static FieldResolver PacketPlayInChatFieldResolver = new FieldResolver(PacketPlayInChat);
+    static MethodResolver ChatSerializerMethodResolver = new MethodResolver(ChatSerializer);
 
-	public PacketListener(Plugin plugin) {
-		super(plugin);
-	}
+    public PacketListener(Plugin plugin) {
+        super(plugin);
+    }
 
-	@Override
-	@PacketOptions(forcePlayer = true)
-	public void onSend(final SentPacket packet) {
-		if (packet.hasPlayer()) {
-			//// Nametag / Skin disguise
-			if ("PacketPlayOutNamedEntitySpawn".equals(packet.getPacketName()) && MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
-				try {
-					Object profileHandle = packet.getPacketValue("b");
-					if (profileHandle != null) {
-						packet.setPacketValue("b", disguiseProfile(packet.getPlayer(), new GameProfileWrapper(profileHandle)).getHandle());
-					}
-				} catch (Exception e) {
-					getPlugin().getLogger().log(Level.SEVERE, "Failed to disguise profile", e);
-				}
-			}
-			if ("PacketPlayOutPlayerInfo".equals(packet.getPacketName())) {
-				if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) && (int) packet.getPacketValue("action") == 4) {
-					return;// Cancel here if the player is currently being removed
-				}
-				try {
-					// (only a profile in < 1.8, otherwise it's a list of PlayerInfoData)
-					Object profileHandle = packet.getPacketValue(MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? "player" : "b");
-					if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
-						if (profileHandle != null) {
-							GameProfileWrapper disguisedWrapper = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(profileHandle));
-							profileHandle = disguisedWrapper.getHandle();
-							packet.setPacketValue("player", profileHandle);
-							packet.setPacketValue("username", disguisedWrapper.getName());
-						}
-					} else {// PlayerInfoData
-						List list = new ArrayList<>((List) profileHandle);
-						for (Object object : list) {
-							Field field = PlayerInfoDataFieldResolver.resolve("d");
-							Object disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(field.get(object))).getHandle();
-							field.set(object, disguised);
-						}
-					}
-				} catch (Exception e) {
-					getPlugin().getLogger().log(Level.SEVERE, "Failed to disguise profile", e);
-				}
-			}
-
-			//// Name replacement
-			if (!NickNamerAPI.getNickManager().isSimple()) {
-				if ("PacketPlayOutChat".equalsIgnoreCase(packet.getPacketName())) {
-					if (ChatOutReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						Object a = packet.getPacketValue("a");
-						try {
-							final String message = serializeChat(a);
-							final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-								@Override
-								public String replace(String original) {
-									Player player = Bukkit.getPlayer(original);
-									if (player != null) {
-										boolean async = !getPlugin().getServer().isPrimaryThread();
-										ChatOutReplacementEvent replacementEvent = new ChatOutReplacementEvent(player, packet.getPlayer(), message, original, original, async);
-										Bukkit.getPluginManager().callEvent(replacementEvent);
-										if (replacementEvent.isCancelled()) { return original; }
-										return replacementEvent.getReplacement();
-									}
-									return original;
-								}
-							}, true);
-							packet.setPacketValue("a", deserializeChat(replacedMessage));
-						} catch (Exception e) {
-							getPlugin().getLogger().log(Level.SEVERE, "", e);
-						}
-					}
-					if (ChatOutReverseReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						Object a = packet.getPacketValue("a");
-						try {
-							final String message = serializeChat(a);
-							final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), new NameReplacer() {
-								@Override
-								public String replace(String original) {
-									Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
-									if (playersWithNick.size() > 0) {
-										Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
-										if (player != null) {
-											boolean async = !getPlugin().getServer().isPrimaryThread();
-											ChatOutReverseReplacementEvent replacementEvent = new ChatOutReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
-											Bukkit.getPluginManager().callEvent(replacementEvent);
-											if (replacementEvent.isCancelled()) { return original; }
-											return replacementEvent.getReplacement();
-										}
-									}
-									return original;
-								}
-							}, true);
-							packet.setPacketValue("a", deserializeChat(replacedMessage));
-						} catch (Exception e) {
-							getPlugin().getLogger().log(Level.SEVERE, "", e);
-						}
-					}
-				}
-				if ("PacketPlayOutScoreboardObjective".equals(packet.getPacketName())) {
-					if (ScoreboardReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						boolean isChatComponent = MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_13_R1);// It's a chat component instead of a string since 1.13
-						final String b = isChatComponent ? serializeChat(packet.getPacketValue("b")) : (String) packet.getPacketValue("b");
-						final String replacedB = NickNamerAPI.replaceNames(b, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-							@Override
-							public String replace(String original) {
-								Player player = Bukkit.getPlayer(original);
-								if (player != null) {
-									boolean async = !getPlugin().getServer().isPrimaryThread();
-									ScoreboardReplacementEvent replacementEvent = new ScoreboardReplacementEvent(player, packet.getPlayer(), b, original, original, async);
-									Bukkit.getPluginManager().callEvent(replacementEvent);
-									if (replacementEvent.isCancelled()) { return original; }
-									return replacementEvent.getReplacement();
-								}
-								return original;
+    @Override
+    @PacketOptions(forcePlayer = true)
+    public void onSend(final SentPacket packet) {
+        if (packet.hasPlayer()) {
+            //// Nametag / Skin disguise
+            if ("PacketPlayOutNamedEntitySpawn".equals(packet.getPacketName()) && MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
+                try {
+                    Object profileHandle = packet.getPacketValue("b");
+                    if (profileHandle != null) {
+                        GameProfileWrapper disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(profileHandle));
+                        if (disguised != null) {
+                            packet.setPacketValue("b", disguised.getHandle());
+                        }
+                    }
+                } catch (Exception e) {
+                    getPlugin().getLogger().log(Level.SEVERE, "Failed to disguise profile", e);
+                }
+            }
+            if ("PacketPlayOutPlayerInfo".equals(packet.getPacketName())) {
+                if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) && (int) packet.getPacketValue("action") == 4) {
+                    return;// Cancel here if the player is currently being removed
+                }
+                try {
+                    // (only a profile in < 1.8, otherwise it's a list of PlayerInfoData)
+                    Object profileHandle = packet.getPacketValue(MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? "player" : "b");
+                    if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
+                        if (profileHandle != null) {
+                            GameProfileWrapper disguisedWrapper = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(profileHandle));
+							if (disguisedWrapper != null) {
+								profileHandle = disguisedWrapper.getHandle();
+								packet.setPacketValue("player", profileHandle);
+								packet.setPacketValue("username", disguisedWrapper.getName());
 							}
-						}, true);
-						packet.setPacketValue("b", isChatComponent ? deserializeChat(replacedB) : replacedB);
-					}
-				}
-				if ("PacketPlayOutScoreboardScore".equals(packet.getPacketName())) {
-					if (ScoreboardScoreReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						final String a = (String) packet.getPacketValue("a");
-						final String replacedA = NickNamerAPI.replaceNames(a, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-							@Override
-							public String replace(String original) {
-								Player player = Bukkit.getPlayer(original);
-								if (player != null) {
-									boolean async = !getPlugin().getServer().isPrimaryThread();
-									ScoreboardScoreReplacementEvent replacementEvent = new ScoreboardScoreReplacementEvent(player, packet.getPlayer(), a, original, original, async);
-									Bukkit.getPluginManager().callEvent(replacementEvent);
-									if (replacementEvent.isCancelled()) { return original; }
-									return replacementEvent.getReplacement();
-								}
-								return original;
+                        }
+                    } else {// PlayerInfoData
+                        List list = new ArrayList<>((List) profileHandle);
+                        for (Object object : list) {
+                            Field field = PlayerInfoDataFieldResolver.resolve("d");
+							GameProfileWrapper disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(field.get(object)));
+							if (disguised != null) {
+								field.set(object, disguised.getHandle());
 							}
-						}, true);
-						packet.setPacketValue("a", replacedA);
-					}
-				}
-				if ("PacketPlayOutScoreboardTeam".equals(packet.getPacketName())) {
-					if (ScoreboardTeamReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						final List<String> h = (List<String>)
-								(MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? packet.getPacketValue("e") :
-										MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_9_R1) ? packet.getPacketValue("g") :
-												packet.getPacketValue("h"));
-						for (ListIterator<String> iterator = h.listIterator(); iterator.hasNext(); ) {
-							final String entry = iterator.next();
-							final String replacedEntry = NickNamerAPI.replaceNames(entry, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-								@Override
-								public String replace(String original) {
-									Player player = Bukkit.getPlayer(original);
-									if (player != null) {
-										boolean async = !getPlugin().getServer().isPrimaryThread();
-										ScoreboardTeamReplacementEvent replacementEvent = new ScoreboardTeamReplacementEvent(player, packet.getPlayer(), entry, original, original, async);
-										Bukkit.getPluginManager().callEvent(replacementEvent);
-										if (replacementEvent.isCancelled()) { return original; }
-										return replacementEvent.getReplacement();
-									}
-									return original;
-								}
-							}, true);
-							iterator.set(replacedEntry);
-						}
-					}
-				}
-			}
-		}
-	}
+                        }
+                    }
+                } catch (Exception e) {
+                    getPlugin().getLogger().log(Level.SEVERE, "Failed to disguise profile", e);
+                }
+            }
 
-	@Override
-	@PacketOptions(forcePlayer = true)
-	public void onReceive(final ReceivedPacket packet) {
-		if (!NickNamerAPI.getNickManager().isSimple()) {
-			if (packet.hasPlayer()) {
-				if ("PacketPlayInChat".equals(packet.getPacketName())) {
-					if (ChatInReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						try {
-							final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
-							String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-								@Override
-								public String replace(String original) {
-									Player player = Bukkit.getPlayer(original);
-									if (player != null) {
-										boolean async = !getPlugin().getServer().isPrimaryThread();
-										ChatInReplacementEvent replacementEvent = new ChatInReplacementEvent(player, packet.getPlayer(), message, original, original, async);
-										Bukkit.getPluginManager().callEvent(replacementEvent);
-										if (replacementEvent.isCancelled()) { return original; }
-										return replacementEvent.getReplacement();
-									}
-									return original;
-								}
-							}, true);
-							PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
-						} catch (Exception e) {
-							getPlugin().getLogger().log(Level.SEVERE, "", e);
-						}
-					}
-					if (ChatInReverseReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-						try {
-							final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
-							String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), new NameReplacer() {
-								@Override
-								public String replace(String original) {
-									Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
-									if (playersWithNick.size() > 0) {
-										Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
-										if (player != null) {
-											boolean async = !getPlugin().getServer().isPrimaryThread();
-											ChatInReverseReplacementEvent replacementEvent = new ChatInReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
-											Bukkit.getPluginManager().callEvent(replacementEvent);
-											if (replacementEvent.isCancelled()) { return original; }
-											return replacementEvent.getReplacement();
-										}
-									}
-									return original;
-								}
-							}, true);
-							PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
-						} catch (Exception e) {
-							getPlugin().getLogger().log(Level.SEVERE, "", e);
-						}
-					}
-				}
-			}
-		}
-	}
+            //// Name replacement
+            if (!NickNamerAPI.getNickManager().isSimple()) {
+                if ("PacketPlayOutChat".equalsIgnoreCase(packet.getPacketName())) {
+                    if (ChatOutReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                        Object a = packet.getPacketValue("a");
+                        try {
+                            final String message = serializeChat(a);
+                            final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+                                @Override
+                                public String replace(String original) {
+                                    Player player = Bukkit.getPlayer(original);
+                                    if (player != null) {
+                                        boolean async = !getPlugin().getServer().isPrimaryThread();
+                                        ChatOutReplacementEvent replacementEvent = new ChatOutReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+                                        Bukkit.getPluginManager().callEvent(replacementEvent);
+                                        if (replacementEvent.isCancelled()) { return original; }
+                                        return replacementEvent.getReplacement();
+                                    }
+                                    return original;
+                                }
+                            }, true);
+                            packet.setPacketValue("a", deserializeChat(replacedMessage));
+                        } catch (Exception e) {
+                            getPlugin().getLogger().log(Level.SEVERE, "", e);
+                        }
+                    }
+                    if (ChatOutReverseReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                        Object a = packet.getPacketValue("a");
+                        try {
+                            final String message = serializeChat(a);
+                            final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), new NameReplacer() {
+                                @Override
+                                public String replace(String original) {
+                                    Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
+                                    if (playersWithNick.size() > 0) {
+                                        Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
+                                        if (player != null) {
+                                            boolean async = !getPlugin().getServer().isPrimaryThread();
+                                            ChatOutReverseReplacementEvent replacementEvent = new ChatOutReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+                                            Bukkit.getPluginManager().callEvent(replacementEvent);
+                                            if (replacementEvent.isCancelled()) { return original; }
+                                            return replacementEvent.getReplacement();
+                                        }
+                                    }
+                                    return original;
+                                }
+                            }, true);
+                            packet.setPacketValue("a", deserializeChat(replacedMessage));
+                        } catch (Exception e) {
+                            getPlugin().getLogger().log(Level.SEVERE, "", e);
+                        }
+                    }
+                }
+                if ("PacketPlayOutScoreboardObjective".equals(packet.getPacketName())) {
+                    if (ScoreboardReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                        boolean isChatComponent = MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_13_R1);// It's a chat component instead of a string since 1.13
+                        final String b = isChatComponent ? serializeChat(packet.getPacketValue("b")) : (String) packet.getPacketValue("b");
+                        final String replacedB = NickNamerAPI.replaceNames(b, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+                            @Override
+                            public String replace(String original) {
+                                Player player = Bukkit.getPlayer(original);
+                                if (player != null) {
+                                    boolean async = !getPlugin().getServer().isPrimaryThread();
+                                    ScoreboardReplacementEvent replacementEvent = new ScoreboardReplacementEvent(player, packet.getPlayer(), b, original, original, async);
+                                    Bukkit.getPluginManager().callEvent(replacementEvent);
+                                    if (replacementEvent.isCancelled()) { return original; }
+                                    return replacementEvent.getReplacement();
+                                }
+                                return original;
+                            }
+                        }, true);
+                        packet.setPacketValue("b", isChatComponent ? deserializeChat(replacedB) : replacedB);
+                    }
+                }
+                if ("PacketPlayOutScoreboardScore".equals(packet.getPacketName())) {
+                    if (ScoreboardScoreReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                        final String a = (String) packet.getPacketValue("a");
+                        final String replacedA = NickNamerAPI.replaceNames(a, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+                            @Override
+                            public String replace(String original) {
+                                Player player = Bukkit.getPlayer(original);
+                                if (player != null) {
+                                    boolean async = !getPlugin().getServer().isPrimaryThread();
+                                    ScoreboardScoreReplacementEvent replacementEvent = new ScoreboardScoreReplacementEvent(player, packet.getPlayer(), a, original, original, async);
+                                    Bukkit.getPluginManager().callEvent(replacementEvent);
+                                    if (replacementEvent.isCancelled()) { return original; }
+                                    return replacementEvent.getReplacement();
+                                }
+                                return original;
+                            }
+                        }, true);
+                        packet.setPacketValue("a", replacedA);
+                    }
+                }
+                if ("PacketPlayOutScoreboardTeam".equals(packet.getPacketName())) {
+                    if (ScoreboardTeamReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                        final List<String> h = (List<String>)
+                                (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? packet.getPacketValue("e") :
+                                        MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_9_R1) ? packet.getPacketValue("g") :
+                                                packet.getPacketValue("h"));
+                        for (ListIterator<String> iterator = h.listIterator(); iterator.hasNext(); ) {
+                            final String entry = iterator.next();
+                            final String replacedEntry = NickNamerAPI.replaceNames(entry, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+                                @Override
+                                public String replace(String original) {
+                                    Player player = Bukkit.getPlayer(original);
+                                    if (player != null) {
+                                        boolean async = !getPlugin().getServer().isPrimaryThread();
+                                        ScoreboardTeamReplacementEvent replacementEvent = new ScoreboardTeamReplacementEvent(player, packet.getPlayer(), entry, original, original, async);
+                                        Bukkit.getPluginManager().callEvent(replacementEvent);
+                                        if (replacementEvent.isCancelled()) { return original; }
+                                        return replacementEvent.getReplacement();
+                                    }
+                                    return original;
+                                }
+                            }, true);
+                            iterator.set(replacedEntry);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	private GameProfileWrapper disguiseProfile(final Player observer, final GameProfileWrapper profileWrapper) throws Exception {
-		final UUID id = profileWrapper.getId();
-		final String name = profileWrapper.getName();
-		final OfflinePlayer toDisguise = Bukkit.getOfflinePlayer(id);
+    @Override
+    @PacketOptions(forcePlayer = true)
+    public void onReceive(final ReceivedPacket packet) {
+        if (!NickNamerAPI.getNickManager().isSimple()) {
+            if (packet.hasPlayer()) {
+                if ("PacketPlayInChat".equals(packet.getPacketName())) {
+                    if (ChatInReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                        try {
+                            final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
+                            String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
+                                @Override
+                                public String replace(String original) {
+                                    Player player = Bukkit.getPlayer(original);
+                                    if (player != null) {
+                                        boolean async = !getPlugin().getServer().isPrimaryThread();
+                                        ChatInReplacementEvent replacementEvent = new ChatInReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+                                        Bukkit.getPluginManager().callEvent(replacementEvent);
+                                        if (replacementEvent.isCancelled()) { return original; }
+                                        return replacementEvent.getReplacement();
+                                    }
+                                    return original;
+                                }
+                            }, true);
+                            PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
+                        } catch (Exception e) {
+                            getPlugin().getLogger().log(Level.SEVERE, "", e);
+                        }
+                    }
+                    if (ChatInReverseReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
+                        try {
+                            final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
+                            String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), new NameReplacer() {
+                                @Override
+                                public String replace(String original) {
+                                    Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
+                                    if (playersWithNick.size() > 0) {
+                                        Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
+                                        if (player != null) {
+                                            boolean async = !getPlugin().getServer().isPrimaryThread();
+                                            ChatInReverseReplacementEvent replacementEvent = new ChatInReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+                                            Bukkit.getPluginManager().callEvent(replacementEvent);
+                                            if (replacementEvent.isCancelled()) { return original; }
+                                            return replacementEvent.getReplacement();
+                                        }
+                                    }
+                                    return original;
+                                }
+                            }, true);
+                            PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
+                        } catch (Exception e) {
+                            getPlugin().getLogger().log(Level.SEVERE, "", e);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-		if (toDisguise == null /*|| !toDisguise.isOnline()*/) {
-			return profileWrapper;//Player to disguise doesn't exist
-		}
+    @Nullable
+    private GameProfileWrapper disguiseProfile(final Player observer, final GameProfileWrapper profileWrapper) throws Exception {
+        final UUID id = profileWrapper.getId();
+        final String name = profileWrapper.getName();
+        final OfflinePlayer toDisguise = Bukkit.getOfflinePlayer(id);
 
-		boolean async = !getPlugin().getServer().isPrimaryThread();
+        if (toDisguise == null /*|| !toDisguise.isOnline()*/) {
+            return profileWrapper;//Player to disguise doesn't exist
+        }
 
-		NickDisguiseEvent nickDisguiseEvent = new NickDisguiseEvent(toDisguise, observer, profileWrapper, name, async);
-		SkinDisguiseEvent skinDisguiseEvent = new SkinDisguiseEvent(toDisguise, observer, profileWrapper, name, async);
-		Bukkit.getPluginManager().callEvent(nickDisguiseEvent);
-		Bukkit.getPluginManager().callEvent(skinDisguiseEvent);
+        boolean async = !getPlugin().getServer().isPrimaryThread();
 
-		if (!nickDisguiseEvent.isDisguised() && !skinDisguiseEvent.isDisguised()) {
-			return profileWrapper;// Both event didn't disguise anything: return the unmodified profile
-		}
+        NickDisguiseEvent nickDisguiseEvent = new NickDisguiseEvent(toDisguise, observer, profileWrapper, name, async);
+        SkinDisguiseEvent skinDisguiseEvent = new SkinDisguiseEvent(toDisguise, observer, profileWrapper, name, async);
+        Bukkit.getPluginManager().callEvent(nickDisguiseEvent);
+        Bukkit.getPluginManager().callEvent(skinDisguiseEvent);
 
-		String nick = nickDisguiseEvent.isDisguised() ? nickDisguiseEvent.getNick() : name;
-		String skin = skinDisguiseEvent.isDisguised() ? skinDisguiseEvent.getSkin() : name;
+        if (!nickDisguiseEvent.isDisguised() && !skinDisguiseEvent.isDisguised()) {
+            return null;// Both events didn't disguise anything: return the unmodified profile
+        }
 
-		if (nick == null) { nick = name; }
+        String nick = nickDisguiseEvent.isDisguised() ? nickDisguiseEvent.getNick() : name;
+        String skin = skinDisguiseEvent.isDisguised() ? skinDisguiseEvent.getSkin() : name;
 
-		{//TODO: deprecate event, as it is no longer necessary
-			//Call the update event
-			NickNamerUpdateEvent event = new NickNamerUpdateEvent(toDisguise, observer, nick, skin);
-			Bukkit.getPluginManager().callEvent(event);
-			if (event.isCancelled()) {
-				return profileWrapper;//Don't change anything if the event is cancelled
-			}
+        if (nick == null) { nick = name; }
 
-			//Update the variables (if they aren't null)
-			if (event.getNick() != null) {
-				nick = event.getNick();
-			}
-			if (event.getSkin() != null) {
-				skin = event.getSkin();
-			}
-		}
+        {//TODO: deprecate event, as it is no longer necessary
+            //Call the update event
+            NickNamerUpdateEvent event = new NickNamerUpdateEvent(toDisguise, observer, nick, skin);
+            Bukkit.getPluginManager().callEvent(event);
+            if (event.isCancelled()) {
+                return profileWrapper;//Don't change anything if the event is cancelled
+            }
 
-		GameProfileWrapper profileClone = new GameProfileWrapper(id, name);// Create a clone of the profile since the server's PlayerList will use the original profiles
+            //Update the variables (if they aren't null)
+            if (event.getNick() != null) {
+                nick = event.getNick();
+            }
+            if (event.getSkin() != null) {
+                skin = event.getSkin();
+            }
+        }
 
-		{
-			GameProfileWrapper skinProfile = skin != null ? SkinLoader.getSkinProfile(skin) : null;
-			if (skinProfile != null) {
-				PropertyMapWrapper clonedSkinProperties = profileClone.getProperties();
-				// Copy the skin properties to the cloned profile
-				clonedSkinProperties.clear();
-				clonedSkinProperties.putAll(skinProfile.getProperties());
-			} else {
-				//TODO: loading skin
-			}
-		}
+        GameProfileWrapper profileClone = new GameProfileWrapper(id, name);// Create a clone of the profile since the server's PlayerList will use the original profiles
 
-		{
-			profileClone.setName(nick);
-		}
-		return profileClone;
-	}
+        {
+            GameProfileWrapper skinProfile = skin != null ? SkinLoader.getSkinProfile(skin) : null;
+            if (skinProfile != null) {
+                PropertyMapWrapper clonedSkinProperties = profileClone.getProperties();
+                // Copy the skin properties to the cloned profile
+                clonedSkinProperties.clear();
+                clonedSkinProperties.putAll(skinProfile.getProperties());
+            } else {
+                //TODO: loading skin
+            }
+        }
 
-	String serializeChat(Object chatComponent) {
-		if (chatComponent == null) { return null; }
-		try {
-			return (String) ChatSerializerMethodResolver.resolve(new ResolverQuery("a", IChatBaseComponent)).invoke(null, chatComponent);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+        {
+            profileClone.setName(nick);
+        }
+        return profileClone;
+    }
 
-	Object deserializeChat(String serialized) {
-		if (serialized == null) { return null; }
-		try {
-			return ChatSerializerMethodResolver.resolve(new ResolverQuery("a", String.class)).invoke(null, serialized);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    String serializeChat(Object chatComponent) {
+        if (chatComponent == null) { return null; }
+        try {
+            return (String) ChatSerializerMethodResolver.resolve(new ResolverQuery("a", IChatBaseComponent)).invoke(null, chatComponent);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    Object deserializeChat(String serialized) {
+        if (serialized == null) { return null; }
+        try {
+            return ChatSerializerMethodResolver.resolve(new ResolverQuery("a", String.class)).invoke(null, serialized);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
