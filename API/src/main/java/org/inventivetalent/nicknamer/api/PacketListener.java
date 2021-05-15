@@ -42,6 +42,7 @@ import org.inventivetalent.packetlistener.handler.PacketHandler;
 import org.inventivetalent.packetlistener.handler.PacketOptions;
 import org.inventivetalent.packetlistener.handler.ReceivedPacket;
 import org.inventivetalent.packetlistener.handler.SentPacket;
+import org.inventivetalent.reflection.accessor.FieldAccessor;
 import org.inventivetalent.reflection.minecraft.Minecraft;
 import org.inventivetalent.reflection.minecraft.MinecraftVersion;
 import org.inventivetalent.reflection.resolver.FieldResolver;
@@ -51,7 +52,6 @@ import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 import org.inventivetalent.reflection.resolver.minecraft.OBCClassResolver;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -110,8 +110,8 @@ public class PacketListener extends PacketHandler {
                     } else {// PlayerInfoData
                         List list = new ArrayList<>((List) profileHandle);
                         for (Object object : list) {
-                            Field field = PlayerInfoDataFieldResolver.resolve("d");
-							GameProfileWrapper disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(field.get(object)));
+                            FieldAccessor field = PlayerInfoDataFieldResolver.resolveAccessor("d");
+							GameProfileWrapper disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper((Object) field.get(object)));
 							if (disguised != null) {
 								field.set(object, disguised.getHandle());
 							}
