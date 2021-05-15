@@ -15,7 +15,7 @@
 
 
     <properties>
-        <nn.version>3.20.0-SNAPSHOT</nn.version>
+        <nn.version>3.21.0-SNAPSHOT</nn.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.9</maven.compiler.source>
         <maven.compiler.target>1.9</maven.compiler.target>
