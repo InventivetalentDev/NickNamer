@@ -32,12 +32,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
-import org.inventivetalent.apihelper.API;
-import org.inventivetalent.apihelper.APIManager;
 import org.inventivetalent.nicknamer.api.event.random.RandomNickRequestEvent;
 import org.inventivetalent.nicknamer.api.event.random.RandomSkinRequestEvent;
 import org.inventivetalent.nicknamer.api.event.replace.NameReplacer;
-import org.inventivetalent.packetlistener.PacketListenerAPI;
 import org.inventivetalent.packetlistener.handler.PacketHandler;
 
 import javax.annotation.Nonnull;
@@ -45,7 +42,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class NickNamerAPI implements API, Listener {
+public class NickNamerAPI implements  Listener {
 
 	static final Random random = new Random();
 
@@ -123,27 +120,19 @@ public class NickNamerAPI implements API, Listener {
 		return ((List<String>) event.getPossibilities()).get(random.nextInt(event.getPossibilities().size()));
 	}
 
-	@Override
 	public void load() {
-		APIManager.require(PacketListenerAPI.class, null);
 	}
 
-	@Override
 	public void init(Plugin plugin) {
-		APIManager.initAPI(PacketListenerAPI.class);
-
-		APIManager.registerEvents(this, this);
+		Bukkit.getPluginManager().registerEvents(this, plugin);
 
 		nickManager = new SimpleNickManager(plugin);
-		//		uuidResolver = new UUIDResolver(plugin, 3600000/* 1 hour */);
 
 		PacketHandler.addHandler(packetListener = new PacketListener(plugin));
 	}
 
-	@Override
 	public void disable(Plugin plugin) {
 		PacketHandler.removeHandler(packetListener);
-		APIManager.disableAPI(PacketListenerAPI.class);
 	}
 
 }

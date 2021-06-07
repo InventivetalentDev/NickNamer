@@ -28,7 +28,6 @@
 
 package org.inventivetalent.nicknamer.api.event.skin;
 
-import lombok.NonNull;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
@@ -37,40 +36,40 @@ import javax.annotation.Nonnull;
 
 public class SkinLoadedEvent extends Event {
 
-	private String             owner;
-	private GameProfileWrapper gameProfileWrapper;
+    private String owner;
+    private GameProfileWrapper gameProfileWrapper;
 
-	public SkinLoadedEvent(@NonNull String owner, @Nonnull GameProfileWrapper gameProfileWrapper, boolean async) {
-		super(async);
-		this.owner = owner;
-		this.gameProfileWrapper = gameProfileWrapper;
-	}
+    public SkinLoadedEvent(String owner, @Nonnull GameProfileWrapper gameProfileWrapper, boolean async) {
+        super(async);
+        this.owner = owner;
+        this.gameProfileWrapper = gameProfileWrapper;
+    }
 
-	public SkinLoadedEvent(@NonNull String owner, @Nonnull GameProfileWrapper gameProfileWrapper) {
-		this.owner = owner;
-		this.gameProfileWrapper = gameProfileWrapper;
-	}
+    public SkinLoadedEvent(String owner, @Nonnull GameProfileWrapper gameProfileWrapper) {
+        this.owner = owner;
+        this.gameProfileWrapper = gameProfileWrapper;
+    }
 
-	public String getOwner() {
-		return owner;
-	}
+    public String getOwner() {
+        return owner;
+    }
 
-	public GameProfileWrapper getGameProfile() {
-		return gameProfileWrapper;
-	}
+    public GameProfileWrapper getGameProfile() {
+        return gameProfileWrapper;
+    }
 
-	public void setGameProfile(@Nonnull GameProfileWrapper gameProfileWrapper) {
-		this.gameProfileWrapper = gameProfileWrapper;
-	}
+    public void setGameProfile(@Nonnull GameProfileWrapper gameProfileWrapper) {
+        this.gameProfileWrapper = gameProfileWrapper;
+    }
 
-	private static HandlerList handlerList = new HandlerList();
+    private static HandlerList handlerList = new HandlerList();
 
-	@Override
-	public HandlerList getHandlers() {
-		return handlerList;
-	}
+    @Override
+    public HandlerList getHandlers() {
+        return handlerList;
+    }
 
-	public static HandlerList getHandlerList() {
-		return handlerList;
-	}
+    public static HandlerList getHandlerList() {
+        return handlerList;
+    }
 }

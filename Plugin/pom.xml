@@ -35,14 +35,14 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>1.9</source>
-                    <target>1.9</target>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.2.4</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -52,7 +52,6 @@
                         <configuration>
                             <artifactSet>
                                 <includes>
-                                    <include>org.mcstats.*</include>
                                     <include>org.inventivetalent.nicknamer:**</include>
                                     <include>org.inventivetalent:apimanager**</include>
                                     <include>org.inventivetalent:reflectionhelper**</include>
@@ -66,18 +65,6 @@
                                 </includes>
                             </artifactSet>
                             <relocations>
-                                <relocation>
-                                    <pattern>org.mcstats</pattern>
-                                    <shadedPattern>org.inventivetalent.nicknamer.mcstats</shadedPattern>
-                                </relocation>
-                                <!--<relocation>-->
-                                    <!--<pattern>redis.clients</pattern>-->
-                                    <!--<shadedPattern>org.inventivetalent.nicknamer.redis</shadedPattern>-->
-                                <!--</relocation>-->
-                                <!--<relocation>-->
-                                    <!--<pattern>org.apache.commons.pool</pattern>-->
-                                    <!--<shadedPattern>org.inventivetalent.nicknamer.commons-pool</shadedPattern>-->
-                                <!--</relocation>-->
                                 <relocation>
                                     <pattern>org.inventivetalent.reflection</pattern>
                                     <shadedPattern>org.inventivetalent.nicknamer.reflection</shadedPattern>
@@ -99,7 +86,7 @@
         <dependency>
             <groupId>org.inventivetalent</groupId>
             <artifactId>pluginannotations</artifactId>
-            <version>1.5.0-SNAPSHOT</version>
+            <version>1.5.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>

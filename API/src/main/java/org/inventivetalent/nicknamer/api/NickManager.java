@@ -29,7 +29,6 @@
 package org.inventivetalent.nicknamer.api;
 
 import com.google.gson.JsonObject;
-import lombok.NonNull;
 import org.bukkit.entity.Player;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 import org.json.simple.JSONObject;
@@ -166,7 +165,6 @@ public interface NickManager {
 	@Nonnull
 	Collection<UUID> getPlayersWithSkin(@Nonnull String skin);
 
-	@NonNull
 	Collection<String> getUsedSkins();
 
 	/**

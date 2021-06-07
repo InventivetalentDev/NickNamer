@@ -48,7 +48,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
-import org.inventivetalent.apihelper.APIManager;
 import org.inventivetalent.data.async.AsyncDataProvider;
 import org.inventivetalent.data.async.DataCallback;
 import org.inventivetalent.data.mapper.AsyncCacheMapper;
@@ -72,7 +71,6 @@ import org.inventivetalent.nicknamer.database.SkinDataEntry;
 import org.inventivetalent.nicknamer.database.SkinEntry;
 import org.inventivetalent.nicknamer.metrics.Metrics;
 import org.inventivetalent.nicknamer.util.NickNamerPlaceholders;
-import org.inventivetalent.packetlistener.PacketListenerAPI;
 import org.inventivetalent.pluginannotations.PluginAnnotations;
 import org.inventivetalent.pluginannotations.config.ConfigValue;
 import org.inventivetalent.update.spiget.SpigetUpdate;
@@ -98,6 +96,8 @@ import java.util.logging.Level;
 public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessageListener, INickNamer {
 
 	public static NickNamerPlugin instance;
+
+	private final NickNamerAPI api = new NickNamerAPI();
 
 	public GeneralCommands generalCommands;
 	public NickCommands    nickCommands;
@@ -173,15 +173,13 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			getLogger().severe("Please use Java 8 or higher (is " + javaVersionParts[1] + ")");
 		}
 
-		APIManager.require(PacketListenerAPI.class, this);
-		APIManager.registerAPI(new NickNamerAPI(), this);
+		api.load();
 	}
 
 	@Override
 	public void onEnable() {
 		instance = this;
-		APIManager.initAPI(PacketListenerAPI.class);
-		APIManager.initAPI(NickNamerAPI.class);
+		api.init(this);
 
 		Bukkit.getPluginManager().registerEvents(this, this);
 
@@ -265,7 +263,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 	@Override
 	public void onDisable() {
-		APIManager.disableAPI(NickNamerAPI.class);
+		api.disable(this);
 	}
 
 	<V> AsyncCacheMapper.CachedDataProvider<V> initCache(AsyncDataProvider<V> provider) {

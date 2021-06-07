@@ -17,15 +17,15 @@
     <properties>
         <nn.version>3.21.0-SNAPSHOT</nn.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.9</maven.compiler.source>
-        <maven.compiler.target>1.9</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
     </properties>
 
 
     <repositories>
         <repository>
             <id>inventive-repo</id>
-            <url>http://repo.inventivetalent.org/content/groups/public/</url>
+            <url>http://repo.inventivetalent.org/repository/public</url>
         </repository>
         <repository>
             <id>jitpack.io</id>

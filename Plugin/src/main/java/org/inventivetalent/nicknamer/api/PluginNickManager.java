@@ -29,7 +29,6 @@
 package org.inventivetalent.nicknamer.api;
 
 import com.google.gson.JsonObject;
-import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.inventivetalent.data.DataProvider;
@@ -386,7 +385,6 @@ public class PluginNickManager extends SimpleNickManager {
 		return list;
 	}
 
-	@NonNull
 	@Override
 	public List<String> getUsedSkins() {
 		List<String> skins = new ArrayList<>();
