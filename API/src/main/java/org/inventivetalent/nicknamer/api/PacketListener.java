@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api;
 
+import com.mojang.authlib.GameProfile;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -60,10 +61,10 @@ public class PacketListener extends PacketHandler {
     static NMSClassResolver nmsClassResolver = new NMSClassResolver();
     static OBCClassResolver obcClassResolver = new OBCClassResolver();
 
-    static Class<?> PlayerInfoData = nmsClassResolver.resolveSilent("PlayerInfoData", "PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
-    static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent");
-    static Class<?> PacketPlayInChat = nmsClassResolver.resolveSilent("PacketPlayInChat");
-    static Class<?> ChatSerializer = nmsClassResolver.resolveSilent("ChatSerializer", "IChatBaseComponent$ChatSerializer");
+    static Class<?> PlayerInfoData = nmsClassResolver.resolveSilent("PlayerInfoData", "PacketPlayOutPlayerInfo$PlayerInfoData", "network.protocol.game.PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
+    static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent", "network.chat");
+    static Class<?> PacketPlayInChat = nmsClassResolver.resolveSilent("PacketPlayInChat", "network.protocol.game.PacketPlayInChat");
+    static Class<?> ChatSerializer = nmsClassResolver.resolveSilent("ChatSerializer", "IChatBaseComponent$ChatSerializer", "network.chat.IChatBaseComponent$ChatSerializer");
 
     static FieldResolver PlayerInfoDataFieldResolver = PlayerInfoData != null ? new FieldResolver(PlayerInfoData) : null;// 1.8+ only
     static FieldResolver PacketPlayInChatFieldResolver = new FieldResolver(PacketPlayInChat);
@@ -109,12 +110,13 @@ public class PacketListener extends PacketHandler {
                         }
                     } else {// PlayerInfoData
                         List list = new ArrayList<>((List) profileHandle);
-                        for (Object object : list) {
-                            FieldAccessor field = PlayerInfoDataFieldResolver.resolveAccessor("d");
-							GameProfileWrapper disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper((Object) field.get(object)));
-							if (disguised != null) {
-								field.set(object, disguised.getHandle());
-							}
+                        for (ListIterator<Object> iterator = list.listIterator(); iterator.hasNext(); ) {
+                            Object object = iterator.next();
+                            FieldAccessor field = PlayerInfoDataFieldResolver.resolveByFirstTypeAccessor(GameProfile.class);
+                            GameProfileWrapper disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper((Object) field.get(object)));
+                            if (disguised != null) {
+                                field.set(object, disguised.getHandle());
+                            }
                         }
                     }
                 } catch (Exception e) {
@@ -370,7 +372,7 @@ public class PacketListener extends PacketHandler {
     String serializeChat(Object chatComponent) {
         if (chatComponent == null) { return null; }
         try {
-            return (String) ChatSerializerMethodResolver.resolve(new ResolverQuery("a", IChatBaseComponent)).invoke(null, chatComponent);
+            return (String) ChatSerializerMethodResolver.resolve(new ResolverQuery("a", IChatBaseComponent), new ResolverQuery("serialize", IChatBaseComponent)).invoke(null, chatComponent);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -379,7 +381,7 @@ public class PacketListener extends PacketHandler {
     Object deserializeChat(String serialized) {
         if (serialized == null) { return null; }
         try {
-            return ChatSerializerMethodResolver.resolve(new ResolverQuery("a", String.class)).invoke(null, serialized);
+            return ChatSerializerMethodResolver.resolve(new ResolverQuery("a", String.class), new ResolverQuery("deserialize", String.class)).invoke(null, serialized);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

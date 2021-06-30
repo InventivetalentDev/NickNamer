@@ -15,7 +15,7 @@
 
 
     <properties>
-        <nn.version>3.21.1-SNAPSHOT</nn.version>
+        <nn.version>3.21.2-SNAPSHOT</nn.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -25,7 +25,7 @@
     <repositories>
         <repository>
             <id>inventive-repo</id>
-            <url>http://repo.inventivetalent.org/repository/public</url>
+            <url>https://repo.inventivetalent.org/repository/public</url>
         </repository>
         <repository>
             <id>jitpack.io</id>
@@ -33,7 +33,7 @@
         </repository>
         <repository>
             <id>md_5-repo</id>
-            <url>http://repo.md-5.net/content/repositories/public/</url>
+            <url>https://repo.md-5.net/content/repositories/public/</url>
         </repository>
         <repository>
             <id>sonatype</id>
@@ -46,6 +46,10 @@
         <repository>
             <id>papermc</id>
             <url>https://papermc.io/repo/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>minecraft</id>
+            <url>https://libraries.minecraft.net/</url>
         </repository>
     </repositories>
 

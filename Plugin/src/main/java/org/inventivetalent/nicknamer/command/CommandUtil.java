@@ -73,39 +73,6 @@ public class CommandUtil {
 		return target;
 	}
 
-	static UUID findOfflineTargetUUID(CommandSender sender, String targetName, boolean otherTarget) {
-		UUID uuid = null;
-		if (otherTarget) {
-			Player target = Bukkit.getPlayer(targetName);
-			if (target != null) {
-				uuid = target.getUniqueId();
-			} else {
-				try {
-					// Paper
-					uuid = Bukkit.getPlayerUniqueId(targetName);
-				} catch (Exception ignored) {
-					// Spigot
-					OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(targetName);
-					UUID offlineUuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + targetName).getBytes(Charsets.UTF_8));
-					if (!offlineUuid.equals(offlinePlayer.getUniqueId())) { // We want the real UUID, not the one generated from OfflinePlayer:name
-						uuid = offlinePlayer.getUniqueId();
-					}
-				}
-			}
-		} else {
-			if (sender instanceof Player) {
-				uuid = ((Player) sender).getUniqueId();
-			} else {
-				throw new InvalidLengthException(2, 1);
-			}
-		}
-		if (uuid == null) {
-			sender.sendMessage(MESSAGE_LOADER.getMessage("error.target.notFound", "error.target.notFound"));
-			return null;
-		}
-		return uuid;
-	}
-
 	static TargetInfo findOfflineTargetInfo(CommandSender sender, String targetName, boolean otherTarget) {
 		TargetInfo targetInfo = null;
 		if (otherTarget) {

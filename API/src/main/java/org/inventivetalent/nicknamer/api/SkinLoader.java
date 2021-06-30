@@ -49,20 +49,20 @@ import java.util.concurrent.TimeUnit;
 
 public class SkinLoader {
 
-	static ClassResolver    classResolver    = new ClassResolver();
-	static NMSClassResolver nmsClassResolver = new NMSClassResolver();
+    static ClassResolver classResolver = new ClassResolver();
+    static NMSClassResolver nmsClassResolver = new NMSClassResolver();
 
-	static Class<?> TileEntitySkull = nmsClassResolver.resolveSilent("TileEntitySkull");
-	static Class<?> Cache           = classResolver.resolveSilent("net.minecraft.util.com.google.common.cache.Cache", "com.google.common.cache.Cache");
-	static Class<?> LoadingCache    = classResolver.resolveSilent("net.minecraft.util.com.google.common.cache.LoadingCache", "com.google.common.cache.LoadingCache");
-	static Class<?> GameProfile     = classResolver.resolveSilent("net.minecraft.util.com.mojang.authlib.GameProfile", "com.mojang.authlib.GameProfile");
-	static Class<?> PropertyMap     = classResolver.resolveSilent("net.minecraft.util.com.mojang.authlib.properties.PropertyMap", "com.mojang.authlib.properties.PropertyMap");
+    static Class<?> TileEntitySkull = nmsClassResolver.resolveSilent("TileEntitySkull", "world.level.block.entity.TileEntitySkull");
+    static Class<?> Cache = classResolver.resolveSilent("net.minecraft.util.com.google.common.cache.Cache", "com.google.common.cache.Cache");
+    static Class<?> LoadingCache = classResolver.resolveSilent("net.minecraft.util.com.google.common.cache.LoadingCache", "com.google.common.cache.LoadingCache");
+    static Class<?> GameProfile = classResolver.resolveSilent("net.minecraft.util.com.mojang.authlib.GameProfile", "com.mojang.authlib.GameProfile");
+    static Class<?> PropertyMap = classResolver.resolveSilent("net.minecraft.util.com.mojang.authlib.properties.PropertyMap", "com.mojang.authlib.properties.PropertyMap");
 
-	static FieldResolver TileEntitySkullFieldResolver = new FieldResolver(TileEntitySkull);
-	static FieldResolver GameProfileFieldResolver     = new FieldResolver(GameProfile);
+    static FieldResolver TileEntitySkullFieldResolver = new FieldResolver(TileEntitySkull);
+    static FieldResolver GameProfileFieldResolver = new FieldResolver(GameProfile);
 
-	static MethodResolver CacheMethodResolver        = new MethodResolver(Cache);
-	static MethodResolver LoadingCacheMethodResolver = new MethodResolver(LoadingCache);
+    static MethodResolver CacheMethodResolver = new MethodResolver(Cache);
+    static MethodResolver LoadingCacheMethodResolver = new MethodResolver(LoadingCache);
 
 	protected static DataProvider<JsonObject> skinDataProvider;
 
@@ -149,14 +149,14 @@ public class SkinLoader {
 		}
 		if (profile == null) {
 			try {
-				Object cache = TileEntitySkullFieldResolver.resolve("skinCache").get(null);
-				profile = LoadingCacheMethodResolver.resolve("getUnchecked").invoke(cache, owner.toLowerCase());
-				if (profile != null) {
-					skinDataProvider.put(owner, profileToJson(profile));
-					boolean async = !Bukkit.getServer().isPrimaryThread();
-					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile), async));
-				}
-			} catch (ReflectiveOperationException e) {
+                Object cache = TileEntitySkullFieldResolver.resolve("skinCache", "b").get(null);
+                profile = LoadingCacheMethodResolver.resolve("getUnchecked").invoke(cache, owner.toLowerCase());
+                if (profile != null) {
+                    skinDataProvider.put(owner, profileToJson(profile));
+                    boolean async = !Bukkit.getServer().isPrimaryThread();
+                    Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile), async));
+                }
+            } catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -168,14 +168,14 @@ public class SkinLoader {
 		Object profile = jsonToProfile(skinDataProvider.get(owner));
 		if (profile == null) {
 			try {
-				Object cache = TileEntitySkullFieldResolver.resolve("skinCache").get(null);
-				profile = CacheMethodResolver.resolve("getIfPresent").invoke(cache, owner);
-				if (profile != null) {
-					skinDataProvider.put(owner, profileToJson(profile));
-					boolean async = !Bukkit.getServer().isPrimaryThread();
-					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile), async));
-				}
-			} catch (ReflectiveOperationException e) {
+                Object cache = TileEntitySkullFieldResolver.resolve("skinCache", "b").get(null);
+                profile = CacheMethodResolver.resolve("getIfPresent").invoke(cache, owner);
+                if (profile != null) {
+                    skinDataProvider.put(owner, profileToJson(profile));
+                    boolean async = !Bukkit.getServer().isPrimaryThread();
+                    Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile), async));
+                }
+            } catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);
 			}
 		}

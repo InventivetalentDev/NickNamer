@@ -52,282 +52,284 @@ import java.util.UUID;
  */
 public class SimpleNickManager implements NickManager {
 
-	Class DimensionManager = SkinLoader.nmsClassResolver.resolveSilent("DimensionManager");
-	Class EnumDifficulty   = SkinLoader.nmsClassResolver.resolveSilent("EnumDifficulty");
-	Class WorldType        = SkinLoader.nmsClassResolver.resolveSilent("WorldType");
-	Class EnumGamemode     = SkinLoader.nmsClassResolver.resolveSilent("WorldSettings$EnumGamemode", "EnumGamemode");
-	Class WorldData        = SkinLoader.nmsClassResolver.resolveSilent("WorldData");
-	Class ResourceKey      = SkinLoader.nmsClassResolver.resolveSilent("ResourceKey");
-	Class World            = SkinLoader.nmsClassResolver.resolveSilent("World");
-	Class WorldServer      = SkinLoader.nmsClassResolver.resolveSilent("WorldServer");
+    Class<?> DimensionManager = SkinLoader.nmsClassResolver.resolveSilent("DimensionManager", "world.level.dimension.DimensionManager");
+    Class<?> EnumDifficulty = SkinLoader.nmsClassResolver.resolveSilent("EnumDifficulty", "world.EnumDifficulty");
+    Class<?> EnumGamemode = SkinLoader.nmsClassResolver.resolveSilent("WorldSettings$EnumGamemode", "EnumGamemode", "world.level.EnumGamemode");
+    Class<?> WorldData = SkinLoader.nmsClassResolver.resolveSilent("WorldData", "world.level.storage.WorldData");
+    Class<?> ResourceKey = SkinLoader.nmsClassResolver.resolveSilent("ResourceKey", "resources.ResourceKey");
+    Class<?> World = SkinLoader.nmsClassResolver.resolveSilent("World", "world.level.World");
+    Class<?> WorldServer = SkinLoader.nmsClassResolver.resolveSilent("WorldServer", "server.level.WorldServer");
+    Class<?> PacketPlayOutRespawn = SkinLoader.nmsClassResolver.resolveSilent("PacketPlayOutRespawn", "network.protocol.game.PacketPlayOutRespawn");
+    Class<?> WorldType = SkinLoader.nmsClassResolver.resolveSilent("WorldType"); // only pre 1.16
 
-	protected Plugin plugin;
+    protected Plugin plugin;
 
-	public SimpleNickManager(Plugin plugin) {
-		this.plugin = plugin;
-	}
+    public SimpleNickManager(Plugin plugin) {
+        this.plugin = plugin;
+    }
 
-	@Override
-	public void refreshPlayer(@Nonnull UUID uuid) {
-		Player player = Bukkit.getPlayer(uuid);
-		if (player == null) { return; }
-		refreshPlayer(player);
-	}
+    @Override
+    public void refreshPlayer(@Nonnull UUID uuid) {
+        Player player = Bukkit.getPlayer(uuid);
+        if (player == null) { return; }
+        refreshPlayer(player);
+    }
 
-	@Override
-	public void refreshPlayer(@Nonnull final Player player) {
-		if (!player.isOnline()) { return; }
+    @Override
+    public void refreshPlayer(@Nonnull final Player player) {
+        if (!player.isOnline()) { return; }
 
-		boolean async = !plugin.getServer().isPrimaryThread();
-		PlayerRefreshEvent refreshEvent = new PlayerRefreshEvent(player, true, async);
-		Bukkit.getPluginManager().callEvent(refreshEvent);
-		if (refreshEvent.isCancelled()) { return; }
+        boolean async = !plugin.getServer().isPrimaryThread();
+        PlayerRefreshEvent refreshEvent = new PlayerRefreshEvent(player, true, async);
+        Bukkit.getPluginManager().callEvent(refreshEvent);
+        if (refreshEvent.isCancelled()) { return; }
 
-		if (refreshEvent.isSelf()) {
-			updateSelf(player);
-		}
+        if (refreshEvent.isSelf()) {
+            updateSelf(player);
+        }
 
-		Bukkit.getScheduler().runTask(plugin, new Runnable() {
+        Bukkit.getScheduler().runTask(plugin, new Runnable() {
 
-			@Override
-			public void run() {
-				List<Player> canSee = new ArrayList<>();
-				for (Player player1 : Bukkit.getOnlinePlayers()) {
-					if (player1.canSee(player)) {
-						canSee.add(player1);
-						player1.hidePlayer(player);
-					}
-				}
-				for (Player player1 : canSee) {
-					player1.showPlayer(player);
-				}
-			}
-		});
-	}
+            @Override
+            public void run() {
+                List<Player> canSee = new ArrayList<>();
+                for (Player player1 : Bukkit.getOnlinePlayers()) {
+                    if (player1.canSee(player)) {
+                        canSee.add(player1);
+                        player1.hidePlayer(player);
+                    }
+                }
+                for (Player player1 : canSee) {
+                    player1.showPlayer(player);
+                }
+            }
+        });
+    }
 
-	protected void updateSelf(final Player player) {
-		if (player == null || !player.isOnline()) { return; }
-		Object profile = ClassBuilder.getGameProfile(player);
+    @SuppressWarnings("unchecked")
+    protected void updateSelf(final Player player) {
+        if (player == null || !player.isOnline()) { return; }
+        Object profile = ClassBuilder.getGameProfile(player);
 
-		boolean async = !plugin.getServer().isPrimaryThread();
-		NickNamerSelfUpdateEvent event = new NickNamerSelfUpdateEvent(player, isNicked(player.getUniqueId()) ? getNick(player.getUniqueId()) : player.getPlayerListName(), profile, player.getWorld().getDifficulty(), player.getGameMode(),async);
-		Bukkit.getPluginManager().callEvent(event);
-		if (event.isCancelled()) { return; }
+        boolean async = !plugin.getServer().isPrimaryThread();
+        NickNamerSelfUpdateEvent event = new NickNamerSelfUpdateEvent(player, isNicked(player.getUniqueId()) ? getNick(player.getUniqueId()) : player.getPlayerListName(), profile, player.getWorld().getDifficulty(), player.getGameMode(), async);
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) { return; }
 
-		try {
-			final Object removePlayer = ClassBuilder.buildPlayerInfoPacket(4, event.getGameProfile(), 0, event.getGameMode().ordinal(), event.getName());
-			final Object addPlayer = ClassBuilder.buildPlayerInfoPacket(0, event.getGameProfile(), 0, event.getGameMode().ordinal(), event.getName());
+        try {
+            final Object removePlayer = ClassBuilder.buildPlayerInfoPacket(4, event.getGameProfile(), 0, event.getGameMode().ordinal(), event.getName());
+            final Object addPlayer = ClassBuilder.buildPlayerInfoPacket(0, event.getGameProfile(), 0, event.getGameMode().ordinal(), event.getName());
 
-			NickNamerAPI.packetListener.sendPacket(player, removePlayer);
+            NickNamerAPI.packetListener.sendPacket(player, removePlayer);
 
-			//TODO: might want to send two respawn packets to get rid of the chunk unloading weirdness
-			//  (https://wiki.vg/Protocol#Respawn)
-			//   -> tried that, turns out the client needs a chunk update right after the respawn packet, so we'd have to add that aswell
+            //TODO: might want to send two respawn packets to get rid of the chunk unloading weirdness
+            //  (https://wiki.vg/Protocol#Respawn)
+            //   -> tried that, turns out the client needs a chunk update right after the respawn packet, so we'd have to add that aswell
 
-			final Object respawnPlayer;
-			if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_13_R1)) {
-				Object dimensionManagerKey;
-				switch (player.getWorld().getEnvironment()) {
-					case NETHER:
-						dimensionManagerKey = DimensionManager.getDeclaredField("NETHER").get(null);
-						break;
-					case THE_END:
-						dimensionManagerKey = DimensionManager.getDeclaredField("THE_END").get(null);
-						break;
-					case NORMAL:
-					default:
-						dimensionManagerKey = DimensionManager.getDeclaredField("OVERWORLD").get(null);
-						break;
-				}
+            final Object respawnPlayer;
+            if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_13_R1)) {
+                Object dimensionManagerKey;
+                switch (player.getWorld().getEnvironment()) {
+                    case NETHER:
+                        dimensionManagerKey = DimensionManager.getDeclaredField("NETHER").get(null);
+                        break;
+                    case THE_END:
+                        dimensionManagerKey = DimensionManager.getDeclaredField("THE_END").get(null);
+                        break;
+                    case NORMAL:
+                    default:
+                        dimensionManagerKey = DimensionManager.getDeclaredField("OVERWORLD").get(null);
+                        break;
+                }
 
-				Object difficulty = EnumDifficulty.getEnumConstants()[event.getDifficulty().ordinal()];
+                Object difficulty = EnumDifficulty.getEnumConstants()[event.getDifficulty().ordinal()];
 
-				Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
-				Object type = MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_16_R1) ? ((Object[]) WorldType.getDeclaredField("types").get(null))[0] : null;
-				long seedHash = MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_15_R1) ?  (long) WorldData.getDeclaredMethod("c", Long.TYPE).invoke(null, player.getWorld().getSeed()) : -1;
+                Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
+                Object type = MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_16_R1) ? ((Object[]) WorldType.getDeclaredField("types").get(null))[0] : null;
+                long seedHash = MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_15_R1) ? (long) WorldData.getDeclaredMethod("c", Long.TYPE).invoke(null, player.getWorld().getSeed()) : -1;
 
-				if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_16_R2)) {
-					Object nmsWorld = Minecraft.getHandle(player.getWorld());
-					Object dimensionManager = World.getDeclaredMethod("getDimensionManager").invoke(nmsWorld);
-					Object dimensionKey = World.getDeclaredMethod("getDimensionKey").invoke(nmsWorld);
-					boolean isFlatWorld = (boolean) WorldServer.getDeclaredMethod("isFlatWorld").invoke(nmsWorld);
-					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
-							.getConstructor(DimensionManager, ResourceKey, Long.TYPE, EnumGamemode, EnumGamemode, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE)
-							.newInstance(dimensionManager, dimensionKey, seedHash, gamemode, gamemode, false/*isDebugWorld*/, isFlatWorld, true/*keepAllPlayerData*/);
-				} else if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_16_R1)) {
-					Object nmsWorld = Minecraft.getHandle(player.getWorld());
-					Object typeKey = World.getDeclaredMethod("getTypeKey").invoke(nmsWorld);
-					Object dimensionKey = World.getDeclaredMethod("getDimensionKey").invoke(nmsWorld);
-					boolean isFlatWorld = (boolean) WorldServer.getDeclaredMethod("isFlatWorld").invoke(nmsWorld);
-					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
-							.getConstructor(ResourceKey, ResourceKey, Long.TYPE, EnumGamemode, EnumGamemode, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE)
-							.newInstance(typeKey, dimensionKey, seedHash, gamemode, gamemode, false/*isDebugWorld*/, isFlatWorld, true/*keepAllPlayerData*/);
-				} else if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_15_R1)) {// https://wiki.vg/Protocol_History#19w36a - new hashed seed field in respawn packet
-					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
-							.getConstructor(DimensionManager, Long.TYPE, WorldType, EnumGamemode)
-							.newInstance(dimensionManagerKey, seedHash, type, gamemode);
-				} else if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_14_R1)) {
-					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
-							.getConstructor(DimensionManager, WorldType, EnumGamemode)
-							.newInstance(dimensionManagerKey, type, gamemode);
-				} else {
-					respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
-							.getConstructor(DimensionManager, EnumDifficulty, WorldType, EnumGamemode)
-							.newInstance(dimensionManagerKey, difficulty, type, gamemode);
-				}
+                if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_16_R2)) {
+                    Object nmsWorld = Minecraft.getHandle(player.getWorld());
+                    Object dimensionManager = World.getDeclaredMethod("getDimensionManager").invoke(nmsWorld);
+                    Object dimensionKey = World.getDeclaredMethod("getDimensionKey").invoke(nmsWorld);
+                    boolean isFlatWorld = (boolean) WorldServer.getDeclaredMethod("isFlatWorld").invoke(nmsWorld);
+                    respawnPlayer = PacketPlayOutRespawn
+                            .getConstructor(DimensionManager, ResourceKey, Long.TYPE, EnumGamemode, EnumGamemode, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE)
+                            .newInstance(dimensionManager, dimensionKey, seedHash, gamemode, gamemode, false/*isDebugWorld*/, isFlatWorld, true/*keepAllPlayerData*/);
+                } else if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_16_R1)) {
+                    Object nmsWorld = Minecraft.getHandle(player.getWorld());
+                    Object typeKey = World.getDeclaredMethod("getTypeKey").invoke(nmsWorld);
+                    Object dimensionKey = World.getDeclaredMethod("getDimensionKey").invoke(nmsWorld);
+                    boolean isFlatWorld = (boolean) WorldServer.getDeclaredMethod("isFlatWorld").invoke(nmsWorld);
+                    respawnPlayer = PacketPlayOutRespawn
+                            .getConstructor(ResourceKey, ResourceKey, Long.TYPE, EnumGamemode, EnumGamemode, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE)
+                            .newInstance(typeKey, dimensionKey, seedHash, gamemode, gamemode, false/*isDebugWorld*/, isFlatWorld, true/*keepAllPlayerData*/);
+                } else if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_15_R1)) {// https://wiki.vg/Protocol_History#19w36a - new hashed seed field in respawn packet
+                    respawnPlayer = PacketPlayOutRespawn
+                            .getConstructor(DimensionManager, Long.TYPE, WorldType, EnumGamemode)
+                            .newInstance(dimensionManagerKey, seedHash, type, gamemode);
+                } else if (MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_14_R1)) {
+                    respawnPlayer = PacketPlayOutRespawn
+                            .getConstructor(DimensionManager, WorldType, EnumGamemode)
+                            .newInstance(dimensionManagerKey, type, gamemode);
+                } else {
+                    respawnPlayer = PacketPlayOutRespawn
+                            .getConstructor(DimensionManager, EnumDifficulty, WorldType, EnumGamemode)
+                            .newInstance(dimensionManagerKey, difficulty, type, gamemode);
+                }
 
-			} else {
-				int dimension = player.getWorld().getEnvironment().getId();
-				Object difficulty = EnumDifficulty.getDeclaredMethod("getById", int.class).invoke(null, event.getDifficulty().getValue());
-				Object type = ((Object[]) WorldType.getDeclaredField("types").get(null))[0];
-				Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
+            } else {
+                int dimension = player.getWorld().getEnvironment().getId();
+                Object difficulty = EnumDifficulty.getDeclaredMethod("getById", int.class).invoke(null, event.getDifficulty().getValue());
+                Object type = ((Object[]) WorldType.getDeclaredField("types").get(null))[0];
+                Object gamemode = EnumGamemode.getDeclaredMethod("getById", int.class).invoke(null, event.getGameMode().getValue());
 
-				respawnPlayer = SkinLoader.nmsClassResolver.resolve("PacketPlayOutRespawn")
-						.getConstructor(int.class, EnumDifficulty, WorldType, EnumGamemode)
-						.newInstance(dimension, difficulty, type, gamemode);
-			}
+                respawnPlayer = PacketPlayOutRespawn
+                        .getConstructor(int.class, EnumDifficulty, WorldType, EnumGamemode)
+                        .newInstance(dimension, difficulty, type, gamemode);
+            }
 
-			final boolean flying = player.isFlying();
-			final Location location = player.getLocation();
-			final int level = player.getLevel();
-			final float xp = player.getExp();
-			final double maxHealth = player.getMaxHealth();
-			final double health = player.getHealth();
+            final boolean flying = player.isFlying();
+            final Location location = player.getLocation();
+            final int level = player.getLevel();
+            final float xp = player.getExp();
+            final double maxHealth = player.getMaxHealth();
+            final double health = player.getHealth();
 
-			Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-				@Override
-				public void run() {
-					NickNamerAPI.packetListener.sendPacket(player, respawnPlayer);
+            Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    NickNamerAPI.packetListener.sendPacket(player, respawnPlayer);
 
-					player.setFlying(flying);
-					player.teleport(location);
-					player.updateInventory();
-					player.setLevel(level);
-					player.setExp(xp);
-					player.setMaxHealth(maxHealth);
-					player.setHealth(health);
+                    player.setFlying(flying);
+                    player.teleport(location);
+                    player.updateInventory();
+                    player.setLevel(level);
+                    player.setExp(xp);
+                    player.setMaxHealth(maxHealth);
+                    player.setHealth(health);
 
-					NickNamerAPI.packetListener.sendPacket(player, addPlayer);
-				}
-			}, 1);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+                    NickNamerAPI.packetListener.sendPacket(player, addPlayer);
+                }
+            }, 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	@Override
-	@Deprecated
-	public void updatePlayer(Player player, boolean updateName, boolean updateSkin, boolean updateSelf) {
-		refreshPlayer(player.getUniqueId());
-	}
+    @Override
+    @Deprecated
+    public void updatePlayer(Player player, boolean updateName, boolean updateSkin, boolean updateSelf) {
+        refreshPlayer(player.getUniqueId());
+    }
 
-	@Override
-	@Deprecated
-	public void updatePlayer(UUID uuid, boolean updateName, boolean updateSkin, boolean updateSelf) {
-		refreshPlayer(uuid);
-	}
+    @Override
+    @Deprecated
+    public void updatePlayer(UUID uuid, boolean updateName, boolean updateSkin, boolean updateSelf) {
+        refreshPlayer(uuid);
+    }
 
-	@Override
-	public boolean isNicked(@Nonnull UUID uuid) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public boolean isNicked(@Nonnull UUID uuid) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public boolean isNickUsed(@Nonnull String nick) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public boolean isNickUsed(@Nonnull String nick) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String getNick(@Nonnull UUID id) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String getNick(@Nonnull UUID id) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setNick(@Nonnull UUID uuid, @Nonnull String nick) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setNick(@Nonnull UUID uuid, @Nonnull String nick) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void removeNick(@Nonnull UUID uuid) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void removeNick(@Nonnull UUID uuid) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Nonnull
-	@Override
-	public List<UUID> getPlayersWithNick(@Nonnull String nick) {
-		throw new UnsupportedOperationException();
-	}
+    @Nonnull
+    @Override
+    public List<UUID> getPlayersWithNick(@Nonnull String nick) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Nonnull
-	@Override
-	public List<String> getUsedNicks() {
-		throw new UnsupportedOperationException();
-	}
+    @Nonnull
+    @Override
+    public List<String> getUsedNicks() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setSkin(@Nonnull UUID uuid, @Nonnull String skin, @Nullable Callback callback) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setSkin(@Nonnull UUID uuid, @Nonnull String skin, @Nullable Callback callback) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setSkin(@Nonnull final UUID uuid, @Nonnull final String skinOwner) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setSkin(@Nonnull final UUID uuid, @Nonnull final String skinOwner) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void loadCustomSkin(@Nonnull String key, @Nonnull Object gameProfile) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void loadCustomSkin(@Nonnull String key, @Nonnull Object gameProfile) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void loadCustomSkin(@Nonnull String key, @Nonnull GameProfileWrapper profileWrapper) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void loadCustomSkin(@Nonnull String key, @Nonnull GameProfileWrapper profileWrapper) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void loadCustomSkin(@Nonnull String key, @Nonnull JsonObject data) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void loadCustomSkin(@Nonnull String key, @Nonnull JsonObject data) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	@Deprecated
-	public void loadCustomSkin(String key, JSONObject data) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    @Deprecated
+    public void loadCustomSkin(String key, JSONObject data) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setCustomSkin(@Nonnull UUID uuid, @Nonnull String skin) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setCustomSkin(@Nonnull UUID uuid, @Nonnull String skin) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void removeSkin(@Nonnull UUID uuid) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void removeSkin(@Nonnull UUID uuid) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String getSkin(@Nonnull UUID uuid) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String getSkin(@Nonnull UUID uuid) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public boolean hasSkin(@Nonnull UUID uuid) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public boolean hasSkin(@Nonnull UUID uuid) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Nonnull
-	@Override
-	public List<UUID> getPlayersWithSkin(@Nonnull String skin) {
-		throw new UnsupportedOperationException();
-	}
+    @Nonnull
+    @Override
+    public List<UUID> getPlayersWithSkin(@Nonnull String skin) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public Collection<String> getUsedSkins() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public Collection<String> getUsedSkins() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public boolean isSimple() {
-		return true;
-	}
+    @Override
+    public boolean isSimple() {
+        return true;
+    }
 }

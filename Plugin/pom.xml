@@ -90,6 +90,13 @@
         </dependency>
 
         <dependency>
+            <groupId>com.destroystokyo.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.14.1-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.inventivetalent.spiget-update</groupId>
             <artifactId>bukkit</artifactId>
             <version>1.4.2-SNAPSHOT</version>
