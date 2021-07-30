@@ -35,6 +35,7 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.mojang.authlib.GameProfile;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -499,7 +500,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				@Override
 				public void provide(@Nullable final String skin) {
 					if (skin != null && !skin.equals(event.getDisguised().getName())) {
-						GameProfileWrapper skinProfile = SkinLoader.getSkinProfile(skin);
+						GameProfile skinProfile = SkinLoader.getSkinProfile(skin);
 						if (skinProfile == null) {
 							Bukkit.getScheduler().runTaskAsynchronously(NickNamerPlugin.instance, new Runnable() {
 								@Override

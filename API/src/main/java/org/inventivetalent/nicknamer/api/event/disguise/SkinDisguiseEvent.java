@@ -28,11 +28,11 @@
 
 package org.inventivetalent.nicknamer.api.event.disguise;
 
+import com.mojang.authlib.GameProfile;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
-import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -50,25 +50,25 @@ import javax.annotation.Nullable;
  */
 public class SkinDisguiseEvent extends ProfileDisguiseEvent implements Cancellable {
 
-	private final String originalSkin;
-	private       String skin;
+    private final String originalSkin;
+    private String skin;
 
-	public SkinDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String skin, boolean async) {
-		super(disguised, receiver, gameProfile, async);
-		this.originalSkin = this.skin = skin;
-	}
+    public SkinDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfile gameProfile, @Nullable String skin, boolean async) {
+        super(disguised, receiver, gameProfile, async);
+        this.originalSkin = this.skin = skin;
+    }
 
-	public SkinDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String skin) {
-		this(disguised, receiver, gameProfile, skin, false);
-	}
+    public SkinDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfile gameProfile, @Nullable String skin) {
+        this(disguised, receiver, gameProfile, skin, false);
+    }
 
-	/**
-	 * @return The player's skin, or the player's name
-	 */
-	@Nullable
-	public String getSkin() {
-		return skin;
-	}
+    /**
+     * @return The player's skin, or the player's name
+     */
+    @Nullable
+    public String getSkin() {
+        return skin;
+    }
 
 	/**
 	 * @param skin The new skin

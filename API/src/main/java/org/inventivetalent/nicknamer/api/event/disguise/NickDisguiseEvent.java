@@ -28,11 +28,11 @@
 
 package org.inventivetalent.nicknamer.api.event.disguise;
 
+import com.mojang.authlib.GameProfile;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
-import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -51,14 +51,14 @@ import javax.annotation.Nullable;
 public class NickDisguiseEvent extends ProfileDisguiseEvent implements Cancellable {
 
 	private final String originalNick;
-	private       String nick;
+	private String nick;
 
-	public NickDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String nick, boolean async) {
+	public NickDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfile gameProfile, @Nullable String nick, boolean async) {
 		super(disguised, receiver, gameProfile, async);
 		this.originalNick = this.nick = nick;
 	}
 
-	public NickDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, @Nullable String nick) {
+	public NickDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfile gameProfile, @Nullable String nick) {
 		this(disguised, receiver, gameProfile, nick, false);
 	}
 

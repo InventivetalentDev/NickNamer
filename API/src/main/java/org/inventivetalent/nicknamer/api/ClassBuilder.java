@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api;
 
+import com.mojang.authlib.GameProfile;
 import org.bukkit.entity.Player;
 import org.inventivetalent.reflection.minecraft.Minecraft;
 import org.inventivetalent.reflection.minecraft.MinecraftVersion;
@@ -45,29 +46,32 @@ public class ClassBuilder {
     @SuppressWarnings({
             "rawtypes",
             "unchecked"})
-    public static Object buildPlayerInfoPacket(int action, Object profile, int ping, int gamemodeOrdinal, String name) {
+    public static Object buildPlayerInfoPacket(int action, GameProfile profile, int ping, int gamemodeOrdinal, String name) {
         try {
-            Object packet;
+            Object packet = PacketPlayOutPlayerInfo.getConstructor(EnumPlayerInfoAction, Class.forName("[L" + EntityPlayer.getName() + ";"))
+                    .newInstance(EnumPlayerInfoAction.getEnumConstants()[action], Array.newInstance(EntityPlayer, 0));
 
-            if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
-                packet = PacketPlayOutPlayerInfo.newInstance();
+            List list = (List) PacketPlayOutPlayerInfoFieldResolver.resolve("b").get(packet);
 
-                PacketPlayOutPlayerInfoFieldResolver.resolve("action").set(packet, action);
-                PacketPlayOutPlayerInfoFieldResolver.resolve("player").set(packet, profile);
-                PacketPlayOutPlayerInfoFieldResolver.resolve("gamemode").set(packet, gamemodeOrdinal);
-                PacketPlayOutPlayerInfoFieldResolver.resolve("ping").set(packet, ping);
-                PacketPlayOutPlayerInfoFieldResolver.resolve("username").set(packet, name);
-            } else {
-                packet = PacketPlayOutPlayerInfo.getConstructor(EnumPlayerInfoAction, Class.forName("[L" + EntityPlayer.getName() + ";"))
-                        .newInstance(EnumPlayerInfoAction.getEnumConstants()[action], Array.newInstance(EntityPlayer, 0));
+            Object data = buildPlayerInfoData(profile, ping, gamemodeOrdinal, name);
+            list.add(data);
 
-                List list = (List) PacketPlayOutPlayerInfoFieldResolver.resolve("b").get(packet);
-
-                Object data;
-                data = PlayerInfoData.getConstructor(PacketPlayOutPlayerInfo, getNMUtilClass("com.mojang.authlib.GameProfile"), int.class, EnumGamemode, IChatBaseComponent).newInstance(packet, profile, ping, EnumGamemode.getEnumConstants()[gamemodeOrdinal], buildChatComponent(name));
-                list.add(data);
-            }
             return packet;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Object buildPlayerInfoData(GameProfile gameProfile, int latency, int gameModeOrdinal, String displayName) {
+        return buildPlayerInfoData(gameProfile, latency, EnumGamemode.getEnumConstants()[gameModeOrdinal], buildChatComponent(displayName));
+    }
+
+    public static Object buildPlayerInfoData(GameProfile gameProfile, int latency, Object gameMode, Object displayName) {
+        try {
+            PlayerInfoData
+                    .getConstructor(GameProfile.class, int.class, EnumGamemode, IChatBaseComponent)
+                    .newInstance(gameProfile, latency, gameMode, displayName);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -86,9 +90,9 @@ public class ClassBuilder {
         return null;
     }
 
-    public static Object getGameProfile(Player player) {
+    public static GameProfile getGameProfile(Player player) {
         try {
-            return EntityHumanMethodResolver.resolve("getProfile").invoke(Minecraft.getHandle(player));
+            return (GameProfile) EntityHumanMethodResolver.resolve("getProfile").invoke(Minecraft.getHandle(player));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

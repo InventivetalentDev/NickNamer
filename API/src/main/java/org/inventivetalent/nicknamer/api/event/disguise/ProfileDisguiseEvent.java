@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api.event.disguise;
 
+import com.mojang.authlib.GameProfile;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -41,35 +42,45 @@ import javax.annotation.Nonnull;
  */
 public abstract class ProfileDisguiseEvent extends DisguiseEvent implements Cancellable {
 
-	private GameProfileWrapper gameProfile;
+    private GameProfile gameProfile;
 
-	private boolean cancelled;
+    private boolean cancelled;
 
-	public ProfileDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile, boolean async) {
-		super(disguised, receiver, async);
-		this.gameProfile = gameProfile;
-	}
+    public ProfileDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfile gameProfile, boolean async) {
+        super(disguised, receiver, async);
+        this.gameProfile = gameProfile;
+    }
 
-	public ProfileDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfileWrapper gameProfile) {
-		this(disguised, receiver, gameProfile, false);
-	}
+    public ProfileDisguiseEvent(@Nonnull OfflinePlayer disguised, @Nonnull Player receiver, @Nonnull GameProfile gameProfile) {
+        this(disguised, receiver, gameProfile, false);
+    }
 
-	/**
-	 * @return The GameProfile
-	 */
-	@Nonnull
-	public GameProfileWrapper getGameProfile() {
-		return gameProfile;
-	}
+    /**
+     * @return The GameProfile
+     */
+    @Nonnull
+    @Deprecated
+    public GameProfileWrapper getGameProfile() {
+        return new GameProfileWrapper(gameProfile);
+    }
 
-	/**
-	 * @param gameProfile The new GameProfile
-	 */
-	public void setGameProfile(@Nonnull GameProfileWrapper gameProfile) {
-		this.gameProfile = gameProfile;
-	}
+    public GameProfile getProfile() {
+        return gameProfile;
+    }
 
-	@Override
+    public void setProfile(GameProfile profile) {
+        this.gameProfile = profile;
+    }
+
+    /**
+     * @param gameProfile The new GameProfile
+     */
+    @Deprecated
+    public void setGameProfile(@Nonnull GameProfileWrapper gameProfile) {
+        this.gameProfile = (GameProfile) gameProfile.getHandle();
+    }
+
+    @Override
 	public boolean isCancelled() {
 		return cancelled;
 	}

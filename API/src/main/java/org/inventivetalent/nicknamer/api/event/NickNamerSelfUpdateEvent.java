@@ -28,6 +28,7 @@
 
 package org.inventivetalent.nicknamer.api.event;
 
+import com.mojang.authlib.GameProfile;
 import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -43,14 +44,14 @@ public class NickNamerSelfUpdateEvent extends Event implements Cancellable {
 	private Player player;
 	private String name;
 
-	private Object gameProfile;
+	private GameProfile gameProfile;
 
 	private Difficulty difficulty;
-	private GameMode   gameMode;
+	private GameMode gameMode;
 
 	private boolean cancelled;
 
-	public NickNamerSelfUpdateEvent(Player player, String name, Object gameProfile,Difficulty difficulty, GameMode gameMode, boolean async) {
+	public NickNamerSelfUpdateEvent(Player player, String name, GameProfile gameProfile, Difficulty difficulty, GameMode gameMode, boolean async) {
 		super(async);
 		this.player = player;
 		this.name = name;
@@ -59,7 +60,7 @@ public class NickNamerSelfUpdateEvent extends Event implements Cancellable {
 		this.gameMode = gameMode;
 	}
 
-	public NickNamerSelfUpdateEvent(Player player, String name, Object gameProfile,Difficulty difficulty, GameMode gameMode) {
+	public NickNamerSelfUpdateEvent(Player player, String name, GameProfile gameProfile, Difficulty difficulty, GameMode gameMode) {
 		this.player = player;
 		this.name = name;
 		this.gameProfile = gameProfile;
@@ -82,11 +83,11 @@ public class NickNamerSelfUpdateEvent extends Event implements Cancellable {
 		this.name = name;
 	}
 
-	public Object getGameProfile() {
+	public GameProfile getGameProfile() {
 		return gameProfile;
 	}
 
-	public void setGameProfile(Object gameProfile) {
+	public void setGameProfile(GameProfile gameProfile) {
 		this.gameProfile = gameProfile;
 	}
 

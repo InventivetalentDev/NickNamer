@@ -29,6 +29,7 @@
 package org.inventivetalent.nicknamer.api;
 
 import com.google.gson.JsonObject;
+import com.mojang.authlib.GameProfile;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -38,6 +39,7 @@ import org.inventivetalent.nicknamer.api.event.NickNamerSelfUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.refresh.PlayerRefreshEvent;
 import org.inventivetalent.reflection.minecraft.Minecraft;
 import org.inventivetalent.reflection.minecraft.MinecraftVersion;
+import org.inventivetalent.reflection.resolver.FieldResolver;
 import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
@@ -109,7 +111,7 @@ public class SimpleNickManager implements NickManager {
     @SuppressWarnings("unchecked")
     protected void updateSelf(final Player player) {
         if (player == null || !player.isOnline()) { return; }
-        Object profile = ClassBuilder.getGameProfile(player);
+        GameProfile profile = ClassBuilder.getGameProfile(player);
 
         boolean async = !plugin.getServer().isPrimaryThread();
         NickNamerSelfUpdateEvent event = new NickNamerSelfUpdateEvent(player, isNicked(player.getUniqueId()) ? getNick(player.getUniqueId()) : player.getPlayerListName(), profile, player.getWorld().getDifficulty(), player.getGameMode(), async);

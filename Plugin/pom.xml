@@ -83,17 +83,24 @@
             <artifactId>api</artifactId>
             <version>${nn.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.17.1-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.mojang</groupId>
+            <artifactId>authlib</artifactId>
+            <version>1.5.21</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.inventivetalent</groupId>
             <artifactId>pluginannotations</artifactId>
             <version>1.5.1-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.destroystokyo.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>1.14.1-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>

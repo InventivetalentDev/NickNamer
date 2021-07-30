@@ -29,12 +29,11 @@
 package org.inventivetalent.nicknamer.api;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.PropertyMap;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
-import org.inventivetalent.mcwrapper.auth.properties.PropertyMapWrapper;
 import org.inventivetalent.nicknamer.api.event.NickNamerUpdateEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.NickDisguiseEvent;
 import org.inventivetalent.nicknamer.api.event.disguise.SkinDisguiseEvent;
@@ -78,45 +77,23 @@ public class PacketListener extends PacketHandler {
     @PacketOptions(forcePlayer = true)
     public void onSend(final SentPacket packet) {
         if (packet.hasPlayer()) {
-            //// Nametag / Skin disguise
-            if ("PacketPlayOutNamedEntitySpawn".equals(packet.getPacketName()) && MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
+            if ("PacketPlayOutPlayerInfo".equals(packet.getPacketName())) {
                 try {
                     Object profileHandle = packet.getPacketValue("b");
-                    if (profileHandle != null) {
-                        GameProfileWrapper disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(profileHandle));
-                        if (disguised != null) {
-                            packet.setPacketValue("b", disguised.getHandle());
-                        }
-                    }
-                } catch (Exception e) {
-                    getPlugin().getLogger().log(Level.SEVERE, "Failed to disguise profile", e);
-                }
-            }
-            if ("PacketPlayOutPlayerInfo".equals(packet.getPacketName())) {
-                if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) && (int) packet.getPacketValue("action") == 4) {
-                    return;// Cancel here if the player is currently being removed
-                }
-                try {
-                    // (only a profile in < 1.8, otherwise it's a list of PlayerInfoData)
-                    Object profileHandle = packet.getPacketValue(MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? "player" : "b");
-                    if (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1)) {
-                        if (profileHandle != null) {
-                            GameProfileWrapper disguisedWrapper = disguiseProfile(packet.getPlayer(), new GameProfileWrapper(profileHandle));
-							if (disguisedWrapper != null) {
-								profileHandle = disguisedWrapper.getHandle();
-								packet.setPacketValue("player", profileHandle);
-								packet.setPacketValue("username", disguisedWrapper.getName());
-							}
-                        }
-                    } else {// PlayerInfoData
-                        List list = new ArrayList<>((List) profileHandle);
-                        for (ListIterator<Object> iterator = list.listIterator(); iterator.hasNext(); ) {
-                            Object object = iterator.next();
-                            FieldAccessor field = PlayerInfoDataFieldResolver.resolveByFirstTypeAccessor(GameProfile.class);
-                            GameProfileWrapper disguised = disguiseProfile(packet.getPlayer(), new GameProfileWrapper((Object) field.get(object)));
-                            if (disguised != null) {
-                                field.set(object, disguised.getHandle());
-                            }
+                    List list = new ArrayList<>((List) profileHandle);
+                    for (ListIterator<Object> iterator = list.listIterator(); iterator.hasNext(); ) {
+                        Object originalData = iterator.next();
+
+                        FieldAccessor latencyField = PlayerInfoDataFieldResolver.resolveIndexAccessor(0);
+                        FieldAccessor gameModeField = PlayerInfoDataFieldResolver.resolveIndexAccessor(1);
+                        FieldAccessor profileField = PlayerInfoDataFieldResolver.resolveIndexAccessor(2);
+                        FieldAccessor nameField = PlayerInfoDataFieldResolver.resolveIndexAccessor(3);
+
+                        GameProfile originalProfile = profileField.get(originalData);
+                        GameProfile disguisedProfile = disguiseProfile(packet.getPlayer(), originalProfile);
+                        if (disguisedProfile != null) {
+                            Object newData = ClassBuilder.buildPlayerInfoData(disguisedProfile, (int) latencyField.get(originalData), gameModeField.get(originalData), nameField.get(originalData));
+                            iterator.set(newData);
                         }
                     }
                 } catch (Exception e) {
@@ -307,9 +284,9 @@ public class PacketListener extends PacketHandler {
     }
 
     @Nullable
-    private GameProfileWrapper disguiseProfile(final Player observer, final GameProfileWrapper profileWrapper) throws Exception {
-        final UUID id = profileWrapper.getId();
-        final String name = profileWrapper.getName();
+    private GameProfile disguiseProfile(final Player observer, final GameProfile profile) {
+        final UUID id = profile.getId();
+        final String name = profile.getName();
         final OfflinePlayer toDisguise = Bukkit.getOfflinePlayer(id);
 
         if (toDisguise == null /*|| !toDisguise.isOnline()*/) {
@@ -318,8 +295,8 @@ public class PacketListener extends PacketHandler {
 
         boolean async = !getPlugin().getServer().isPrimaryThread();
 
-        NickDisguiseEvent nickDisguiseEvent = new NickDisguiseEvent(toDisguise, observer, profileWrapper, name, async);
-        SkinDisguiseEvent skinDisguiseEvent = new SkinDisguiseEvent(toDisguise, observer, profileWrapper, name, async);
+        NickDisguiseEvent nickDisguiseEvent = new NickDisguiseEvent(toDisguise, observer, profile, name, async);
+        SkinDisguiseEvent skinDisguiseEvent = new SkinDisguiseEvent(toDisguise, observer, profile, name, async);
         Bukkit.getPluginManager().callEvent(nickDisguiseEvent);
         Bukkit.getPluginManager().callEvent(skinDisguiseEvent);
 
@@ -337,7 +314,7 @@ public class PacketListener extends PacketHandler {
             NickNamerUpdateEvent event = new NickNamerUpdateEvent(toDisguise, observer, nick, skin);
             Bukkit.getPluginManager().callEvent(event);
             if (event.isCancelled()) {
-                return profileWrapper;//Don't change anything if the event is cancelled
+                return profile;//Don't change anything if the event is cancelled
             }
 
             //Update the variables (if they aren't null)
@@ -349,12 +326,12 @@ public class PacketListener extends PacketHandler {
             }
         }
 
-        GameProfileWrapper profileClone = new GameProfileWrapper(id, name);// Create a clone of the profile since the server's PlayerList will use the original profiles
+        GameProfile profileClone = new GameProfile(id, nick);// Create a clone of the profile since the server's PlayerList will use the original profiles
 
         {
-            GameProfileWrapper skinProfile = skin != null ? SkinLoader.getSkinProfile(skin) : null;
+            GameProfile skinProfile = skin != null ? SkinLoader.getSkinProfile(skin) : null;
             if (skinProfile != null) {
-                PropertyMapWrapper clonedSkinProperties = profileClone.getProperties();
+                PropertyMap clonedSkinProperties = profileClone.getProperties();
                 // Copy the skin properties to the cloned profile
                 clonedSkinProperties.clear();
                 clonedSkinProperties.putAll(skinProfile.getProperties());
@@ -363,9 +340,6 @@ public class PacketListener extends PacketHandler {
             }
         }
 
-        {
-            profileClone.setName(nick);
-        }
         return profileClone;
     }
 
