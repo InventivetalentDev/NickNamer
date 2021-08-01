@@ -69,7 +69,7 @@ public class ClassBuilder {
 
     public static Object buildPlayerInfoData(GameProfile gameProfile, int latency, Object gameMode, Object displayName) {
         try {
-            PlayerInfoData
+            return PlayerInfoData
                     .getConstructor(GameProfile.class, int.class, EnumGamemode, IChatBaseComponent)
                     .newInstance(gameProfile, latency, gameMode, displayName);
         } catch (Exception e) {

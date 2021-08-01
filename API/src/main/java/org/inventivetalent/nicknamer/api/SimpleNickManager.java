@@ -64,6 +64,8 @@ public class SimpleNickManager implements NickManager {
     Class<?> PacketPlayOutRespawn = SkinLoader.nmsClassResolver.resolveSilent("PacketPlayOutRespawn", "network.protocol.game.PacketPlayOutRespawn");
     Class<?> WorldType = SkinLoader.nmsClassResolver.resolveSilent("WorldType"); // only pre 1.16
 
+    FieldResolver DimensionManagerFieldResolver = new FieldResolver(DimensionManager);
+
     protected Plugin plugin;
 
     public SimpleNickManager(Plugin plugin) {
@@ -133,14 +135,14 @@ public class SimpleNickManager implements NickManager {
                 Object dimensionManagerKey;
                 switch (player.getWorld().getEnvironment()) {
                     case NETHER:
-                        dimensionManagerKey = DimensionManager.getDeclaredField("NETHER").get(null);
+                        dimensionManagerKey = DimensionManagerFieldResolver.resolveAccessor("NETHER", "g").get(null);
                         break;
                     case THE_END:
-                        dimensionManagerKey = DimensionManager.getDeclaredField("THE_END").get(null);
+                        dimensionManagerKey = DimensionManagerFieldResolver.resolveAccessor("THE_END", "h").get(null);
                         break;
                     case NORMAL:
                     default:
-                        dimensionManagerKey = DimensionManager.getDeclaredField("OVERWORLD").get(null);
+                        dimensionManagerKey = DimensionManagerFieldResolver.resolveAccessor("OVERWORLD", "f").get(null);
                         break;
                 }
 

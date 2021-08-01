@@ -52,7 +52,10 @@ import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 import org.inventivetalent.reflection.resolver.minecraft.OBCClassResolver;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public class PacketListener extends PacketHandler {
@@ -61,7 +64,7 @@ public class PacketListener extends PacketHandler {
     static OBCClassResolver obcClassResolver = new OBCClassResolver();
 
     static Class<?> PlayerInfoData = nmsClassResolver.resolveSilent("PlayerInfoData", "PacketPlayOutPlayerInfo$PlayerInfoData", "network.protocol.game.PacketPlayOutPlayerInfo$PlayerInfoData");// 1.8+ only
-    static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent", "network.chat");
+    static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent", "network.chat.IChatBaseComponent");
     static Class<?> PacketPlayInChat = nmsClassResolver.resolveSilent("PacketPlayInChat", "network.protocol.game.PacketPlayInChat");
     static Class<?> ChatSerializer = nmsClassResolver.resolveSilent("ChatSerializer", "IChatBaseComponent$ChatSerializer", "network.chat.IChatBaseComponent$ChatSerializer");
 
@@ -80,9 +83,10 @@ public class PacketListener extends PacketHandler {
             if ("PacketPlayOutPlayerInfo".equals(packet.getPacketName())) {
                 try {
                     Object profileHandle = packet.getPacketValue("b");
-                    List list = new ArrayList<>((List) profileHandle);
+                    List list = (List) profileHandle;
                     for (ListIterator<Object> iterator = list.listIterator(); iterator.hasNext(); ) {
                         Object originalData = iterator.next();
+                        if (originalData == null) continue;
 
                         FieldAccessor latencyField = PlayerInfoDataFieldResolver.resolveIndexAccessor(0);
                         FieldAccessor gameModeField = PlayerInfoDataFieldResolver.resolveIndexAccessor(1);
@@ -360,4 +364,5 @@ public class PacketListener extends PacketHandler {
             throw new RuntimeException(e);
         }
     }
+
 }

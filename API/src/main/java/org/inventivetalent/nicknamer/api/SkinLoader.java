@@ -52,20 +52,16 @@ import java.util.concurrent.TimeoutException;
 
 public class SkinLoader {
 
-    static ClassResolver classResolver = new ClassResolver();
-    static NMSClassResolver nmsClassResolver = new NMSClassResolver();
+	static ClassResolver classResolver = new ClassResolver();
+	static NMSClassResolver nmsClassResolver = new NMSClassResolver();
 
-    static Class<?> TileEntitySkull = nmsClassResolver.resolveSilent("TileEntitySkull", "world.level.block.entity.TileEntitySkull");
-    static Class<?> Cache = classResolver.resolveSilent("net.minecraft.util.com.google.common.cache.Cache", "com.google.common.cache.Cache");
-    static Class<?> LoadingCache = classResolver.resolveSilent("net.minecraft.util.com.google.common.cache.LoadingCache", "com.google.common.cache.LoadingCache");
-    static Class<?> GameProfile = classResolver.resolveSilent("net.minecraft.util.com.mojang.authlib.GameProfile", "com.mojang.authlib.GameProfile");
-    static Class<?> PropertyMap = classResolver.resolveSilent("net.minecraft.util.com.mojang.authlib.properties.PropertyMap", "com.mojang.authlib.properties.PropertyMap");
+	static Class<?> TileEntitySkull = nmsClassResolver.resolveSilent("TileEntitySkull", "world.level.block.entity.TileEntitySkull");
+	static Class<?> UserCache = nmsClassResolver.resolveSilent("server.players.UserCache");
 
-    static FieldResolver TileEntitySkullFieldResolver = new FieldResolver(TileEntitySkull);
-    static FieldResolver GameProfileFieldResolver = new FieldResolver(GameProfile);
+	static FieldResolver TileEntitySkullFieldResolver = new FieldResolver(TileEntitySkull);
 
-    static MethodResolver CacheMethodResolver = new MethodResolver(Cache);
-    static MethodResolver LoadingCacheMethodResolver = new MethodResolver(LoadingCache);
+	static MethodResolver UserCacheMethodResolver = new MethodResolver(UserCache);
+
 
 	protected static DataProvider<JsonObject> skinDataProvider;
 
@@ -121,17 +117,7 @@ public class SkinLoader {
 			}
 		}
 		if (profile == null) {
-			try {
-                Object cache = TileEntitySkullFieldResolver.resolve("skinCache", "b").get(null);
-				profile = (GameProfile) LoadingCacheMethodResolver.resolve("getUnchecked").invoke(cache, owner.toLowerCase());
-                if (profile != null) {
-                    skinDataProvider.put(owner, profileToJson(profile));
-                    boolean async = !Bukkit.getServer().isPrimaryThread();
-                    Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile), async));
-                }
-            } catch (ReflectiveOperationException e) {
-				throw new RuntimeException(e);
-			}
+			profile = getCachedProfile(owner);
 		}
 		return profile;
 	}
@@ -140,17 +126,23 @@ public class SkinLoader {
 	public static GameProfile getSkinProfileHandle(@Nonnull String owner) {
 		GameProfile profile = jsonToProfile(skinDataProvider.get(owner));
 		if (profile == null) {
-			try {
-				Object cache = TileEntitySkullFieldResolver.resolve("skinCache", "b").get(null);
-				profile = (GameProfile) CacheMethodResolver.resolve("getIfPresent").invoke(cache, owner);
-				if (profile != null) {
-					skinDataProvider.put(owner, profileToJson(profile));
-					boolean async = !Bukkit.getServer().isPrimaryThread();
-					Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile), async));
-				}
-			} catch (ReflectiveOperationException e) {
-				throw new RuntimeException(e);
+			profile = getCachedProfile(owner);
+		}
+		return profile;
+	}
+
+	public static GameProfile getCachedProfile(String owner) {
+		GameProfile profile;
+		try {
+			Object cache = TileEntitySkullFieldResolver.resolve("skinCache", "b").get(null);
+			profile = (GameProfile) UserCacheMethodResolver.resolve("getProfileIfCached").invoke(cache, owner);
+			if (profile != null) {
+				skinDataProvider.put(owner, profileToJson(profile));
+				boolean async = !Bukkit.getServer().isPrimaryThread();
+				Bukkit.getPluginManager().callEvent(new SkinLoadedEvent(owner, new GameProfileWrapper(profile), async));
 			}
+		} catch (ReflectiveOperationException e) {
+			throw new RuntimeException(e);
 		}
 		return profile;
 	}
