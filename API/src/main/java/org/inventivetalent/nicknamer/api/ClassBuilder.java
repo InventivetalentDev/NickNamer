@@ -180,8 +180,8 @@ public class ClassBuilder {
     static Class<?> EnumScoreboardHealthDisplay = nmsClassResolver.resolveSilent("world.scores.criteria.IScoreboardCriteria$EnumScoreboardHealthDisplay");
     static Class<?> PacketPlayOutScoreboardObjective = nmsClassResolver.resolveSilent("network.protocol.game.PacketPlayOutScoreboardObjective");
     static Class<?> PacketPlayOutScoreboardScore = nmsClassResolver.resolveSilent("network.protocol.game.PacketPlayOutScoreboardScore");
-    static Class<?> ScoreboardServer = nmsClassResolver.resolveSilent("ScoreboardServer");
-    static Class<?> ScoreboardServer$Action = nmsClassResolver.resolveSilent("ScoreboardServer$Action");
+    static Class<?> ScoreboardServer = nmsClassResolver.resolveSilent("server.ScoreboardServer");
+    static Class<?> ScoreboardServer$Action = nmsClassResolver.resolveSilent("server.ScoreboardServer$Action");
     static Class<?> PacketPlayOutScoreboardTeam = nmsClassResolver.resolveSilent("network.protocol.game.PacketPlayOutScoreboardTeam");
     static Class<?> PacketPlayInChat = nmsClassResolver.resolveSilent("network.protocol.game.PacketPlayInChat");
 
