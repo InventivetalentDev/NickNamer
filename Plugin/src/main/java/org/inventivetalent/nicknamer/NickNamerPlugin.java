@@ -50,7 +50,6 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.inventivetalent.data.async.AsyncDataProvider;
-import org.inventivetalent.data.async.DataCallback;
 import org.inventivetalent.data.mapper.AsyncCacheMapper;
 import org.inventivetalent.data.mapper.AsyncJsonValueMapper;
 import org.inventivetalent.data.mapper.AsyncStringValueMapper;
@@ -83,7 +82,6 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -273,72 +271,6 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 				.expireAfterWrite(10, TimeUnit.MINUTES), storageExecutor);
 	}
 
-	/*void initStorageLocal() {
-		int nickCount = -1;
-		int skinCount = -1;
-		int dataCount = -1;
-		try {
-			nickCount = getDatabase().find(NickEntry.class).findRowCount();
-			skinCount = getDatabase().find(SkinEntry.class).findRowCount();
-			dataCount = getDatabase().find(SkinDataEntry.class).findRowCount();
-		} catch (PersistenceException e) {
-			getLogger().info("Installing database");
-			installDDL();
-		}
-		if (nickCount > 0) {
-			getLogger().info("Found " + nickCount + " player nick-data in database");
-		}
-		((PluginNickManager) NickNamerAPI.getNickManager())
-				.setNickDataProvider(initCache(AsyncStringValueMapper
-						.ebean(new EbeanDataProvider<>(getDatabase(), NickEntry.class), new BeanProvider<NickEntry>() {
-							@Override
-							public NickEntry provide(String key, String value) {
-								return new NickEntry(key, value);
-							}
-						})));
-		//		((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), NickEntry.class)));
-		if (dataCount > 0) {
-			getLogger().info("Found " + skinCount + " player skin-data in database");
-		}
-		((PluginNickManager) NickNamerAPI.getNickManager())
-				.setSkinDataProvider(initCache(AsyncStringValueMapper
-						.ebean(new EbeanDataProvider<>(getDatabase(), SkinEntry.class), new BeanProvider<SkinEntry>() {
-							@Override
-							public SkinEntry provide(String key, String value) {
-								return new SkinEntry(key, value);
-							}
-						})));
-		//		((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new EbeanDataProvider<>(String.class, getDatabase(), SkinEntry.class)));
-
-		if (dataCount > 0) {
-			getLogger().info("Found " + dataCount + " skin textures in database");
-			for (SkinDataEntry entry : getDatabase().find(SkinDataEntry.class).findSet()) {
-				if (System.currentTimeMillis() - entry.getLoadTime() > 3600000) {
-					getLogger().info("Deleting old skin for " + entry.getKey());
-					getDatabase().delete(entry);
-				}
-			}
-		}
-
-		SkinLoader.setSkinDataProvider(initCache(AsyncJsonValueMapper
-				.ebean(new EbeanDataProvider<>(getDatabase(), SkinDataEntry.class), new BeanProvider<SkinDataEntry>() {
-					@Override
-					public SkinDataEntry provide(String key, String value) {
-						SkinDataEntry bean = new SkinDataEntry(key, value);
-						bean.setLoadTime(System.currentTimeMillis());
-						return bean;
-					}
-				})));
-		//		SkinLoader.setSkinDataProvider(new EbeanDataProvider<Object>(Object.class/*We're using a custom parser/serializer, so this class doesn't matter, getDatabase(), SkinDataEntry.class) {
-		//			@Override
-		//			public KeyValueBean newBean() {
-		//				SkinDataEntry bean = new SkinDataEntry();
-		//				bean.setLoadTime(System.currentTimeMillis());
-		//				return bean;
-		//			}
-		//		});
-	}*/
-
 	void initStorageLocal() {
 		File dbFile = new File(getDataFolder(), "nicknamer.db");
 		String url = "jdbc:sqlite:" + dbFile.getAbsolutePath();
@@ -361,22 +293,19 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	void initStorageSQL() {
 		if (sqlPass == null || sqlPass.isEmpty()) { sqlPass = null; }
 
-		Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
-			@Override
-			public void run() {
-				try {
-					Connection connection = DriverManager.getConnection(sqlAddress, sqlUser, sqlPass);
-					((PluginNickManager) NickNamerAPI.getNickManager())
-							.setNickDataProvider(initCache(AsyncStringValueMapper
-									.sql(new SQLDataProvider(connection, "nicknamer_data_nick"))));
-					((PluginNickManager) NickNamerAPI.getNickManager())
-							.setSkinDataProvider(initCache(AsyncStringValueMapper
-									.sql(new SQLDataProvider(connection, "nicknamer_data_skin"))));
-					SkinLoader.setSkinDataProvider(initCache(AsyncJsonValueMapper
-							.sql(new SQLDataProvider(connection, "nicknamer_skins"))));
-				} catch (SQLException e) {
-					throw new RuntimeException("SQL connection failed", e);
-				}
+		Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+			try {
+				Connection connection = DriverManager.getConnection(sqlAddress, sqlUser, sqlPass);
+				((PluginNickManager) NickNamerAPI.getNickManager())
+						.setNickDataProvider(initCache(AsyncStringValueMapper
+								.sql(new SQLDataProvider(connection, "nicknamer_data_nick"))));
+				((PluginNickManager) NickNamerAPI.getNickManager())
+						.setSkinDataProvider(initCache(AsyncStringValueMapper
+								.sql(new SQLDataProvider(connection, "nicknamer_data_skin"))));
+				SkinLoader.setSkinDataProvider(initCache(AsyncJsonValueMapper
+						.sql(new SQLDataProvider(connection, "nicknamer_skins"))));
+			} catch (SQLException e) {
+				throw new RuntimeException("SQL connection failed", e);
 			}
 		});
 	}
@@ -384,43 +313,40 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 	void initStorageRedis() {
 		if (redisPass == null || redisPass.isEmpty()) { redisPass = null; }
 
-		Bukkit.getScheduler().runTaskAsynchronously(this, new Runnable() {
-			@Override
-			public void run() {
-				JedisPoolConfig config = new JedisPoolConfig();
-				config.setMaxTotal(redisMaxConnections);
-				final JedisPool pool = new JedisPool(config, redisHost, redisPort, 0, redisPass);
-				try (final Jedis jedis = pool.getResource()) {
-					jedis.ping();
-					getLogger().info("Connected to Redis");
+		Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+			JedisPoolConfig config = new JedisPoolConfig();
+			config.setMaxTotal(redisMaxConnections);
+			final JedisPool pool = new JedisPool(config, redisHost, redisPort, 0, redisPass);
+			try (final Jedis jedis = pool.getResource()) {
+				jedis.ping();
+				getLogger().info("Connected to Redis");
 
-					((PluginNickManager) NickNamerAPI.getNickManager())
-							.setNickDataProvider(initCache(AsyncStringValueMapper
-									.redis(new RedisDataProvider(jedis, "nn_data:%s:nick", "nn_data:(.*):nick"))));
-					//					((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:nick", "nn_data:(.*):nick")));
-					((PluginNickManager) NickNamerAPI.getNickManager())
-							.setSkinDataProvider(initCache(AsyncStringValueMapper
-									.redis(new RedisDataProvider(jedis, "nn_data:%s:skin", "nn_data:(.*):skin"))));
-					//					((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:skin", "nn_data:(.*):skin")));
-					SkinLoader.setSkinDataProvider(initCache(AsyncJsonValueMapper
-							.redis(new RedisDataProvider(jedis, "nn_skins:%s", "nn_skins:(.ü)") {
-								@Override
-								public void put(@Nonnull String key, @Nonnull String value) {
-									jedis.setex(formatKey(key), 3600, value);
-								}
-							})));
-					//					SkinLoader.setSkinDataProvider(new RedisDataProvider<Object>(Object.class, pool, "nn_skins:%s", "nn_skins:(.*)") {
-					//						@Override
-					//						public void put(@NonNull String key, Object value) {
-					//							try (Jedis jedis = pool.getResource()) {
-					//								jedis.setex(key(key), 3600, getSerializer().serialize(value));
-					//							}
-					//						}
-					//					});
-				} catch (JedisConnectionException e) {
-					pool.destroy();
-					throw new RuntimeException("Failed to connect to Redis", e);
-				}
+				((PluginNickManager) NickNamerAPI.getNickManager())
+						.setNickDataProvider(initCache(AsyncStringValueMapper
+								.redis(new RedisDataProvider(jedis, "nn_data:%s:nick", "nn_data:(.*):nick"))));
+				//					((PluginNickManager) NickNamerAPI.getNickManager()).setNickDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:nick", "nn_data:(.*):nick")));
+				((PluginNickManager) NickNamerAPI.getNickManager())
+						.setSkinDataProvider(initCache(AsyncStringValueMapper
+								.redis(new RedisDataProvider(jedis, "nn_data:%s:skin", "nn_data:(.*):skin"))));
+				//					((PluginNickManager) NickNamerAPI.getNickManager()).setSkinDataProvider(wrapAsyncProvider(String.class, new RedisDataProvider<>(String.class, pool, "nn_data:%s:skin", "nn_data:(.*):skin")));
+				SkinLoader.setSkinDataProvider(initCache(AsyncJsonValueMapper
+						.redis(new RedisDataProvider(jedis, "nn_skins:%s", "nn_skins:(.ü)") {
+							@Override
+							public void put(@Nonnull String key, @Nonnull String value) {
+								jedis.setex(formatKey(key), 3600, value);
+							}
+						})));
+				//					SkinLoader.setSkinDataProvider(new RedisDataProvider<Object>(Object.class, pool, "nn_skins:%s", "nn_skins:(.*)") {
+				//						@Override
+				//						public void put(@NonNull String key, Object value) {
+				//							try (Jedis jedis = pool.getResource()) {
+				//								jedis.setex(key(key), 3600, getSerializer().serialize(value));
+				//							}
+				//						}
+				//					});
+			} catch (JedisConnectionException e) {
+				pool.destroy();
+				throw new RuntimeException("Failed to connect to Redis", e);
 			}
 		});
 	}
@@ -472,12 +398,9 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 
 			((PluginNickManager) getAPI()).refreshCachedNick(event.getDisguised().getUniqueId());
 		} else {
-			((PluginNickManager) getAPI()).getNick(event.getDisguised().getUniqueId(), new DataCallback<String>() {
-				@Override
-				public void provide(@Nullable String nick) {
-					if (nick != null && !nick.equals(event.getDisguised().getName())) {
-						getAPI().refreshPlayer(event.getDisguised().getUniqueId());
-					}
+			((PluginNickManager) getAPI()).getNick(event.getDisguised().getUniqueId(), nick -> {
+				if (nick != null && !nick.equals(event.getDisguised().getName())) {
+					getAPI().refreshPlayer(event.getDisguised().getUniqueId());
 				}
 			});
 		}
@@ -496,27 +419,24 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			((PluginNickManager) getAPI()).refreshCachedSkin(event.getDisguised().getUniqueId());
 			if (event.getSkin() != null) { SkinLoader.refreshCachedData(event.getSkin()); }
 		} else {
-			((PluginNickManager) getAPI()).getSkin(event.getDisguised().getUniqueId(), new DataCallback<String>() {
-				@Override
-				public void provide(@Nullable final String skin) {
-					if (skin != null && !skin.equals(event.getDisguised().getName())) {
-						GameProfile skinProfile = SkinLoader.getSkinProfile(skin);
-						if (skinProfile == null) {
-							Bukkit.getScheduler().runTaskAsynchronously(NickNamerPlugin.instance, new Runnable() {
-								@Override
-								public void run() {
-									SkinLoader.loadSkin(skin);
-									Bukkit.getScheduler().runTaskLater(NickNamerPlugin.instance, new Runnable() {
-										@Override
-										public void run() {
-											getAPI().refreshPlayer(event.getDisguised().getUniqueId());
-										}
-									}, 10);
-								}
-							});
-						} else {
-							getAPI().refreshPlayer(event.getDisguised().getUniqueId());
-						}
+			((PluginNickManager) getAPI()).getSkin(event.getDisguised().getUniqueId(), skin -> {
+				if (skin != null && !skin.equals(event.getDisguised().getName())) {
+					GameProfile skinProfile = SkinLoader.getSkinProfile(skin);
+					if (skinProfile == null) {
+						Bukkit.getScheduler().runTaskAsynchronously(NickNamerPlugin.instance, new Runnable() {
+							@Override
+							public void run() {
+								SkinLoader.loadSkin(skin);
+								Bukkit.getScheduler().runTaskLater(NickNamerPlugin.instance, new Runnable() {
+									@Override
+									public void run() {
+										getAPI().refreshPlayer(event.getDisguised().getUniqueId());
+									}
+								}, 10);
+							}
+						});
+					} else {
+						getAPI().refreshPlayer(event.getDisguised().getUniqueId());
 					}
 				}
 			});
@@ -546,19 +466,16 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (ChatReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 			final String message = event.getMessage();
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
-			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
-				@Override
-				public String replace(String original) {
-					Player player = Bukkit.getPlayer(original);
-					if (player != null) {
-						boolean async = !getServer().isPrimaryThread();
-						NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original, async);
-						Bukkit.getPluginManager().callEvent(replacementEvent);
-						if (replacementEvent.isCancelled()) { return original; }
-						return replacementEvent.getReplacement();
-					}
-					return original;
+			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, original -> {
+				Player player = Bukkit.getPlayer(original);
+				if (player != null) {
+					boolean async = !getServer().isPrimaryThread();
+					NameReplacementEvent replacementEvent = new ChatReplacementEvent(player, event.getRecipients(), message, original, original, async);
+					Bukkit.getPluginManager().callEvent(replacementEvent);
+					if (replacementEvent.isCancelled()) { return original; }
+					return replacementEvent.getReplacement();
 				}
+				return original;
 			}, true);
 			event.setMessage(replacedMessage);
 		}
@@ -569,18 +486,15 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (PlayerJoinReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 			final String message = event.getJoinMessage();
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
-			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
-				@Override
-				public String replace(String original) {
-					Player player = Bukkit.getPlayer(original);
-					if (player != null) {
-						PlayerJoinReplacementEvent replacementEvent = new PlayerJoinReplacementEvent(player, Bukkit.getOnlinePlayers(), message, original, original);
-						Bukkit.getPluginManager().callEvent(replacementEvent);
-						if (replacementEvent.isCancelled()) { return original; }
-						return replacementEvent.getReplacement();
-					}
-					return original;
+			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, original -> {
+				Player player = Bukkit.getPlayer(original);
+				if (player != null) {
+					PlayerJoinReplacementEvent replacementEvent = new PlayerJoinReplacementEvent(player, Bukkit.getOnlinePlayers(), message, original, original);
+					Bukkit.getPluginManager().callEvent(replacementEvent);
+					if (replacementEvent.isCancelled()) { return original; }
+					return replacementEvent.getReplacement();
 				}
+				return original;
 			}, true);
 			event.setJoinMessage(replacedMessage);
 		}
@@ -666,18 +580,15 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		if (PlayerQuitReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
 			final String message = event.getQuitMessage();
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
-			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, new NameReplacer() {
-				@Override
-				public String replace(String original) {
-					Player player = Bukkit.getPlayer(original);
-					if (player != null) {
-						PlayerQuitReplacementEvent replacementEvent = new PlayerQuitReplacementEvent(player, Bukkit.getOnlinePlayers(), message, original, original);
-						Bukkit.getPluginManager().callEvent(replacementEvent);
-						if (replacementEvent.isCancelled()) { return original; }
-						return replacementEvent.getReplacement();
-					}
-					return original;
+			String replacedMessage = NickNamerAPI.replaceNames(message, nickedPlayerNames, original -> {
+				Player player = Bukkit.getPlayer(original);
+				if (player != null) {
+					PlayerQuitReplacementEvent replacementEvent = new PlayerQuitReplacementEvent(player, Bukkit.getOnlinePlayers(), message, original, original);
+					Bukkit.getPluginManager().callEvent(replacementEvent);
+					if (replacementEvent.isCancelled()) { return original; }
+					return replacementEvent.getReplacement();
 				}
+				return original;
 			}, true);
 			event.setQuitMessage(replacedMessage);
 		}
@@ -689,18 +600,15 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			Set<String> nickedPlayerNames = NickNamerAPI.getNickedPlayerNames();
 			for (ListIterator<String> iterator = ((List<String>) event.getTabCompletions()).listIterator(); iterator.hasNext(); ) {
 				final String completion = iterator.next();
-				String replacedCompletion = NickNamerAPI.replaceNames(completion, nickedPlayerNames, new NameReplacer() {
-					@Override
-					public String replace(String original) {
-						Player player = Bukkit.getPlayer(original);
-						if (player != null) {
-							ChatTabCompleteReplacementEvent replacementEvent = new ChatTabCompleteReplacementEvent(player, event.getPlayer(), completion, original, original);
-							Bukkit.getPluginManager().callEvent(replacementEvent);
-							if (replacementEvent.isCancelled()) { return original; }
-							return replacementEvent.getReplacement();
-						}
-						return original;
+				String replacedCompletion = NickNamerAPI.replaceNames(completion, nickedPlayerNames, original -> {
+					Player player = Bukkit.getPlayer(original);
+					if (player != null) {
+						ChatTabCompleteReplacementEvent replacementEvent = new ChatTabCompleteReplacementEvent(player, event.getPlayer(), completion, original, original);
+						Bukkit.getPluginManager().callEvent(replacementEvent);
+						if (replacementEvent.isCancelled()) { return original; }
+						return replacementEvent.getReplacement();
 					}
+					return original;
 				}, true);
 				iterator.set(ChatColor.stripColor(replacedCompletion));
 			}

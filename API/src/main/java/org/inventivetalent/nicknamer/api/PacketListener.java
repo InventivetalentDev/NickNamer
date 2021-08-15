@@ -160,19 +160,16 @@ public class PacketListener extends PacketHandler {
                         final Collection<String> playerNames = (Collection<String>) packet.getPacketValue("j");
                         final List<String> newPlayerNames = new ArrayList<>();
                         for (String entry : playerNames) {
-                            final String replacedEntry = NickNamerAPI.replaceNames(entry, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-                                @Override
-                                public String replace(String original) {
-                                    Player player = Bukkit.getPlayer(original);
-                                    if (player != null) {
-                                        boolean async = !getPlugin().getServer().isPrimaryThread();
-                                        ScoreboardTeamReplacementEvent replacementEvent = new ScoreboardTeamReplacementEvent(player, packet.getPlayer(), entry, original, original, async);
-                                        Bukkit.getPluginManager().callEvent(replacementEvent);
-                                        if (replacementEvent.isCancelled()) { return original; }
-                                        return replacementEvent.getReplacement();
-                                    }
-                                    return original;
+                            final String replacedEntry = NickNamerAPI.replaceNames(entry, NickNamerAPI.getNickedPlayerNames(), original -> {
+                                Player player = Bukkit.getPlayer(original);
+                                if (player != null) {
+                                    boolean async = !getPlugin().getServer().isPrimaryThread();
+                                    ScoreboardTeamReplacementEvent replacementEvent = new ScoreboardTeamReplacementEvent(player, packet.getPlayer(), entry, original, original, async);
+                                    Bukkit.getPluginManager().callEvent(replacementEvent);
+                                    if (replacementEvent.isCancelled()) { return original; }
+                                    return replacementEvent.getReplacement();
                                 }
+                                return original;
                             }, true);
                             newPlayerNames.add(Objects.requireNonNullElse(replacedEntry, entry));
                         }

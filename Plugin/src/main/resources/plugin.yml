@@ -3,7 +3,7 @@ main: org.inventivetalent.nicknamer.NickNamerPlugin
 author: inventivetalent
 version: ${project.version}
 
-api-version: '1.13'
+api-version: '1.17'
 
 depend: [PacketListenerApi]
 softdepend: [PlaceholderAPI]
