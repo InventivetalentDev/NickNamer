@@ -300,7 +300,7 @@ public class PacketListener extends PacketHandler {
     }
 
     void handlePacketPlayOutChat(SentPacket packet, boolean reverse) {
-        try {
+        try { // paper only
             Component adventureMessage = (Component) packet.getPacketValue("adventure$message");
             if (adventureMessage != null) {
                 String replacedMessage = replaceChatPacket(AdventureHelper.asJsonString(adventureMessage), packet, reverse);
@@ -311,8 +311,7 @@ public class PacketListener extends PacketHandler {
                 }
                 return;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
         try {
             BaseComponent[] components = (BaseComponent[]) packet.getPacketValue("components");
@@ -323,8 +322,7 @@ public class PacketListener extends PacketHandler {
                 }
                 return;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
         try {
             Object message = packet.getPacketValue("a");
@@ -336,7 +334,7 @@ public class PacketListener extends PacketHandler {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
