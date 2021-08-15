@@ -53,7 +53,6 @@ import org.inventivetalent.data.async.AsyncDataProvider;
 import org.inventivetalent.data.mapper.AsyncCacheMapper;
 import org.inventivetalent.data.mapper.AsyncJsonValueMapper;
 import org.inventivetalent.data.mapper.AsyncStringValueMapper;
-import org.inventivetalent.data.redis.RedisDataProvider;
 import org.inventivetalent.data.sql.SQLDataProvider;
 import org.inventivetalent.data.sqlite.SQLiteDataProvider;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
@@ -76,12 +75,7 @@ import org.inventivetalent.pluginannotations.config.ConfigValue;
 import org.inventivetalent.update.spiget.SpigetUpdate;
 import org.inventivetalent.update.spiget.UpdateCallback;
 import org.inventivetalent.update.spiget.comparator.VersionComparator;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.exceptions.JedisConnectionException;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -310,6 +304,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 		});
 	}
 
+	/*
 	void initStorageRedis() {
 		if (redisPass == null || redisPass.isEmpty()) { redisPass = null; }
 
@@ -350,6 +345,7 @@ public class NickNamerPlugin extends JavaPlugin implements Listener, PluginMessa
 			}
 		});
 	}
+	 */
 
 	public List<Class<?>> getDatabaseClasses() {
 		List<Class<?>> list = new ArrayList<>();
