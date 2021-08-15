@@ -31,6 +31,7 @@ package org.inventivetalent.nicknamer.api;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -193,6 +194,8 @@ public class SimpleNickManager implements NickManager {
                         .newInstance(dimension, difficulty, type, gamemode);
             }
 
+            final GameMode gameMode = player.getGameMode();
+            final boolean allowFlight = player.getAllowFlight();
             final boolean flying = player.isFlying();
             final Location location = player.getLocation();
             final int level = player.getLevel();
@@ -200,22 +203,21 @@ public class SimpleNickManager implements NickManager {
             final double maxHealth = player.getMaxHealth();
             final double health = player.getHealth();
 
-            Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    NickNamerAPI.packetListener.sendPacket(player, respawnPlayer);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                NickNamerAPI.packetListener.sendPacket(player, respawnPlayer);
 
-                    player.setFlying(flying);
-                    player.teleport(location);
-                    player.updateInventory();
-                    player.setLevel(level);
-                    player.setExp(xp);
-                    player.setMaxHealth(maxHealth);
-                    player.setHealth(health);
+                player.setGameMode(gameMode);
+                player.setAllowFlight(allowFlight);
+                player.setFlying(flying);
+                player.teleport(location);
+                player.updateInventory();
+                player.setLevel(level);
+                player.setExp(xp);
+                player.setMaxHealth(maxHealth);
+                player.setHealth(health);
 
-                    NickNamerAPI.packetListener.sendPacket(player, addPlayer);
-                }
-            }, 5);
+                NickNamerAPI.packetListener.sendPacket(player, addPlayer);
+            }, 1);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -336,4 +338,5 @@ public class SimpleNickManager implements NickManager {
     public boolean isSimple() {
         return true;
     }
+
 }
