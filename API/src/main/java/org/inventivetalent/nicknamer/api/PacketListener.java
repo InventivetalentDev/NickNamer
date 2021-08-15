@@ -228,21 +228,21 @@ public class PacketListener extends PacketHandler {
                     if (ChatInReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
                         try {
                             final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
-                            String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-                                @Override
-                                public String replace(String original) {
-                                    Player player = Bukkit.getPlayer(original);
-                                    if (player != null) {
-                                        boolean async = !getPlugin().getServer().isPrimaryThread();
-                                        ChatInReplacementEvent replacementEvent = new ChatInReplacementEvent(player, packet.getPlayer(), message, original, original, async);
-                                        Bukkit.getPluginManager().callEvent(replacementEvent);
-                                        if (replacementEvent.isCancelled()) { return original; }
-                                        return replacementEvent.getReplacement();
-                                    }
-                                    return original;
+                            String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), original -> {
+                                Player player = Bukkit.getPlayer(original);
+                                if (player != null) {
+                                    boolean async = !getPlugin().getServer().isPrimaryThread();
+                                    ChatInReplacementEvent replacementEvent = new ChatInReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+                                    Bukkit.getPluginManager().callEvent(replacementEvent);
+                                    if (replacementEvent.isCancelled()) { return original; }
+                                    return replacementEvent.getReplacement();
                                 }
+                                return original;
                             }, true);
-                            PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
+                            if (replacedMessage != null) {
+                                Object newPacket = ClassBuilder.buildPacketPlayInChat(replacedMessage);
+                                packet.setPacket(newPacket);
+                            }
                         } catch (Exception e) {
                             getPlugin().getLogger().log(Level.SEVERE, "", e);
                         }
@@ -250,24 +250,24 @@ public class PacketListener extends PacketHandler {
                     if (ChatInReverseReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
                         try {
                             final String message = (String) PacketPlayInChatFieldResolver.resolve("message", "a").get(packet.getPacket());
-                            String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), new NameReplacer() {
-                                @Override
-                                public String replace(String original) {
-                                    Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
-                                    if (playersWithNick.size() > 0) {
-                                        Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
-                                        if (player != null) {
-                                            boolean async = !getPlugin().getServer().isPrimaryThread();
-                                            ChatInReverseReplacementEvent replacementEvent = new ChatInReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
-                                            Bukkit.getPluginManager().callEvent(replacementEvent);
-                                            if (replacementEvent.isCancelled()) { return original; }
-                                            return replacementEvent.getReplacement();
-                                        }
+                            String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), original -> {
+                                Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
+                                if (playersWithNick.size() > 0) {
+                                    Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
+                                    if (player != null) {
+                                        boolean async = !getPlugin().getServer().isPrimaryThread();
+                                        ChatInReverseReplacementEvent replacementEvent = new ChatInReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+                                        Bukkit.getPluginManager().callEvent(replacementEvent);
+                                        if (replacementEvent.isCancelled()) { return original; }
+                                        return replacementEvent.getReplacement();
                                     }
-                                    return original;
                                 }
+                                return original;
                             }, true);
-                            PacketPlayInChatFieldResolver.resolve("message", "a").set(packet.getPacket(), replacedMessage);
+                            if (replacedMessage != null) {
+                                Object newPacket = ClassBuilder.buildPacketPlayInChat(replacedMessage);
+                                packet.setPacket(newPacket);
+                            }
                         } catch (Exception e) {
                             getPlugin().getLogger().log(Level.SEVERE, "", e);
                         }

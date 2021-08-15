@@ -139,6 +139,17 @@ public class ClassBuilder {
         return null;
     }
 
+    public static Object buildPacketPlayInChat(String message) {
+        try {
+            return PacketPlayInChat
+                    .getConstructor(String.class)
+                    .newInstance(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public static GameProfile getGameProfile(Player player) {
         try {
             return (GameProfile) EntityHumanMethodResolver.resolve("getProfile").invoke(Minecraft.getHandle(player));
@@ -172,6 +183,7 @@ public class ClassBuilder {
     static Class<?> ScoreboardServer = nmsClassResolver.resolveSilent("ScoreboardServer");
     static Class<?> ScoreboardServer$Action = nmsClassResolver.resolveSilent("ScoreboardServer$Action");
     static Class<?> PacketPlayOutScoreboardTeam = nmsClassResolver.resolveSilent("network.protocol.game.PacketPlayOutScoreboardTeam");
+    static Class<?> PacketPlayInChat = nmsClassResolver.resolveSilent("network.protocol.game.PacketPlayInChat");
 
     static Class<?> CraftChatMessage = obcClassResolver.resolveSilent("util.CraftChatMessage");
 
