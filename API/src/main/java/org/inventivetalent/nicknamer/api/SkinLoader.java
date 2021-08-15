@@ -33,7 +33,6 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import org.bukkit.Bukkit;
 import org.inventivetalent.data.DataProvider;
-import org.inventivetalent.data.async.DataCallback;
 import org.inventivetalent.data.mapper.AsyncCacheMapper;
 import org.inventivetalent.data.mapper.MapMapper;
 import org.inventivetalent.mcwrapper.auth.GameProfileWrapper;
@@ -104,13 +103,7 @@ public class SkinLoader {
 		GameProfile profile = getSkinProfileHandle(owner);
 		if (profile == null && skinDataProvider instanceof AsyncCacheMapper.CachedDataProvider) {
 			CompletableFuture<GameProfile> future = new CompletableFuture<>();
-			((AsyncCacheMapper.CachedDataProvider<JsonObject>) skinDataProvider).get(owner, new DataCallback<JsonObject>() {
-				@Override
-				public void provide(@Nullable JsonObject jsonObject) {
-					System.out.println(jsonObject);
-					future.complete(jsonToProfile(jsonObject));
-				}
-			});
+			((AsyncCacheMapper.CachedDataProvider<JsonObject>) skinDataProvider).get(owner, jsonObject -> future.complete(jsonToProfile(jsonObject)));
 			try {
 				profile = future.get(2, TimeUnit.SECONDS);
 			} catch (InterruptedException | ExecutionException | TimeoutException e) {
