@@ -129,7 +129,7 @@ public class ClassBuilder {
     public static Object buildPacketPlayOutScoreboardTeam(String teamName, int packetType, Optional teamOptional, Collection<String> playerNames) {
         try {
             Constructor constructor = PacketPlayOutScoreboardTeam
-                    .getConstructor(String.class, int.class, Optional.class, Collection.class);
+                    .getDeclaredConstructor(String.class, int.class, Optional.class, Collection.class);
             constructor.setAccessible(true);
             return constructor
                     .newInstance(teamName, packetType, teamOptional, playerNames);
