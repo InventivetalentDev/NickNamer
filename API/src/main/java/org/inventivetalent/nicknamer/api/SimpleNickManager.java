@@ -215,7 +215,7 @@ public class SimpleNickManager implements NickManager {
 
                     NickNamerAPI.packetListener.sendPacket(player, addPlayer);
                 }
-            }, 1);
+            }, 5);
         } catch (Exception e) {
             e.printStackTrace();
         }

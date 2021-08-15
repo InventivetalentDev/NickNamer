@@ -30,6 +30,7 @@ package org.inventivetalent.nicknamer.api;
 
 import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.minecraft.MinecraftSessionService;
 import org.bukkit.Bukkit;
 import org.inventivetalent.data.DataProvider;
 import org.inventivetalent.data.async.DataCallback;
@@ -40,11 +41,13 @@ import org.inventivetalent.nicknamer.api.event.skin.SkinLoadedEvent;
 import org.inventivetalent.reflection.resolver.ClassResolver;
 import org.inventivetalent.reflection.resolver.FieldResolver;
 import org.inventivetalent.reflection.resolver.MethodResolver;
+import org.inventivetalent.reflection.resolver.ResolverQuery;
 import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -104,13 +107,14 @@ public class SkinLoader {
 			((AsyncCacheMapper.CachedDataProvider<JsonObject>) skinDataProvider).get(owner, new DataCallback<JsonObject>() {
 				@Override
 				public void provide(@Nullable JsonObject jsonObject) {
+					System.out.println(jsonObject);
 					future.complete(jsonToProfile(jsonObject));
 				}
 			});
 			try {
-				profile = future.get(10, TimeUnit.SECONDS);
+				profile = future.get(2, TimeUnit.SECONDS);
 			} catch (InterruptedException | ExecutionException | TimeoutException e) {
-				throw new RuntimeException(e);
+				e.printStackTrace();
 			}
 			if (profile != null) {
 				return profile;
@@ -135,7 +139,20 @@ public class SkinLoader {
 		GameProfile profile;
 		try {
 			Object cache = TileEntitySkullFieldResolver.resolve("skinCache", "b").get(null);
-			profile = (GameProfile) UserCacheMethodResolver.resolve("getProfileIfCached").invoke(cache, owner);
+			Object profileObj = UserCacheMethodResolver.resolve(new ResolverQuery("getProfile", String.class)).invoke(cache, owner);
+			if (profileObj instanceof Optional) {
+				profile = (GameProfile) ((Optional) profileObj).orElse(null);
+			} else {
+				profile = (GameProfile) profileObj;
+			}
+			if (profile != null) { // make sure we have textures
+				if (!profile.getProperties().containsKey("textures")) {
+					MinecraftSessionService sessionService = (MinecraftSessionService) TileEntitySkullFieldResolver.resolve("sessionService", "c").get(null);
+					sessionService.fillProfileProperties(profile, true);
+					// put the filled profile back into the UserCache
+					UserCacheMethodResolver.resolve(new ResolverQuery("a", GameProfile.class)).invoke(cache, profile);
+				}
+			}
 			if (profile != null) {
 				skinDataProvider.put(owner, profileToJson(profile));
 				boolean async = !Bukkit.getServer().isPrimaryThread();

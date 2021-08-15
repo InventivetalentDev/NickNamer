@@ -39,7 +39,10 @@ import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 import org.inventivetalent.reflection.resolver.minecraft.OBCClassResolver;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public class ClassBuilder {
 
@@ -90,6 +93,52 @@ public class ClassBuilder {
         return null;
     }
 
+    public static Object buildScoreboardObjective(Object scoreboard, String name, Object criterion, Object displayName, Object renderType) {
+        try {
+            return ScoreboardObjective
+                    .getConstructor(Scoreboard, String.class, IScoreboardCriteria, IChatBaseComponent, EnumScoreboardHealthDisplay)
+                    .newInstance(scoreboard, name, criterion, displayName, renderType);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Object buildPacketPlayOutScoreboard(Object objective, int mode) {
+        try {
+            return PacketPlayOutScoreboardObjective
+                    .getConstructor(ScoreboardObjective, int.class)
+                    .newInstance(objective, mode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Object buildPacketPlayOutScoreboardScore(Object action, String objectiveName, String playerName, int score) {
+        try {
+            return PacketPlayOutScoreboardScore
+                    .getConstructor(ScoreboardServer$Action, String.class, String.class, int.class)
+                    .newInstance(action, objectiveName, playerName, score);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Object buildPacketPlayOutScoreboardTeam(String teamName, int packetType, Optional teamOptional, Collection<String> playerNames) {
+        try {
+            Constructor constructor = PacketPlayOutScoreboardTeam
+                    .getConstructor(String.class, int.class, Optional.class, Collection.class);
+            constructor.setAccessible(true);
+            return constructor
+                    .newInstance(teamName, packetType, teamOptional, playerNames);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public static GameProfile getGameProfile(Player player) {
         try {
             return (GameProfile) EntityHumanMethodResolver.resolve("getProfile").invoke(Minecraft.getHandle(player));
@@ -114,6 +163,15 @@ public class ClassBuilder {
     static Class<?> EntityHuman = nmsClassResolver.resolveSilent("EntityHuman", "world.entity.player.EntityHuman");
     static Class<?> EntityPlayer = nmsClassResolver.resolveSilent("EntityPlayer", "server.level.EntityPlayer");
     static Class<?> IChatBaseComponent = nmsClassResolver.resolveSilent("IChatBaseComponent", "network.chat.IChatBaseComponent");
+    static Class<?> ScoreboardObjective = nmsClassResolver.resolveSilent("world.scores.ScoreboardObjective");
+    static Class<?> Scoreboard = nmsClassResolver.resolveSilent("world.scores.Scoreboard");
+    static Class<?> IScoreboardCriteria = nmsClassResolver.resolveSilent("world.scores.criteria.IScoreboardCriteria");
+    static Class<?> EnumScoreboardHealthDisplay = nmsClassResolver.resolveSilent("world.scores.criteria.IScoreboardCriteria$EnumScoreboardHealthDisplay");
+    static Class<?> PacketPlayOutScoreboardObjective = nmsClassResolver.resolveSilent("network.protocol.game.PacketPlayOutScoreboardObjective");
+    static Class<?> PacketPlayOutScoreboardScore = nmsClassResolver.resolveSilent("network.protocol.game.PacketPlayOutScoreboardScore");
+    static Class<?> ScoreboardServer = nmsClassResolver.resolveSilent("ScoreboardServer");
+    static Class<?> ScoreboardServer$Action = nmsClassResolver.resolveSilent("ScoreboardServer$Action");
+    static Class<?> PacketPlayOutScoreboardTeam = nmsClassResolver.resolveSilent("network.protocol.game.PacketPlayOutScoreboardTeam");
 
     static Class<?> CraftChatMessage = obcClassResolver.resolveSilent("util.CraftChatMessage");
 

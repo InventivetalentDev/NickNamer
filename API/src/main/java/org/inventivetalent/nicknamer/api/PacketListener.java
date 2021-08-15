@@ -30,6 +30,7 @@ package org.inventivetalent.nicknamer.api;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.PropertyMap;
+import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -43,8 +44,6 @@ import org.inventivetalent.packetlistener.handler.PacketOptions;
 import org.inventivetalent.packetlistener.handler.ReceivedPacket;
 import org.inventivetalent.packetlistener.handler.SentPacket;
 import org.inventivetalent.reflection.accessor.FieldAccessor;
-import org.inventivetalent.reflection.minecraft.Minecraft;
-import org.inventivetalent.reflection.minecraft.MinecraftVersion;
 import org.inventivetalent.reflection.resolver.FieldResolver;
 import org.inventivetalent.reflection.resolver.MethodResolver;
 import org.inventivetalent.reflection.resolver.ResolverQuery;
@@ -52,10 +51,7 @@ import org.inventivetalent.reflection.resolver.minecraft.NMSClassResolver;
 import org.inventivetalent.reflection.resolver.minecraft.OBCClassResolver;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
 public class PacketListener extends PacketHandler {
@@ -112,21 +108,18 @@ public class PacketListener extends PacketHandler {
                         Object a = packet.getPacketValue("a");
                         try {
                             final String message = serializeChat(a);
-                            final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-                                @Override
-                                public String replace(String original) {
-                                    Player player = Bukkit.getPlayer(original);
-                                    if (player != null) {
-                                        boolean async = !getPlugin().getServer().isPrimaryThread();
-                                        ChatOutReplacementEvent replacementEvent = new ChatOutReplacementEvent(player, packet.getPlayer(), message, original, original, async);
-                                        Bukkit.getPluginManager().callEvent(replacementEvent);
-                                        if (replacementEvent.isCancelled()) { return original; }
-                                        return replacementEvent.getReplacement();
-                                    }
-                                    return original;
+                            final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickedPlayerNames(), original -> {
+                                Player player = Bukkit.getPlayer(original);
+                                if (player != null) {
+                                    boolean async = !getPlugin().getServer().isPrimaryThread();
+                                    ChatOutReplacementEvent replacementEvent = new ChatOutReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+                                    Bukkit.getPluginManager().callEvent(replacementEvent);
+                                    if (replacementEvent.isCancelled()) { return original; }
+                                    return replacementEvent.getReplacement();
                                 }
+                                return original;
                             }, true);
-                            packet.setPacketValue("a", deserializeChat(replacedMessage));
+                            if (replacedMessage != null) packet.setPacketValue("components", ComponentSerializer.parse(replacedMessage));
                         } catch (Exception e) {
                             getPlugin().getLogger().log(Level.SEVERE, "", e);
                         }
@@ -135,24 +128,21 @@ public class PacketListener extends PacketHandler {
                         Object a = packet.getPacketValue("a");
                         try {
                             final String message = serializeChat(a);
-                            final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), new NameReplacer() {
-                                @Override
-                                public String replace(String original) {
-                                    Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
-                                    if (playersWithNick.size() > 0) {
-                                        Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
-                                        if (player != null) {
-                                            boolean async = !getPlugin().getServer().isPrimaryThread();
-                                            ChatOutReverseReplacementEvent replacementEvent = new ChatOutReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
-                                            Bukkit.getPluginManager().callEvent(replacementEvent);
-                                            if (replacementEvent.isCancelled()) { return original; }
-                                            return replacementEvent.getReplacement();
-                                        }
+                            final String replacedMessage = NickNamerAPI.replaceNames(message, NickNamerAPI.getNickManager().getUsedNicks(), original -> {
+                                Collection<UUID> playersWithNick = NickNamerAPI.getNickManager().getPlayersWithNick(original);
+                                if (playersWithNick.size() > 0) {
+                                    Player player = Bukkit.getPlayer(playersWithNick.iterator().next());
+                                    if (player != null) {
+                                        boolean async = !getPlugin().getServer().isPrimaryThread();
+                                        ChatOutReverseReplacementEvent replacementEvent = new ChatOutReverseReplacementEvent(player, packet.getPlayer(), message, original, original, async);
+                                        Bukkit.getPluginManager().callEvent(replacementEvent);
+                                        if (replacementEvent.isCancelled()) { return original; }
+                                        return replacementEvent.getReplacement();
                                     }
-                                    return original;
                                 }
+                                return original;
                             }, true);
-                            packet.setPacketValue("a", deserializeChat(replacedMessage));
+                            if (replacedMessage != null) packet.setPacketValue("components", ComponentSerializer.parse(replacedMessage));
                         } catch (Exception e) {
                             getPlugin().getLogger().log(Level.SEVERE, "", e);
                         }
@@ -160,53 +150,51 @@ public class PacketListener extends PacketHandler {
                 }
                 if ("PacketPlayOutScoreboardObjective".equals(packet.getPacketName())) {
                     if (ScoreboardReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-                        boolean isChatComponent = MinecraftVersion.VERSION.newerThan(Minecraft.Version.v1_13_R1);// It's a chat component instead of a string since 1.13
-                        final String b = isChatComponent ? serializeChat(packet.getPacketValue("b")) : (String) packet.getPacketValue("b");
-                        final String replacedB = NickNamerAPI.replaceNames(b, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-                            @Override
-                            public String replace(String original) {
-                                Player player = Bukkit.getPlayer(original);
-                                if (player != null) {
-                                    boolean async = !getPlugin().getServer().isPrimaryThread();
-                                    ScoreboardReplacementEvent replacementEvent = new ScoreboardReplacementEvent(player, packet.getPlayer(), b, original, original, async);
-                                    Bukkit.getPluginManager().callEvent(replacementEvent);
-                                    if (replacementEvent.isCancelled()) { return original; }
-                                    return replacementEvent.getReplacement();
-                                }
-                                return original;
+                        final String displayName = serializeChat(packet.getPacketValue("e"));
+                        final String replacedDisplayName = NickNamerAPI.replaceNames(displayName, NickNamerAPI.getNickedPlayerNames(), original -> {
+                            Player player = Bukkit.getPlayer(original);
+                            if (player != null) {
+                                boolean async = !getPlugin().getServer().isPrimaryThread();
+                                ScoreboardReplacementEvent replacementEvent = new ScoreboardReplacementEvent(player, packet.getPlayer(), displayName, original, original, async);
+                                Bukkit.getPluginManager().callEvent(replacementEvent);
+                                if (replacementEvent.isCancelled()) { return original; }
+                                return replacementEvent.getReplacement();
                             }
+                            return original;
                         }, true);
-                        packet.setPacketValue("b", isChatComponent ? deserializeChat(replacedB) : replacedB);
+                        if (replacedDisplayName != null) {
+                            // the packet only needs name, displayName, renderType of the objective
+                            Object newObjective = ClassBuilder.buildScoreboardObjective(null, (String) packet.getPacketValue("d"), null, (String) replacedDisplayName, packet.getPacketValue("f"));
+                            Object newPacket = ClassBuilder.buildPacketPlayOutScoreboard(newObjective, (int) packet.getPacketValue("g"));
+                            packet.setPacket(newPacket);
+                        }
                     }
                 }
                 if ("PacketPlayOutScoreboardScore".equals(packet.getPacketName())) {
                     if (ScoreboardScoreReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-                        final String a = (String) packet.getPacketValue("a");
-                        final String replacedA = NickNamerAPI.replaceNames(a, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
-                            @Override
-                            public String replace(String original) {
-                                Player player = Bukkit.getPlayer(original);
-                                if (player != null) {
-                                    boolean async = !getPlugin().getServer().isPrimaryThread();
-                                    ScoreboardScoreReplacementEvent replacementEvent = new ScoreboardScoreReplacementEvent(player, packet.getPlayer(), a, original, original, async);
-                                    Bukkit.getPluginManager().callEvent(replacementEvent);
-                                    if (replacementEvent.isCancelled()) { return original; }
-                                    return replacementEvent.getReplacement();
-                                }
-                                return original;
+                        final String playerName = (String) packet.getPacketValue("a");
+                        final String replacedPlayerName = NickNamerAPI.replaceNames(playerName, NickNamerAPI.getNickedPlayerNames(), original -> {
+                            Player player = Bukkit.getPlayer(original);
+                            if (player != null) {
+                                boolean async = !getPlugin().getServer().isPrimaryThread();
+                                ScoreboardScoreReplacementEvent replacementEvent = new ScoreboardScoreReplacementEvent(player, packet.getPlayer(), playerName, original, original, async);
+                                Bukkit.getPluginManager().callEvent(replacementEvent);
+                                if (replacementEvent.isCancelled()) { return original; }
+                                return replacementEvent.getReplacement();
                             }
+                            return original;
                         }, true);
-                        packet.setPacketValue("a", replacedA);
+                        if (replacedPlayerName != null) {
+                            Object newPacket = ClassBuilder.buildPacketPlayOutScoreboardScore(packet.getPacketValue("d"), (String) packet.getPacketValue("b"), (String) replacedPlayerName, (int) packet.getPacketValue("c"));
+                            packet.setPacket(newPacket);
+                        }
                     }
                 }
                 if ("PacketPlayOutScoreboardTeam".equals(packet.getPacketName())) {
                     if (ScoreboardTeamReplacementEvent.getHandlerList().getRegisteredListeners().length > 0) {
-                        final List<String> h = (List<String>)
-                                (MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_8_R1) ? packet.getPacketValue("e") :
-                                        MinecraftVersion.VERSION.olderThan(Minecraft.Version.v1_9_R1) ? packet.getPacketValue("g") :
-                                                packet.getPacketValue("h"));
-                        for (ListIterator<String> iterator = h.listIterator(); iterator.hasNext(); ) {
-                            final String entry = iterator.next();
+                        final Collection<String> playerNames = (Collection<String>) packet.getPacketValue("j");
+                        final List<String> newPlayerNames = new ArrayList<>();
+                        for (String entry : playerNames) {
                             final String replacedEntry = NickNamerAPI.replaceNames(entry, NickNamerAPI.getNickedPlayerNames(), new NameReplacer() {
                                 @Override
                                 public String replace(String original) {
@@ -221,8 +209,10 @@ public class PacketListener extends PacketHandler {
                                     return original;
                                 }
                             }, true);
-                            iterator.set(replacedEntry);
+                            newPlayerNames.add(Objects.requireNonNullElse(replacedEntry, entry));
                         }
+                        Object newPacket = ClassBuilder.buildPacketPlayOutScoreboardTeam((String) packet.getPacketValue("i"), (int) packet.getPacketValue("h"), (Optional) packet.getPacketValue("k"), (Collection<String>) newPlayerNames);
+                        packet.setPacket(newPacket);
                     }
                 }
             }
